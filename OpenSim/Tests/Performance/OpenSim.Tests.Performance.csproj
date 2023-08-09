@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net48</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="log4net" Version="2.0.15" />
@@ -38,7 +38,6 @@
     <ProjectReference Include="..\..\Region\Framework\OpenSim.Region.Framework.csproj" />
     <ProjectReference Include="..\..\Region\OptionalModules\OpenSim.Region.OptionalModules.csproj" />
     <ProjectReference Include="..\..\Region\ScriptEngine\Shared\OpenSim.Region.ScriptEngine.Shared.csproj" />
-    <ProjectReference Include="..\..\Region\ScriptEngine\XEngine\OpenSim.Region.ScriptEngine.XEngine.csproj" />
     <ProjectReference Include="..\..\Services\AvatarService\OpenSim.Services.AvatarService.csproj" />
     <ProjectReference Include="..\..\Services\Interfaces\OpenSim.Services.Interfaces.csproj" />
     <ProjectReference Include="..\Common\OpenSim.Tests.Common.csproj" />
