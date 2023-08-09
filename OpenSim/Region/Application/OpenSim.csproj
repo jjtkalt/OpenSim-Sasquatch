@@ -55,6 +55,13 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <Content Remove="L:\Documents\Projects\OpenSimulator\OpenSim-Tranquillity\bin\Mono.Data.SqliteClient.dll.config" />
+    <Content Remove="L:\Documents\Projects\OpenSimulator\OpenSim-Tranquillity\bin\prebuild.dll" />
+    <Content Remove="L:\Documents\Projects\OpenSimulator\OpenSim-Tranquillity\bin\prebuild.runtimeconfig.json" />
+    <Content Remove="L:\Documents\Projects\OpenSimulator\OpenSim-Tranquillity\bin\Robust.Tests.dll.config" />
+    <Content Remove="L:\Documents\Projects\OpenSimulator\OpenSim-Tranquillity\bin\Robust.Tests.ini" />
+  </ItemGroup>
+  <ItemGroup>
 	<Content Include="Resources/OpenSim.addin.xml">
 	  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	</Content>

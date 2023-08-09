@@ -11,7 +11,7 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Mono.Security.dll">
-      <HintPath>..\..\..\bin\lib\NET\Mono.Security.dll</HintPath>
+      <HintPath>..\..\..\bin\Mono.Security.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Nini">

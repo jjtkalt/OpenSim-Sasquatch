@@ -39,9 +39,10 @@ namespace OpenSim
     {
         public const string VersionNumber = "0.9.3.0";
         public const string AssemblyVersionNumber = "0.9.3.0";
-        public const string Release = "8619";
+        public const string Release = "8621";
 
         public const Flavour VERSION_FLAVOUR = Flavour.Dev;
+        public const int VERSIONINFO_VERSION_LENGTH = 48;
 
         public enum Flavour
         {
@@ -65,8 +66,6 @@ namespace OpenSim
             string versionString = $"OpenSim-NGC {versionNumber}.{release} Tranquility {flavour}";
             return versionString.PadRight(VERSIONINFO_VERSION_LENGTH);
         }
-
-        public const int VERSIONINFO_VERSION_LENGTH = 48;
 
         /// <summary>
         /// This rules versioning regarding teleports, and compatibility between simulators in that regard.
