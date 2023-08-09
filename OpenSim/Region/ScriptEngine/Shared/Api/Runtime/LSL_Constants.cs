@@ -742,12 +742,22 @@ namespace OpenSim.Region.ScriptEngine.Shared.ScriptBase
         public const int PARCEL_DETAILS_AREA = 4;
         public const int PARCEL_DETAILS_ID = 5;
         public const int PARCEL_DETAILS_SEE_AVATARS = 6;
-        public const int PARCEL_DETAILS_ANY_AVATAR_SOUNDS = 7;
-        public const int PARCEL_DETAILS_GROUP_SOUNDS = 8;
+        public const int PARCEL_DETAILS_PRIM_CAPACITY = 7;
+        public const int PARCEL_DETAILS_PRIM_USED = 8;
+        public const int PARCEL_DETAILS_LANDING_POINT = 9;
+        public const int PARCEL_DETAILS_LANDING_LOOKAT = 10;
+        public const int PARCEL_DETAILS_TP_ROUTING = 11;
+        public const int PARCEL_DETAILS_FLAGS = 12;
+        public const int PARCEL_DETAILS_SCRIPT_DANGER = 13;
+
         // constants for llGetParcelDetails os specific
         public const int PARCEL_DETAILS_DWELL = 64;
+        public const int PARCEL_DETAILS_GETCLAIMDATE = 65;
+        public const int PARCEL_DETAILS_GEOMETRICCENTER = 66;
 
         //osSetParcelDetails
+        public const int PARCEL_DETAILS_ANY_AVATAR_SOUNDS = 7;
+        public const int PARCEL_DETAILS_GROUP_SOUNDS = 8;
         public const int PARCEL_DETAILS_CLAIMDATE = 10;
 
         // constants for llSetClickAction
@@ -760,6 +770,7 @@ namespace OpenSim.Region.ScriptEngine.Shared.ScriptBase
         public const int CLICK_ACTION_PLAY = 5;
         public const int CLICK_ACTION_OPEN_MEDIA = 6;
         public const int CLICK_ACTION_ZOOM = 7;
+        public const int CLICK_ACTION_DISABLED = 8;
 
         // constants for the llDetectedTouch* functions
         public const int TOUCH_INVALID_FACE = -1;
@@ -1001,5 +1012,23 @@ namespace OpenSim.Region.ScriptEngine.Shared.ScriptBase
         public const int NPCLOOKAT_FOCUS = 8;
         public const int NPCLOOKAT_MOUSELOOK = 9;
         public const int NPCLOOKAT_CLEAR = 10;
+
+        // future ?? linkset_data event
+        public const int LINKSETDATA_RESET = 0;
+        public const int LINKSETDATA_UPDATE = 1;
+        public const int LINKSETDATA_DELETE = 2;
+
+        public const int LINKSETDATA_OK = 0;
+        public const int LINKSETDATA_EMEMORY = 1;
+        public const int LINKSETDATA_ENOKEY = 2;
+        public const int LINKSETDATA_EPROTECTED = 3;
+        public const int LINKSETDATA_NOTFOUND = 4;
+        public const int LINKSETDATA_NOUPDATE = 5;
+
+        //llLinkPlaySound flags
+        public const int SOUND_PLAY = 0;
+        public const int SOUND_LOOP = 1;
+        public const int SOUND_TRIGGER = 2;
+        public const int SOUND_SYNC = 4;
     }
 }

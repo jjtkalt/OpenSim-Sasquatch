@@ -27,28 +27,21 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Reflection;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Timers;
 using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using log4net;
-using log4net.Appender;
-using log4net.Core;
-using log4net.Repository;
 using OpenMetaverse;
-using OpenMetaverse.StructuredData;
 using OpenSim.Framework;
-using OpenSim.Framework.Console;
 using OpenSim.Framework.Monitoring;
-using OpenSim.Framework.Servers;
 using OpenSim.Framework.Servers.HttpServer;
 using Timer=System.Timers.Timer;
 using Nini.Config;
+using System.Runtime.InteropServices;
 
 namespace OpenSim.Framework.Servers
 {
@@ -124,6 +117,8 @@ namespace OpenSim.Framework.Servers
             m_NoVerifyCertHostname = startupConfig.GetBoolean("NoVerifyCertHostname", m_NoVerifyCertHostname);
             ServicePointManager.ServerCertificateValidationCallback = ValidateServerCertificate;
 
+            WebUtil.SetupHTTPClients(m_NoVerifyCertChain, m_NoVerifyCertHostname, null, 32 );
+
             int logShowStatsSeconds = startupConfig.GetInt("LogShowStatsSeconds", m_periodDiagnosticTimerMS / 1000);
             m_periodDiagnosticTimerMS = logShowStatsSeconds * 1000;
             m_periodicDiagnosticsTimer.Elapsed += new ElapsedEventHandler(LogDiagnostics);
@@ -184,21 +179,12 @@ namespace OpenSim.Framework.Servers
         {
             m_log.Info("[STARTUP]: Beginning startup processing");
 
-            m_log.Info("[STARTUP]: version: " + m_version + Environment.NewLine);
-            // clr version potentially is more confusing than helpful, since it doesn't tell us if we're running under Mono/MS .NET and
-            // the clr version number doesn't match the project version number under Mono.
-            //m_log.Info("[STARTUP]: Virtual machine runtime version: " + Environment.Version + Environment.NewLine);
-            m_log.InfoFormat(
-                "[STARTUP]: Operating system version: {0}, .NET platform {1}, {2}-bit\n",
-                Environment.OSVersion, Environment.OSVersion.Platform, Environment.Is64BitProcess ? "64" : "32");
-
-            // next code can be changed on .net 4.7.x
-            if(Util.IsWindows())
-                m_log.InfoFormat("[STARTUP]: Processor Architecture: {0}({1})",
-                    System.Environment.GetEnvironmentVariable("PROCESSOR_ARCHITECTURE", EnvironmentVariableTarget.Machine),
-                    BitConverter.IsLittleEndian ?"le":"be");
-
-            // on other platforms we need to wait for .net4.7.1
+            m_log.Info("[STARTUP]: version: " + m_version);
+            m_log.InfoFormat("[STARTUP]: Operating system version: {0}, .NET platform {1}, Runtime {2}",
+                    Environment.OSVersion, Util.RuntimePlatformStr, Environment.Version.ToString());
+            m_log.InfoFormat("[STARTUP]: Processor Architecture: {0}({1} {2}bit)",
+                    RuntimeInformation.ProcessArchitecture.ToString(),
+                    BitConverter.IsLittleEndian ?"le":"be", Environment.Is64BitProcess ? "64" : "32");
             try
             {
                 StartupSpecific();
@@ -208,12 +194,6 @@ namespace OpenSim.Framework.Servers
                 m_log.Fatal("Fatal error: " + e.ToString());
                 Environment.Exit(1);
             }
-
-            //TimeSpan timeTaken = DateTime.Now - m_startuptime;
-
-//            MainConsole.Instance.OutputFormat(
-//                "PLEASE WAIT FOR LOGINS TO BE ENABLED ON REGIONS ONCE SCRIPTS HAVE STARTED.  Non-script portion of startup took {0}m {1}s.",
-//                timeTaken.Minutes, timeTaken.Seconds);
         }
 
         public string osSecret
