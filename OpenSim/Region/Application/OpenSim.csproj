@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <OutputType>Exe</OutputType>
@@ -11,10 +11,6 @@
   <ItemGroup>
     <Reference Include="NDesk.Options">
       <HintPath>..\..\..\bin\NDesk.Options.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Nini">
-      <HintPath>..\..\..\bin\Nini.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="OpenMetaverse">
@@ -55,11 +51,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Content Remove="L:\Documents\Projects\OpenSimulator\OpenSim-Tranquillity\bin\Mono.Data.SqliteClient.dll.config" />
-    <Content Remove="L:\Documents\Projects\OpenSimulator\OpenSim-Tranquillity\bin\prebuild.dll" />
-    <Content Remove="L:\Documents\Projects\OpenSimulator\OpenSim-Tranquillity\bin\prebuild.runtimeconfig.json" />
-    <Content Remove="L:\Documents\Projects\OpenSimulator\OpenSim-Tranquillity\bin\Robust.Tests.dll.config" />
-    <Content Remove="L:\Documents\Projects\OpenSimulator\OpenSim-Tranquillity\bin\Robust.Tests.ini" />
+    <Content Remove="L:\Documents\Projects\OpenSimulator\OpenSim-Tranquillity\bin\Nini.dll" />
   </ItemGroup>
   <ItemGroup>
 	<Content Include="Resources/OpenSim.addin.xml">
@@ -69,6 +61,7 @@
   <ItemGroup>
     <PackageReference Include="log4net" Version="2.0.15" />
     <PackageReference Include="Mono.Addins" Version="1.4.1" />
-	<PackageReference Include="Mono.Addins.Setup" Version="1.4.1" />
+	  <PackageReference Include="Mono.Addins.Setup" Version="1.4.1" />
+	  <PackageReference Include="RawScape.Nini" Version="1.0.0" />
   </ItemGroup>
 </Project>

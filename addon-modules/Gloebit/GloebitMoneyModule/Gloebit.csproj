@@ -6,10 +6,6 @@
     <Copy SourceFiles="@(FilesToCopy_0000)" DestinationFolder="../../../bin/" />
   </Target>
   <ItemGroup>
-    <Reference Include="Nini">
-      <HintPath>..\..\..\bin\Nini.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Npgsql">
       <HintPath>..\..\..\bin\Npgsql.dll</HintPath>
       <Private>False</Private>
@@ -64,6 +60,7 @@
   <ItemGroup>
     <PackageReference Include="log4net" Version="2.0.15" />
     <PackageReference Include="Mono.Addins" Version="1.4.1" />
-    <PackageReference Include="MySqlConnector" Version="2.2.6" />
+    <PackageReference Include="MySqlConnector" Version="2.2.7" />
+    <PackageReference Include="RawScape.Nini" Version="1.0.0" />
   </ItemGroup>
 </Project>

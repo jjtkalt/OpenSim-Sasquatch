@@ -4,14 +4,6 @@
     <OutputType>Exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="log4net">
-      <HintPath>..\..\bin\log4net.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Nini">
-      <HintPath>..\..\bin\Nini.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="OpenMetaverse">
       <HintPath>..\..\bin\OpenMetaverse.dll</HintPath>
       <Private>False</Private>
@@ -37,5 +29,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="log4net" Version="2.0.15" />
+    <PackageReference Include="RawScape.Nini" Version="1.0.0" />
   </ItemGroup>
 </Project>
