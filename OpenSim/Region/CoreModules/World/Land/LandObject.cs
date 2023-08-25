@@ -51,7 +51,7 @@ namespace OpenSim.Region.CoreModules.World.Land
 
         protected const int GROUPMEMBERCACHETIMEOUT = 30000;  // cache invalidation after 30s
 
-         private int m_lastSeqId = 0;
+        private int m_lastSeqId = 0;
         private int m_expiryCounter = 0;
 
         protected readonly Scene m_scene;
@@ -192,7 +192,7 @@ namespace OpenSim.Region.CoreModules.World.Land
         public Vector2? GetNearestPointAlongDirection(Vector3 pos, Vector2 direction)
         {
             Vector2 testpos;
-
+ 
             testpos.X = pos.X / Constants.LandUnit;
             testpos.Y = pos.Y / Constants.LandUnit;
 
@@ -747,7 +747,7 @@ namespace OpenSim.Region.CoreModules.World.Land
         public bool CanBeOnThisLand(UUID avatar, float posHeight)
         {
             if (m_estateSettings.TaxFree) // estate access only
-                return false;
+                return true;
 
             if (m_scenePermissions.IsAdministrator(avatar))
                 return true;
@@ -831,8 +831,8 @@ namespace OpenSim.Region.CoreModules.World.Land
             {
                 int now = Util.UnixTimeSinceEpoch();
                 foreach (LandAccessEntry e in LandData.ParcelAccessList)
-                        {
-                            if (e.Flags == AccessList.Ban && e.AgentID.Equals(avatar))
+                {
+                    if (e.Flags == AccessList.Ban && e.AgentID.Equals(avatar))
                         return e.Expires == 0 || e.Expires > now;
                 }
             }
@@ -915,9 +915,9 @@ namespace OpenSim.Region.CoreModules.World.Land
         public bool IsInLandAccessList(UUID avatar)
         {
             foreach(LandAccessEntry e in LandData.ParcelAccessList)
-                    {
+            {
                 int now = Util.UnixTimeSinceEpoch();
-                        if (e.Flags == AccessList.Access && e.AgentID.Equals(avatar))
+                if (e.Flags == AccessList.Access && e.AgentID.Equals(avatar))
                     return e.Expires == 0 || e.Expires > now;
             }
             return false;
@@ -1031,7 +1031,7 @@ namespace OpenSim.Region.CoreModules.World.Land
             {
                 remote_client.SendLandAccessListData(new List<LandAccessEntry>() { new LandAccessEntry() },
                     (uint)AccessList.Access, LandData.LocalID);
-            }
+            }               
             else
                 remote_client.SendLandAccessListData(accesslist, (uint)AccessList.Access, LandData.LocalID);
 
@@ -2042,7 +2042,7 @@ namespace OpenSim.Region.CoreModules.World.Land
                         cur += (now - sp.ParcelDwellTickMS);
                         sp.ParcelDwellTickMS = now;
                     });
-                
+
                     float newdwell = (float)(cur * 1.666666666667e-5); 
                     LandData.Dwell = newdwell;
 
