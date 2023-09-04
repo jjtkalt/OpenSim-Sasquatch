@@ -9,21 +9,17 @@
     <Copyright>OpenSimulator developers</Copyright>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="NDesk.Options">
-      <HintPath>..\..\..\bin\NDesk.Options.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="OpenMetaverse">
       <HintPath>..\..\..\bin\OpenMetaverse.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="OpenMetaverse.StructuredData">
       <HintPath>..\..\..\bin\OpenMetaverse.StructuredData.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="OpenMetaverseTypes">
       <HintPath>..\..\..\bin\OpenMetaverseTypes.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="XMLRPC">
       <HintPath>..\..\..\bin\XMLRPC.dll</HintPath>
@@ -51,9 +47,6 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Content Remove="L:\Documents\Projects\OpenSimulator\OpenSim-Tranquillity\bin\Nini.dll" />
-  </ItemGroup>
-  <ItemGroup>
 	<Content Include="Resources/OpenSim.addin.xml">
 	  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	</Content>
@@ -62,6 +55,7 @@
     <PackageReference Include="log4net" Version="2.0.15" />
     <PackageReference Include="Mono.Addins" Version="1.4.1" />
 	  <PackageReference Include="Mono.Addins.Setup" Version="1.4.1" />
+	  <PackageReference Include="NDesk.Options.Core" Version="1.2.5" />
 	  <PackageReference Include="RawScape.Nini" Version="1.0.0" />
   </ItemGroup>
 </Project>
