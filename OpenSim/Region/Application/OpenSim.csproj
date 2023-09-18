@@ -54,6 +54,7 @@
   <ItemGroup>
     <PackageReference Include="log4net" Version="2.0.15" />
     <PackageReference Include="Mono.Addins" Version="1.4.1" />
+    <PackageReference Include="Mono.Addins.CecilReflector" Version="1.4.1" />
 	  <PackageReference Include="Mono.Addins.Setup" Version="1.4.1" />
 	  <PackageReference Include="NDesk.Options.Core" Version="1.2.5" />
 	  <PackageReference Include="RawScape.Nini" Version="1.0.0" />
