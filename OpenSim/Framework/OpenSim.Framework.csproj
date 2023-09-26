@@ -33,7 +33,6 @@
     <ProjectReference Include="..\..\ThirdParty\SmartThreadPool\SmartThreadPool.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Remove="Console\AssemblyInfo.cs" />
     <Compile Remove="Console\CommandConsole.cs" />
     <Compile Remove="Console\ConsoleBase.cs" />
     <Compile Remove="Console\ConsoleDisplayList.cs" />
@@ -63,20 +62,10 @@
     <Compile Remove="Servers\BaseOpenSimServer.cs" />
     <Compile Remove="Servers\MainServer.cs" />
     <Compile Remove="Servers\ServerBase.cs" />
-    <Compile Remove="Tests\AgentCircuitDataTest.cs" />
-    <Compile Remove="Tests\AgentCircuitManagerTests.cs" />
-    <Compile Remove="Tests\AnimationTests.cs" />
-    <Compile Remove="Tests\AssetBaseTest.cs" />
-    <Compile Remove="Tests\CacheTests.cs" />
-    <Compile Remove="Tests\LocationTest.cs" />
-    <Compile Remove="Tests\MundaneFrameworkTests.cs" />
-    <Compile Remove="Tests\PrimeNumberHelperTests.cs" />
-    <Compile Remove="Tests\UtilTest.cs" />
     <Compile Remove="AssetLoader\Filesystem\AssetLoaderFileSystem.cs" />
     <Compile Remove="Monitoring\Checks\Check.cs" />
     <Compile Remove="Monitoring\Interfaces\IPullStatsProvider.cs" />
     <Compile Remove="Monitoring\Interfaces\IStatsCollector.cs" />
-    <Compile Remove="Monitoring\Properties\AssemblyInfo.cs" />
     <Compile Remove="Monitoring\Stats\CounterStat.cs" />
     <Compile Remove="Monitoring\Stats\EventHistogram.cs" />
     <Compile Remove="Monitoring\Stats\PercentageStat.cs" />
@@ -87,9 +76,6 @@
     <Compile Remove="Serialization\External\RegionSettingsSerializer.cs" />
     <Compile Remove="Serialization\External\UserInventoryItemSerializer.cs" />
     <Compile Remove="Serialization\External\UserProfileSerializer.cs" />
-    <Compile Remove="Serialization\Properties\AssemblyInfo.cs" />
-    <Compile Remove="Serialization\Tests\LandDataSerializerTests.cs" />
-    <Compile Remove="Serialization\Tests\RegionSettingsSerializerTests.cs" />
     <Compile Remove="Servers\HttpServer\BaseHTTPHandler.cs" />
     <Compile Remove="Servers\HttpServer\BaseHttpServer.cs" />
     <Compile Remove="Servers\HttpServer\BaseOutputStreamHandler.cs" />
@@ -123,12 +109,6 @@
     <Compile Remove="Servers\HttpServer\WebsocketServerHandler.cs" />
     <Compile Remove="Servers\HttpServer\XmlRpcBasicDOSProtector.cs" />
     <Compile Remove="Servers\HttpServer\XmlRpcMethod.cs" />
-    <Compile Remove="Servers\Properties\AssemblyInfo.cs" />
-    <Compile Remove="Servers\Tests\VersionInfoTests.cs" />
-    <Compile Remove="AssetLoader\Filesystem\Properties\AssemblyInfo.cs" />
-    <Compile Remove="Console\obj\Debug\.NETFramework,Version=v4.8.AssemblyAttributes.cs" />
-    <Compile Remove="Monitoring\obj\Debug\.NETFramework,Version=v4.8.AssemblyAttributes.cs" />
-    <Compile Remove="Serialization\obj\Debug\.NETFramework,Version=v4.8.AssemblyAttributes.cs" />
     <Compile Remove="Servers\HttpServer\Interfaces\IHttpAgentHandler.cs" />
     <Compile Remove="Servers\HttpServer\Interfaces\IHttpServer.cs" />
     <Compile Remove="Servers\HttpServer\Interfaces\IOSHttpRequest.cs" />
@@ -165,19 +145,12 @@
     <Compile Remove="Servers\HttpServer\OSHttpServer\ResponseCookie.cs" />
     <Compile Remove="Servers\HttpServer\OSHttpServer\ResponseCookies.cs" />
     <Compile Remove="Servers\HttpServer\OSHttpServer\UnauthorizedException.cs" />
-    <Compile Remove="Servers\HttpServer\Properties\AssemblyInfo.cs" />
-    <Compile Remove="Servers\obj\Debug\.NETFramework,Version=v4.8.AssemblyAttributes.cs" />
-    <Compile Remove="Tests\obj\Debug\.NETFramework,Version=v4.8.AssemblyAttributes.cs" />
-    <Compile Remove="AssetLoader\Filesystem\obj\Debug\.NETFramework,Version=v4.8.AssemblyAttributes.cs" />
-    <Compile Remove="Serialization\Tests\obj\Debug\.NETFramework,Version=v4.8.AssemblyAttributes.cs" />
-    <Compile Remove="Servers\HttpServer\obj\Debug\.NETFramework,Version=v4.8.AssemblyAttributes.cs" />
-    <Compile Remove="Servers\Tests\obj\Debug\.NETFramework,Version=v4.8.AssemblyAttributes.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="log4net" Version="2.0.15" />
     <PackageReference Include="Mono.Addins" Version="1.4.1" />
-	  <PackageReference Include="Mono.Addins.Setup" Version="1.4.1" />
-	  <PackageReference Include="RawScape.Nini" Version="1.0.0" />
+    <PackageReference Include="Mono.Addins.Setup" Version="1.4.1" />
+    <PackageReference Include="RawScape.Nini" Version="1.0.0" />
     <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
   </ItemGroup>
   <ItemGroup>

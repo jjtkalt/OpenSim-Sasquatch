@@ -42,7 +42,7 @@ namespace OpenSim.Framework.Monitoring
     {
         private static readonly ILog m_statsLog = LogManager.GetLogger("special.StatsLogger");
 
-        private static Timer m_loggingTimer;
+        private static System.Timers.Timer m_loggingTimer;
         private static int m_statsLogIntervalMs = 5000;
 
         public static void RegisterConsoleCommands(ICommandConsole console)

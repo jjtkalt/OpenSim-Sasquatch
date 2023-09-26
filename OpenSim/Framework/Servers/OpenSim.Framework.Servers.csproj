@@ -61,8 +61,6 @@
     <Compile Remove="HttpServer\WebsocketServerHandler.cs" />
     <Compile Remove="HttpServer\XmlRpcBasicDOSProtector.cs" />
     <Compile Remove="HttpServer\XmlRpcMethod.cs" />
-    <Compile Remove="Properties\AssemblyInfo.cs" />
-    <Compile Remove="Tests\VersionInfoTests.cs" />
     <Compile Remove="HttpServer\Interfaces\IHttpAgentHandler.cs" />
     <Compile Remove="HttpServer\Interfaces\IHttpServer.cs" />
     <Compile Remove="HttpServer\Interfaces\IOSHttpRequest.cs" />
@@ -99,9 +97,6 @@
     <Compile Remove="HttpServer\OSHttpServer\ResponseCookie.cs" />
     <Compile Remove="HttpServer\OSHttpServer\ResponseCookies.cs" />
     <Compile Remove="HttpServer\OSHttpServer\UnauthorizedException.cs" />
-    <Compile Remove="HttpServer\Properties\AssemblyInfo.cs" />
-    <Compile Remove="HttpServer\obj\Debug\.NETFramework,Version=v4.8.AssemblyAttributes.cs" />
-    <Compile Remove="Tests\obj\Debug\.NETFramework,Version=v4.8.AssemblyAttributes.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="log4net" Version="2.0.15" />

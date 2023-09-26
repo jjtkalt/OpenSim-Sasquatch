@@ -87,8 +87,8 @@ using OpenSim.Services.Interfaces;
 using OpenMetaverse.StructuredData;     // TODO: turn transactionData into a dictionary of <string, object> and remove this.
 using OpenSim.Region.ScriptEngine.Shared.ScriptBase;    // For ScriptBaseClass permissions constants
 
-[assembly: Addin("Gloebit", "0.1")]
-[assembly: AddinDependency("OpenSim.Region.Framework", OpenSim.VersionInfo.AssemblyVersionNumber)]
+[assembly: Addin("Gloebit")]
+[assembly: AddinDependency("OpenSim.Region.Framework")]
 [assembly: AddinDescription("OpenSim Addin for Gloebit Money Module")]
 [assembly: AddinAuthor("Gloebit LLC gloebit@gloebit.com")]
 //[assembly: ImportAddinFile("Gloebit.ini")]

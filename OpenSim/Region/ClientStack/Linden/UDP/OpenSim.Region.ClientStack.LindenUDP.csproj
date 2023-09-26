@@ -37,13 +37,6 @@
     <ProjectReference Include="..\..\..\..\Services\Interfaces\OpenSim.Services.Interfaces.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Remove="Tests\BasicCircuitTests.cs" />
-    <Compile Remove="Tests\LLImageManagerTests.cs" />
-    <Compile Remove="Tests\PacketHandlerTests.cs" />
-    <Compile Remove="Tests\ThrottleTests.cs" />
-    <Compile Remove="Tests\obj\Debug\.NETFramework,Version=v4.8.AssemblyAttributes.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="log4net" Version="2.0.15" />
     <PackageReference Include="Mono.Addins" Version="1.4.1" />
     <PackageReference Include="RawScape.Nini" Version="1.0.0" />
