@@ -33,7 +33,7 @@ namespace OpenSim
     /// <summary>
     /// OpenSimulator Application Plugin framework interface
     /// </summary>
-    [TypeExtensionPoint(Path="/OpenSim/Startup"), NodeName="Plugin")]
+    [TypeExtensionPoint(Path="/OpenSim/Startup", NodeName="Plugin")]
     public interface IApplicationPlugin : IPlugin
     {
         /// <summary>

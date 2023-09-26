@@ -114,7 +114,7 @@ namespace OpenSim.Framework.Monitoring
             if (m_loggingTimer != null)
                 Stop();
 
-            m_loggingTimer = new Timer(m_statsLogIntervalMs);
+            m_loggingTimer = new System.Timers.Timer(m_statsLogIntervalMs);
             m_loggingTimer.AutoReset = false;
             m_loggingTimer.Elapsed += Log;
             m_loggingTimer.Start();

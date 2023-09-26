@@ -88,7 +88,7 @@ using OpenMetaverse.StructuredData;     // TODO: turn transactionData into a dic
 using OpenSim.Region.ScriptEngine.Shared.ScriptBase;    // For ScriptBaseClass permissions constants
 
 [assembly: Addin("Gloebit")]
-[assembly: AddinDependency("OpenSim.Region.Framework")]
+[assembly: AddinDependency("OpenSim.Region.Framework", OpenSim.VersionInfo.AssemblyVersionNumber)]
 [assembly: AddinDescription("OpenSim Addin for Gloebit Money Module")]
 [assembly: AddinAuthor("Gloebit LLC gloebit@gloebit.com")]
 //[assembly: ImportAddinFile("Gloebit.ini")]

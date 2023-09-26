@@ -16,7 +16,7 @@ using System.Xml;
 using DirFindFlags = OpenMetaverse.DirectoryManager.DirFindFlags;
 
 [assembly: Addin("OpenSimSearch")]
-[assembly: AddinDependency("OpenSim.Region.Framework")]
+[assembly: AddinDependency("OpenSim.Region.Framework", OpenSim.VersionInfo.AssemblyVersionNumber)]
 [assembly: AddinDescription("OpenSimSearch module.")]
 [assembly: AddinAuthor("Unknown")]
 
