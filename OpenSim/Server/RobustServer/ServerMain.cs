@@ -40,11 +40,11 @@ using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Base;
 using OpenSim.Server.Handlers.Base;
 
-namespace OpenSim.Server
+namespace OpenSim.Server.RobustServer
 {
     public class OpenSimServer
     {
-        private static readonly ILog m_log = LogManager.GetLogger( MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         protected static HttpServerBase m_Server = null;
         protected static List<IServiceConnector> m_ServiceConnectors = new();
@@ -61,7 +61,7 @@ namespace OpenSim.Server
         {
             if (m_NoVerifyCertChain)
                 sslPolicyErrors &= ~SslPolicyErrors.RemoteCertificateChainErrors;
- 
+
             if (m_NoVerifyCertHostname)
                 sslPolicyErrors &= ~SslPolicyErrors.RemoteCertificateNameMismatch;
 
@@ -79,7 +79,7 @@ namespace OpenSim.Server
         {
             if (File.Exists(fileName))
             {
-                using(StreamReader readFile = File.OpenText(fileName))
+                using (StreamReader readFile = File.OpenText(fileName))
                 {
                     string currentLine;
                     while ((currentLine = readFile.ReadLine()) is not null)
@@ -90,7 +90,7 @@ namespace OpenSim.Server
             }
         }
 
-        public static int Main(string[] args)
+        public static int Startup()
         {
             Culture.SetCurrentCulture();
             Culture.SetDefaultCurrentCulture();
@@ -103,7 +103,8 @@ namespace OpenSim.Server
             ServicePointManager.ServerCertificateValidationCallback = ValidateServerCertificate;
 
             WebUtil.SetupHTTPClients(m_NoVerifyCertChain, m_NoVerifyCertHostname, null, 32);
-            
+
+            string[] args = Environment.GetCommandLineArgs();
             m_Server = new HttpServerBase("R.O.B.U.S.T.", args);
 
             string registryLocation;
@@ -124,7 +125,7 @@ namespace OpenSim.Server
 
             string connList = serverConfig.GetString("ServiceConnectors", string.Empty);
 
-            registryLocation = serverConfig.GetString("RegistryLocation",".");
+            registryLocation = serverConfig.GetString("RegistryLocation", ".");
 
             IConfig servicesConfig = m_Server.Config.Configs["ServiceList"];
             if (servicesConfig != null)
@@ -143,7 +144,7 @@ namespace OpenSim.Server
                 connList = string.Join(",", servicesList.ToArray());
             }
 
-            string[] conns = connList.Split(new char[] {',', ' ', '\n', '\r', '\t'});
+            string[] conns = connList.Split(new char[] { ',', ' ', '\n', '\r', '\t' });
 
             foreach (string c in conns)
             {
@@ -154,12 +155,12 @@ namespace OpenSim.Server
                 string conn = c;
                 uint port = 0;
 
-                string[] split1 = conn.Split(new char[] {'/'});
+                string[] split1 = conn.Split(new char[] { '/' });
                 if (split1.Length > 1)
                 {
                     conn = split1[1];
 
-                    string[] split2 = split1[0].Split(new char[] {'@'});
+                    string[] split2 = split1[0].Split(new char[] { '@' });
                     if (split2.Length > 1)
                     {
                         configName = split2[0];
@@ -170,7 +171,7 @@ namespace OpenSim.Server
                         port = Convert.ToUInt32(split1[0]);
                     }
                 }
-                string[] parts = conn.Split(new char[] {':'});
+                string[] parts = conn.Split(new char[] { ':' });
                 string friendlyName = parts[0];
                 if (parts.Length > 1)
                     friendlyName = parts[1];
@@ -213,15 +214,14 @@ namespace OpenSim.Server
 
             loader = new PluginLoader(m_Server.Config, registryLocation);
 
-            int res = m_Server.Run();
+            return m_Server.Run();
+        }
 
+        public static void Shutdown(int res)
+        {
             m_Server?.Shutdown();
-
             Util.StopThreadPool();
-
             Environment.Exit(res);
-
-            return 0;
         }
     }
 }

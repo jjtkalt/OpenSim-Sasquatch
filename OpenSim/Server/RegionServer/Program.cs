@@ -25,18 +25,50 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using log4net.Config;
 
-namespace OpenSim.Server.MoneyServer
+using log4net.Config;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
+using System.Collections.Generic;
+
+namespace OpenSim.Server.RegionServer
 {
     class Program
     {
         public static void Main(string[] args)
         {
+            var switchMappings = new Dictionary<string, string>()
+            {
+                { "-background", "background" },
+                { "-gui", "gui" },
+                { "-console", "console" },
+                { "-logfile", "logfile" },
+                { "-logconfig", "logconfig" },
+                { "-inifile", "inifile" },
+                { "-inimaster", "inimaster" },
+                { "-inidirectory", "inidirectory" },
+                { "-physics", "physics" },
+                { "-save_crashes", "save_crashes" },
+                { "-crash_dir", "crash_dir" }
+            };
+            
             XmlConfigurator.Configure();
-            MoneyServerBase app = new MoneyServerBase();
-            app.Startup();
-            app.Work();
+
+            IHostBuilder builder = Host.CreateDefaultBuilder()
+                .ConfigureAppConfiguration(configuration =>
+                {
+                    configuration.AddCommandLine(args, switchMappings);
+                    configuration.AddIniFile("OpenSimServer.ini", optional: true, reloadOnChange: true);
+                })
+                .ConfigureServices(services =>
+                {
+                    services.AddHostedService<RegionService>();
+                });
+
+            IHost host = builder.Build();
+
+            host.Run();
         }
     }
 }
