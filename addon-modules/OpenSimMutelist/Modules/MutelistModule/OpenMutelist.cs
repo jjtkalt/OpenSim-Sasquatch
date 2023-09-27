@@ -42,8 +42,8 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Xml;
 
-[assembly: Addin("OpenSimMutelist")]
-[assembly: AddinDependency("OpenSim.Region.Framework", OpenSim.VersionInfo.AssemblyVersionNumber)]
+[assembly: Addin("OpenSimMutelist", OpenSim.VersionInfo.AssemblyVersionNumber)]
+[assembly: AddinDependency("OpenSim", OpenSim.VersionInfo.AssemblyVersionNumber)]
 [assembly: AddinDescription("OpenSimMutelist module.")]
 [assembly: AddinAuthor("Kevin Cozens")]
 

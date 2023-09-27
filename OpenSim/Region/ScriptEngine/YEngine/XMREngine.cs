@@ -61,7 +61,7 @@ using LSL_Vector = OpenSim.Region.ScriptEngine.Shared.LSL_Types.Vector3;
 using SceneScriptEvents = OpenSim.Region.Framework.Scenes.scriptEvents;
 
 [assembly: Addin("YEngine", OpenSim.VersionInfo.VersionNumber)]
-[assembly: AddinDependency("OpenSim.Region.Framework", OpenSim.VersionInfo.VersionNumber)]
+[assembly: AddinDependency("OpenSim", OpenSim.VersionInfo.VersionNumber)]
 
 namespace OpenSim.Region.ScriptEngine.Yengine
 {

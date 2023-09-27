@@ -57,9 +57,9 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
-[assembly: Addin("DTLNSLMoneyModule", "1.0.4")]
+[assembly: Addin("DTLNSLMoneyModule", "0.9.3.0")]
 [assembly: AddinDescription("OpenSim Addin for DTL Money Module")]
-[assembly: AddinDependency("OpenSim.Region.Framework", OpenSim.VersionInfo.VersionNumber)]
+[assembly: AddinDependency("OpenSim", OpenSim.VersionInfo.AssemblyVersionNumber)]
 
 namespace OpenSim.Region.OptionalModules.Currency
 {
