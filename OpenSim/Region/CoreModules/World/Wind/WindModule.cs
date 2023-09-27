@@ -36,9 +36,7 @@ using OpenSim.Framework;
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
 
-using OpenSim.Region.CoreModules.World.Wind;
-
-namespace OpenSim.Region.CoreModules
+namespace OpenSim.Region.CoreModules.World.Wind
 {
     [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "WindModule")]
     public class WindModule : IWindModule

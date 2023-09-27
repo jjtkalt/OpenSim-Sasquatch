@@ -54,35 +54,8 @@
     <ProjectReference Include="..\..\..\ThirdParty\SmartThreadPool\SmartThreadPool.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Remove="Asset\Tests\FlotsamAssetCacheTests.cs" />
-    <Compile Remove="Avatar\Attachments\Tests\AttachmentsModuleTests.cs" />
-    <Compile Remove="Avatar\AvatarFactory\Tests\AvatarFactoryModuleTests.cs" />
-    <Compile Remove="Avatar\Chat\Tests\ChatModuleTests.cs" />
-    <Compile Remove="Avatar\Friends\Tests\FriendModuleTests.cs" />
-    <Compile Remove="Framework\InventoryAccess\Tests\HGAssetMapperTests.cs" />
-    <Compile Remove="Framework\InventoryAccess\Tests\InventoryAccessModuleTests.cs" />
-    <Compile Remove="Framework\UserManagement\Tests\HGUserManagementModuleTests.cs" />
-    <Compile Remove="Scripting\HttpRequest\Tests\ScriptsHttpRequestsTests.cs" />
-    <Compile Remove="Scripting\VectorRender\Tests\VectorRenderModuleTests.cs" />
-    <Compile Remove="ServiceConnectorsOut\Asset\Tests\AssetConnectorTests.cs" />
-    <Compile Remove="ServiceConnectorsOut\Grid\Tests\GridConnectorsTests.cs" />
-    <Compile Remove="ServiceConnectorsOut\Presence\Tests\PresenceConnectorsTests.cs" />
-    <Compile Remove="World\Archiver\Tests\ArchiverTests.cs" />
-    <Compile Remove="World\Land\Tests\LandManagementModuleTests.cs" />
-    <Compile Remove="World\Land\Tests\PrimCountModuleTests.cs" />
-    <Compile Remove="World\Serialiser\Tests\SerialiserTests.cs" />
-    <Compile Remove="World\Terrain\Tests\TerrainModuleTests.cs" />
-    <Compile Remove="World\Terrain\Tests\TerrainTest.cs" />
-    <Compile Remove="Avatar\Inventory\Archiver\Tests\InventoryArchiveLoadPathTests.cs" />
-    <Compile Remove="Avatar\Inventory\Archiver\Tests\InventoryArchiveLoadTests.cs" />
-    <Compile Remove="Avatar\Inventory\Archiver\Tests\InventoryArchiveSaveTests.cs" />
-    <Compile Remove="Avatar\Inventory\Archiver\Tests\InventoryArchiveTestCase.cs" />
-    <Compile Remove="Avatar\Inventory\Transfer\Tests\InventoryTransferModuleTests.cs" />
-    <Compile Remove="World\Media\Moap\Tests\MoapTests.cs" />
-  </ItemGroup>
-  <!-- <ItemGroup>
     <EmbeddedResource Include="Resources\OpenSim.Region.CoreModules.addin.xml" />
-  </ItemGroup> -->
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Ionic.Zlib.Core" Version="1.0.0" />
     <PackageReference Include="log4net" Version="2.0.15" />
