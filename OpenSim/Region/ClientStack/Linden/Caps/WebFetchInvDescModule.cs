@@ -54,7 +54,6 @@ namespace OpenSim.Region.ClientStack.Linden
     /// <summary>
     /// This module implements both WebFetchInventoryDescendents and FetchInventoryDescendents2 capabilities.
     /// </summary>
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "WebFetchInvDescModule")]
     public class WebFetchInvDescModule : INonSharedRegionModule
     {
         class APollRequest

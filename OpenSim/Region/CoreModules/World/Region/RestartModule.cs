@@ -45,7 +45,6 @@ using Mono.Addins;
 
 namespace OpenSim.Region.CoreModules.World.Region
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "RestartModule")]
     public class RestartModule : INonSharedRegionModule, IRestartModule
     {
         private static readonly ILog m_log =

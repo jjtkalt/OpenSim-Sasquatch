@@ -1,10 +1,26 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
-<Addin id="OpenSim.Groups">
+﻿<Addin id="OpenSim.Addons.Groups" version="0.9.3.0">
+
+  <Runtime>
+    <Import assembly="OpenSim.Region.Framework.dll" />
+    <Import assembly="OpenSim.Addons.Groups.dll"/>
+  </Runtime>
+
   <Dependencies>
-    <Addin id="OpenSim.Region.Framework" />
+    <Addin id="OpenSim" version="0.9.3.0" />
   </Dependencies>
 
-  <!--<Extension path = "/Commands">
-    <Command class="HelloWorldAddin.HelloCommand" />
-  </Extension>-->
+  <ExtensionPoint path="/OpenSim/RegionModules">
+    <ExtensionNode name="RegionModule"
+                   type="Mono.Addins.TypeExtensionNode"
+                   objectType="OpenSim.Region.Framework.Interfaces.IRegionModuleBase"/>
+  </ExtensionPoint>
+
+  <Extension path = "/OpenSim/RegionModules">
+    <RegionModule id="GroupsMessagingModule" class="OpenSim.Groups.GroupsMessagingModule" />  
+    <RegionModule id="GroupsModule" class="OpenSim.Groups.GroupsModule" />   
+    <RegionModule id="GroupsServiceHGConnectorModule" class="OpenSim.Groups.GroupsServiceHGConnectorModule" />
+    <RegionModule id="GroupsServiceLocalConnectorModule" class="OpenSim.Groups.GroupsServiceLocalConnectorModule" />
+    <RegionModule id="GroupsServiceRemoteConnectorModule" class="OpenSim.Groups.GroupsServiceRemoteConnectorModule" />
+  </Extension>
+  
 </Addin>

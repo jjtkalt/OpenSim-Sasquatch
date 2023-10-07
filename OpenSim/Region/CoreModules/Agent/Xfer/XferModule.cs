@@ -41,7 +41,6 @@ using Mono.Addins;
 
 namespace OpenSim.Region.CoreModules.Agent.Xfer
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "XferModule")]
     public class XferModule : INonSharedRegionModule, IXfer
     {
         private Scene m_scene;

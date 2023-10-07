@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Addin id="OpenSim.Region.CoreModules.Wind" version="0.9.3.0">
+    
+  <Runtime>
+      <Import assembly="OpenSim.dll" />
+      <Import assembly="OpenSim.Region.Framework.dll" />
+      <Import assembly="OpenSim.Region.CoreModules.dll"/>
+      <Import assembly="Mono.Addins.dll"/>
+  </Runtime>
+
+  <Dependencies>
+      <Addin id="OpenSim" version="0.9.3.0" />
+  </Dependencies>
+ 
+  <Extension path = "/OpenSim/WindModule">
+    <WindModel id="ConfigurableWind" class="OpenSim.Region.CoreModules.World.Wind.Plugins.ConfigurableWind" />
+    <WindModel id="SimpleRandomWind" class="OpenSim.Region.CoreModules.World.Wind.Plugins.SimpleRandomWind" />
+  </Extension>
+
+</Addin>

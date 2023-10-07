@@ -63,7 +63,6 @@ namespace OpenSim.Region.CoreModules.World.Land
         public byte RegionAccess;
     }
 
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "LandManagementModule")]
     public class LandManagementModule : INonSharedRegionModule , ILandChannel
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

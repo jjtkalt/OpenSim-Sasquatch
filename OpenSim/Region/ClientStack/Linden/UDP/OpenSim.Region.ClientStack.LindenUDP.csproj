@@ -8,6 +8,9 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Resources\OpenSim.Region.ClientStack.LindenUDP.addin.xml" />
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="C5">
       <HintPath>..\..\..\..\..\bin\C5.dll</HintPath>
       <Private>False</Private>

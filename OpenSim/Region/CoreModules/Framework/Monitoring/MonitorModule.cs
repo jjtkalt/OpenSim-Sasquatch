@@ -45,7 +45,6 @@ using Mono.Addins;
 
 namespace OpenSim.Region.CoreModules.Framework.Monitoring
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "MonitorModule")]
     public class MonitorModule : INonSharedRegionModule
     {
         /// <summary>

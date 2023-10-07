@@ -38,7 +38,6 @@ using OpenSim.Region.Framework.Scenes;
 
 namespace OpenSim.Region.CoreModules.World.Wind
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "WindModule")]
     public class WindModule : IWindModule
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

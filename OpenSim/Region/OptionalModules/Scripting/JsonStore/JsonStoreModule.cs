@@ -44,8 +44,6 @@ using System.Text.RegularExpressions;
 
 namespace OpenSim.Region.OptionalModules.Scripting.JsonStore
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "JsonStoreModule")]
-
     public class JsonStoreModule  : INonSharedRegionModule, IJsonStoreModule
     {
         private static readonly ILog m_log =

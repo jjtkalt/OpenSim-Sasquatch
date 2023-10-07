@@ -43,7 +43,6 @@ using Mono.Addins;
 
 namespace OpenSim.Region.CoreModules.Scripting.EmailModules
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "EmailModule")]
     public class EmailModule : ISharedRegionModule, IEmailModule
     {
         public class throttleControlInfo

@@ -42,7 +42,6 @@ using OpenSim.Services.Interfaces;
 
 namespace OpenSim.ApplicationPlugins.LoadRegions
 {
-    [Extension(Path="/OpenSim/Startup", Id="LoadRegions", NodeName="Plugin")]
     public class LoadRegionsPlugin : IApplicationPlugin, IRegionCreator
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

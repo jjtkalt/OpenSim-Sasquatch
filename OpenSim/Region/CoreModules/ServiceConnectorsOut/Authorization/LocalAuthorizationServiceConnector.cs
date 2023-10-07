@@ -40,7 +40,6 @@ using OpenMetaverse;
 
 namespace OpenSim.Region.CoreModules.ServiceConnectorsOut.Authorization
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "LocalAuthorizationServicesConnector")]
     public class LocalAuthorizationServicesConnector : INonSharedRegionModule, IAuthorizationService
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

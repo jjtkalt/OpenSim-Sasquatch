@@ -40,7 +40,6 @@ using OpenMetaverse;
 
 namespace OpenSim.Region.CoreModules.ServiceConnectorsOut.MuteList
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "LocalMuteListServicesConnector")]
     public class LocalMuteListServicesConnector : ISharedRegionModule, IMuteListService
     {
         private static readonly ILog m_log =

@@ -46,7 +46,6 @@ using System.Threading;
 
 namespace OpenSim.Region.OptionalModules.Scripting.RegionReady
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "RegionReadyModule")]
     public class RegionReadyModule : IRegionReadyModule, INonSharedRegionModule
     {
         private static readonly ILog m_log =

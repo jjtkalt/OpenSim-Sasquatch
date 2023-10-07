@@ -51,7 +51,6 @@ namespace OpenSim.Region.ClientStack.LindenUDP
     /// <summary>
     /// A shim around LLUDPServer that implements the IClientNetworkServer interface
     /// </summary>
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "LLUDPServerShim")]
     public class LLUDPServerShim : INonSharedRegionModule
     {
         protected IConfigSource m_Config;

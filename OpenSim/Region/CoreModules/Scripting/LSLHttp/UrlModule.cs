@@ -80,7 +80,6 @@ namespace OpenSim.Region.CoreModules.Scripting.LSLHttp
     /// <summary>
     /// This module provides external URLs for in-world scripts.
     /// </summary>
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "UrlModule")]
     public class UrlModule : ISharedRegionModule, IUrlModule
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

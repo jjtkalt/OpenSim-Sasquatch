@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyTitle>OpenSim.Region.OptionalModules</AssemblyTitle>
-    <Product>OpenSim.Region.OptionalModules.Properties</Product>
+    <Product>OpenSim.Region.OptionalModules</Product>
     <Description>Optional modules for OpenSim</Description>
     <Copyright>Copyright ©  2012</Copyright>
   </PropertyGroup>
@@ -47,9 +47,7 @@
     <ProjectReference Include="..\..\Services\Interfaces\OpenSim.Services.Interfaces.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Remove="Avatar\XmlRpcGroups\Tests\GroupsModuleTests.cs" />
-    <Compile Remove="Scripting\JsonStore\Tests\JsonStoreScriptModuleTests.cs" />
-    <Compile Remove="World\NPC\Tests\NPCModuleTests.cs" />
+    <EmbeddedResource Include="Resources\OpenSim.Region.OptionalModules.addin.xml" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Ionic.Zlib.Core" Version="1.0.0" />

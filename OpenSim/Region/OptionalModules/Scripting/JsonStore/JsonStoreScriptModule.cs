@@ -46,8 +46,6 @@ using PermissionMask = OpenSim.Framework.PermissionMask;
 
 namespace OpenSim.Region.OptionalModules.Scripting.JsonStore
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "JsonStoreScriptModule")]
-
     public class JsonStoreScriptModule  : INonSharedRegionModule
     {
         private static readonly ILog m_log =

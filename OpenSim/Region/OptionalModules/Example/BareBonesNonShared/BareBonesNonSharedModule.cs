@@ -50,12 +50,11 @@ namespace OpenSim.Region.OptionalModules.Example.BareBonesNonShared
     /// please create a separate class.
     ///
     /// This module is not active by default.  If you want to see it in action,
-    /// then just uncomment the line below starting with [Extension(Path...
+    /// then just add an entry to the *.addins.xml resource file for this your namespace so its discovered 
     ///
     /// When the module is enabled it will print messages when it receives certain events to the screen and the log
     /// file.
     /// </remarks>
-    //[Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "BareBonesNonSharedModule")]
     public class BareBonesNonSharedModule : INonSharedRegionModule
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

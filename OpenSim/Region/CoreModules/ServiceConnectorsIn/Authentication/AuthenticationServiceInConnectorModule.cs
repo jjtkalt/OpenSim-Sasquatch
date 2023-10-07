@@ -42,7 +42,6 @@ using OpenSim.Services.Interfaces;
 
 namespace OpenSim.Region.CoreModules.ServiceConnectorsIn.Authentication
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "AuthenticationServiceInConnectorModule")]
     public class AuthenticationServiceInConnectorModule : ISharedRegionModule
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

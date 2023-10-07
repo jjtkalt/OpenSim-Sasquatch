@@ -41,7 +41,6 @@ using OpenSim.Region.Framework.Scenes;
 
 namespace OpenSim.Region.CoreModules.Framework.DynamicAttributes
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "DAExampleModule")]
     public class DAExampleModule : INonSharedRegionModule
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

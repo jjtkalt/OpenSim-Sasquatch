@@ -43,7 +43,6 @@ using Nini.Config;
 
 namespace OpenSim.Groups
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "GroupsServiceLocalConnectorModule")]
     public class GroupsServiceLocalConnectorModule : ISharedRegionModule, IGroupsServicesConnector
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

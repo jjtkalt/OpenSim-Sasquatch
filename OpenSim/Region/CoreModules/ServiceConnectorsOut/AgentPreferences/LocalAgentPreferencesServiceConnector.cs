@@ -40,7 +40,6 @@ using OpenMetaverse;
 
 namespace OpenSim.Region.CoreModules.ServiceConnectorsOut.AgentPreferences
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "LocalAgentPreferencesServicesConnector")]
     public class LocalAgentPreferencesServicesConnector : ISharedRegionModule, IAgentPreferencesService
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

@@ -42,7 +42,6 @@ using Mono.Addins;
 
 namespace OpenSim.Region.CoreModules.Framework.InventoryAccess
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "HGInventoryAccessModule")]
     public class HGInventoryAccessModule : BasicInventoryAccessModule, INonSharedRegionModule, IInventoryAccessModule
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

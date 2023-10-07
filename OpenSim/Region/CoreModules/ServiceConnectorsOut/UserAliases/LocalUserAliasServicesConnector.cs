@@ -40,7 +40,6 @@ using OpenMetaverse;
 
 namespace OpenSim.Region.CoreModules.ServiceConnectorsOut.UserAliases
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "LocalUserAliasServicesConnector")]
     public class LocalUserAliasServicesConnector : ISharedRegionModule, IUserAliasService
     {
         private static readonly ILog m_log =

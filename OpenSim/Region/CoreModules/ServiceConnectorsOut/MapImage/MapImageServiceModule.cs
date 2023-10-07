@@ -51,9 +51,6 @@ namespace OpenSim.Region.CoreModules.ServiceConnectorsOut.MapImage
     /// </summary>
     /// <remarks>
     /// </remarks>
-
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "MapImageServiceModule")]
-
     public class MapImageServiceModule : IMapImageUploadModule, ISharedRegionModule
     {
         private static readonly ILog m_log =

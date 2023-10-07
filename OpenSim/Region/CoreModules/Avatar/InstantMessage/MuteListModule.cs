@@ -43,7 +43,6 @@ using OpenSim.Services.Interfaces;
 
 namespace OpenSim.Region.CoreModules.Avatar.InstantMessage
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "MuteListModule")]
     public class MuteListModule : ISharedRegionModule
     {
         private static readonly ILog m_log = LogManager.GetLogger(

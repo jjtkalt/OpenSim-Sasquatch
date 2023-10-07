@@ -40,12 +40,10 @@ using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
 using Caps = OpenSim.Framework.Capabilities.Caps;
 
-[assembly: Addin("LindenCaps", OpenSim.VersionInfo.AssemblyVersionNumber)]
-[assembly: AddinDependency("OpenSim", OpenSim.VersionInfo.AssemblyVersionNumber)]
+//[assembly: Addin("LindenCaps", OpenSim.VersionInfo.AssemblyVersionNumber)]
+//[assembly: AddinDependency("OpenSim", OpenSim.VersionInfo.AssemblyVersionNumber)]
 namespace OpenSim.Region.ClientStack.Linden
 {
-
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "BunchOfCapsModule")]
     public class BunchOfCapsModule : INonSharedRegionModule
     {
 //        private static readonly ILog m_log =

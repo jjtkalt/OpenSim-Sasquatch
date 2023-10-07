@@ -47,7 +47,6 @@ using OpenSim.Services.Interfaces;
 
 namespace OpenSim.Region.CoreModules.Asset
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "FlotsamAssetCache")]
     public class FlotsamAssetCache : ISharedRegionModule, IAssetCache, IAssetService
     {
         private struct WriteAssetInfo

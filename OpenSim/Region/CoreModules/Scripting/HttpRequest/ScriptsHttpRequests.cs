@@ -56,7 +56,6 @@ using System.Net.Http.Headers;
 
 namespace OpenSim.Region.CoreModules.Scripting.HttpRequest
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "HttpRequestModule")]
     public class HttpRequestModule : INonSharedRegionModule, IHttpRequestModule
     {
         private struct ThrottleData

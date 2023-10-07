@@ -47,10 +47,8 @@ using OpenMetaverse.StructuredData;
 
 namespace OpenSim.Region.OptionalModules.Avatar.Voice.VivoxVoice
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "VivoxVoiceModule")]
     public class VivoxVoiceModule : ISharedRegionModule
     {
-
         // channel distance model values
         public const int CHAN_DIST_NONE     = 0; // no attenuation
         public const int CHAN_DIST_INVERSE  = 1; // inverse distance attenuation

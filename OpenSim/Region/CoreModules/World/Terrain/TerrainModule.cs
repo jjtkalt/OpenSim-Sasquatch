@@ -50,7 +50,6 @@ using OpenSim.Region.Framework.Scenes;
 
 namespace OpenSim.Region.CoreModules.World.Terrain
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "TerrainModule")]
     public class TerrainModule : INonSharedRegionModule, ICommandableModule, ITerrainModule
     {
         #region StandardTerrainEffects enum

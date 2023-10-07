@@ -47,7 +47,6 @@ using Caps = OpenSim.Framework.Capabilities.Caps;
 
 namespace OpenSim.Region.ClientStack.Linden
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "GetAssetsModule")]
     public class GetAssetsModule : INonSharedRegionModule
     {
 //        private static readonly ILog m_log =

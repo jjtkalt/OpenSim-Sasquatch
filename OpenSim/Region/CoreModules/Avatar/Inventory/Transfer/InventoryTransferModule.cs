@@ -39,7 +39,6 @@ using OpenSim.Services.Interfaces;
 
 namespace OpenSim.Region.CoreModules.Avatar.Inventory.Transfer
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "InventoryTransferModule")]
     public class InventoryTransferModule : ISharedRegionModule
     {
         private static readonly ILog m_log

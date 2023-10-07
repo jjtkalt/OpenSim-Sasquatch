@@ -50,7 +50,6 @@ using Ionic.Zlib;
 
 namespace OpenSim.Region.OptionalModules.Materials
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "MaterialsModule")]
     public class MaterialsModule : INonSharedRegionModule, IMaterialsModule
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

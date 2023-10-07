@@ -41,7 +41,6 @@ using Mono.Addins;
 
 namespace OpenSim.Region.CoreModules.Scripting.LoadImageURL
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "LoadImageURLModule")]
     public class LoadImageURLModule : ISharedRegionModule, IDynamicTextureRender
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

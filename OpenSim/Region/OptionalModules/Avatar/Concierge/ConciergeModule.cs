@@ -48,7 +48,6 @@ using OpenSim.Region.CoreModules.Avatar.Chat;
 
 namespace OpenSim.Region.OptionalModules.Avatar.Concierge
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "ConciergeModule")]
     public class ConciergeModule : ChatModule, ISharedRegionModule
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

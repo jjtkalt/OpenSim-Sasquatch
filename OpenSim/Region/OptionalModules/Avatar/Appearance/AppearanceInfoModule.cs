@@ -46,7 +46,6 @@ namespace OpenSim.Region.OptionalModules.Avatar.Appearance
     /// <summary>
     /// A module that just holds commands for inspecting avatar appearance.
     /// </summary>
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "AppearanceInfoModule")]
     public class AppearanceInfoModule : ISharedRegionModule
     {
 //        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

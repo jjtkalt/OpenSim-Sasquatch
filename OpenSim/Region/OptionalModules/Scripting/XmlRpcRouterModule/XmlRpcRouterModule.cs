@@ -40,7 +40,6 @@ using OpenSim.Region.Framework.Scenes;
 
 namespace OpenSim.Region.OptionalModules.Scripting.XmlRpcRouterModule
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "XmlRpcRouter")]
     public class XmlRpcRouter : INonSharedRegionModule, IXmlRpcRouter
     {
         //private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

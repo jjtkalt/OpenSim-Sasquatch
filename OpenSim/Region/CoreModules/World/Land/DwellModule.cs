@@ -52,7 +52,6 @@ using GridRegion = OpenSim.Services.Interfaces.GridRegion;
 
 namespace OpenSim.Region.CoreModules.World.Land
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "DefaultDwellModule")]
     public class DefaultDwellModule : INonSharedRegionModule, IDwellModule
     {
         private Scene m_scene;

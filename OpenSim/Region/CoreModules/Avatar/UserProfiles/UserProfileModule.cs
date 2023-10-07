@@ -49,7 +49,6 @@ using OpenSim.Region.CoreModules.Avatar.Friends;
 
 namespace OpenSim.Region.CoreModules.Avatar.UserProfiles
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "UserProfilesModule")]
     public class UserProfileModule : IProfileModule, INonSharedRegionModule
     {
         const double PROFILECACHEEXPIRE = 300;

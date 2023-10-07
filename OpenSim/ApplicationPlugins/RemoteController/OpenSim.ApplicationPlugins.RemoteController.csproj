@@ -10,9 +10,9 @@
     <PackageReference Include="log4net" Version="2.0.15" />
     <PackageReference Include="RawScape.Nini" Version="1.0.0" />
   </ItemGroup>
-  <!-- <ItemGroup>
+   <ItemGroup>
     <EmbeddedResource Include="Resources/OpenSim.ApplicationPlugins.RemoteController.addin.xml" />
-  </ItemGroup>   -->
+  </ItemGroup>   
   <ItemGroup>
     <Reference Include="OpenMetaverse">
       <HintPath>..\..\..\bin\OpenMetaverse.dll</HintPath>

@@ -43,7 +43,6 @@ using OpenMetaverse;
 
 namespace OpenSim.Region.CoreModules.ServiceConnectorsOut.Inventory
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "LocalInventoryServicesConnector")]
     public class LocalInventoryServicesConnector : ISharedRegionModule, IInventoryService
     {
         private static readonly ILog m_log =

@@ -46,7 +46,6 @@ using PermissionMask = OpenSim.Framework.PermissionMask;
 
 namespace OpenSim.Region.CoreModules.Avatar.Attachments
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "AttachmentsModule")]
     public class AttachmentsModule : IAttachmentsModule, INonSharedRegionModule
     {
         #region INonSharedRegionModule

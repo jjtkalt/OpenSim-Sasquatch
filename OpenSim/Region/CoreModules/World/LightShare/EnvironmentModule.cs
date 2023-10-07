@@ -48,8 +48,6 @@ using MethodImplOptions = System.Runtime.CompilerServices.MethodImplOptions;
 
 namespace OpenSim.Region.CoreModules.World.LightShare
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "EnvironmentModule")]
-
     public class EnvironmentModule : INonSharedRegionModule, IEnvironmentModule
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

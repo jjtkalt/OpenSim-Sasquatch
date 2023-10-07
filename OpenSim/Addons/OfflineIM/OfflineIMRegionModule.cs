@@ -40,7 +40,6 @@ using OpenSim.Services.Interfaces;
 
 namespace OpenSim.OfflineIM
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "OfflineIMConnectorModule")]
     public class OfflineIMRegionModule : ISharedRegionModule, IOfflineIMService
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

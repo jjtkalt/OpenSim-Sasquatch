@@ -40,7 +40,6 @@ using OpenMetaverse;
 
 namespace OpenSim.Region.CoreModules.ServiceConnectorsOut.Authentication
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "LocalAuthenticationServicesConnector")]
     public class LocalAuthenticationServicesConnector : ISharedRegionModule, IAuthenticationService
     {
         private static readonly ILog m_log =

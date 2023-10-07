@@ -51,8 +51,6 @@ namespace Gloebit.GloebitMoneyModule {
         private string m_secret;
         public readonly Uri m_url;
 
-
-        
         public interface IAsyncEndpointCallback {
             void exchangeAccessTokenCompleted(bool success, GloebitUser user, OSDMap responseDataMap);
             // TODO: may change this to transactCompleted and add a bool for u2u

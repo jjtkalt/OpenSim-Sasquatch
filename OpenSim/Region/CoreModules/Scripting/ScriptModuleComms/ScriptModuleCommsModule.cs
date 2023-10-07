@@ -40,7 +40,6 @@ using System.Linq.Expressions;
 
 namespace OpenSim.Region.CoreModules.Scripting.ScriptModuleComms
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "ScriptModuleCommsModule")]
     public class ScriptModuleCommsModule : INonSharedRegionModule, IScriptModuleComms
     {
         private static readonly ILog m_log =

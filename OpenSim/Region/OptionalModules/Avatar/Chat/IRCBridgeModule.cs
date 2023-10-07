@@ -41,7 +41,6 @@ using OpenSim.Region.Framework.Scenes;
 
 namespace OpenSim.Region.OptionalModules.Avatar.Chat
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "IRCBridgeModule")]
     public class IRCBridgeModule : INonSharedRegionModule
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

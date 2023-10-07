@@ -87,13 +87,6 @@ using OpenSim.Services.Interfaces;
 using OpenMetaverse.StructuredData;     // TODO: turn transactionData into a dictionary of <string, object> and remove this.
 using OpenSim.Region.ScriptEngine.Shared.ScriptBase;    // For ScriptBaseClass permissions constants
 
-[assembly: Addin("Gloebit", OpenSim.VersionInfo.AssemblyVersionNumber)]
-[assembly: AddinDependency("OpenSim", OpenSim.VersionInfo.AssemblyVersionNumber)]
-[assembly: AddinDescription("OpenSim Addin for Gloebit Money Module")]
-[assembly: AddinAuthor("Gloebit LLC gloebit@gloebit.com")]
-//[assembly: ImportAddinFile("Gloebit.ini")]
-
-
 namespace Gloebit.GloebitMoneyModule
 {
     // TODO: Should this enum be inside of class or just the namespace?
@@ -109,8 +102,6 @@ namespace Gloebit.GloebitMoneyModule
     /// This is only the Gloebit Money Module which enables monetary transactions in OpenSim
     /// via the Gloebit API and Gloebit Services.
     /// </summary>
-
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "GloebitMoneyModule")]
     public class GloebitMoneyModule : IMoneyModule, ISharedRegionModule, GloebitTransaction.IAssetCallback, GloebitAPIWrapper.IUriLoader, GloebitAPIWrapper.IPlatformAccessor, GloebitAPIWrapper.IUserAlert, GloebitAPIWrapper.ITransactionAlert, GloebitAPIWrapper.ISubscriptionAlert
     {
         

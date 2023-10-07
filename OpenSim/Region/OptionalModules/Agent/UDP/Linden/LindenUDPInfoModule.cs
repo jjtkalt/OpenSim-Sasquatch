@@ -40,7 +40,7 @@ using OpenSim.Region.ClientStack.LindenUDP;
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
 
-namespace OpenSim.Region.OptionalModules.UDP.Linden
+namespace OpenSim.Region.OptionalModules.Agent.UDP.Linden
 {
     /// <summary>
     /// A module that just holds commands for inspecting the current state of the Linden UDP stack.
@@ -48,7 +48,6 @@ namespace OpenSim.Region.OptionalModules.UDP.Linden
     /// <remarks>
     /// All actual client stack functionality remains in OpenSim.Region.ClientStack.LindenUDP
     /// </remarks>
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "LindenUDPInfoModule")]
     public class LindenUDPInfoModule : ISharedRegionModule
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

@@ -38,7 +38,6 @@ using Mono.Addins;
 
 namespace OpenSim.Region.OptionalModules.Agent.InternetRelayClientView
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "IRCStackModule")]
     public class IRCStackModule : INonSharedRegionModule
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

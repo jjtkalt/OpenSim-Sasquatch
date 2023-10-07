@@ -44,7 +44,6 @@ namespace OpenSim.Region.CoreModules.Framework.DynamicAttributes
     /// <summary>
     /// Example module for experimenting with and demonstrating dynamic object ideas.
     /// </summary>
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "DOExampleModule")]
     public class DOExampleModule : INonSharedRegionModule
     {
         public class MyObject

@@ -41,7 +41,6 @@ using OpenSim.Server.Handlers.Base;
 
 namespace OpenSim.Region.CoreModules.ServiceConnectorsIn.Simulation
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "SimulationServiceInConnectorModule")]
     public class SimulationServiceInConnectorModule : ISharedRegionModule
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

@@ -37,7 +37,6 @@ using OpenSim.Region.Framework.Scenes;
 
 namespace OpenSim.Region.CoreModules.World.Vegetation
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "VegetationModule")]
     public class VegetationModule : INonSharedRegionModule, IVegetationModule
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

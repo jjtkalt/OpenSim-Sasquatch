@@ -42,7 +42,6 @@ using PermissionMask = OpenSim.Framework.PermissionMask;
 
 namespace OpenSim.Groups
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "GroupsModule")]
     public class GroupsModule : ISharedRegionModule, IGroupsModule
     {
         private static readonly ILog m_log =

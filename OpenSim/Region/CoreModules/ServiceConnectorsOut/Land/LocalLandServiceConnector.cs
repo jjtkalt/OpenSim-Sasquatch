@@ -40,7 +40,6 @@ using OpenMetaverse;
 
 namespace OpenSim.Region.CoreModules.ServiceConnectorsOut.Land
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "LocalLandServicesConnector")]
     public class LocalLandServicesConnector : ISharedRegionModule, ILandService
     {
         private static readonly ILog m_log =

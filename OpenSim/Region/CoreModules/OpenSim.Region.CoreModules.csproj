@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyTitle>OpenSim.Region.CoreModules</AssemblyTitle>
-    <Product>OpenSim.Region.CoreModules.Properties</Product>
+    <Product>OpenSim.Region.CoreModules</Product>
     <Description>Core modules for OpenSim</Description>
     <Copyright>Copyright ©  2012</Copyright>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
@@ -54,6 +54,7 @@
     <ProjectReference Include="..\..\..\ThirdParty\SmartThreadPool\SmartThreadPool.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Resources\OpenSim.Region.CoreModules.Wind.addin.xml" />
     <EmbeddedResource Include="Resources\OpenSim.Region.CoreModules.addin.xml" />
   </ItemGroup>
   <ItemGroup>

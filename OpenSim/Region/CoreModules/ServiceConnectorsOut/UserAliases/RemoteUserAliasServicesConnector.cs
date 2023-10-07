@@ -42,7 +42,6 @@ using OpenMetaverse;
 
 namespace OpenSim.Region.CoreModules.ServiceConnectorsOut.UserAliases
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "RemoteUserAliasServicesConnector")]
     public class RemoteUserAliasServicesConnector : UserAliasServicesConnector,
             ISharedRegionModule, IUserAliasService
     {

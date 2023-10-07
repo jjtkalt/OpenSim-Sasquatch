@@ -41,7 +41,6 @@ using OpenSim.Region.Framework.Scenes;
 
 namespace OpenSim.Region.CoreModules.World.Land
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "HGWorldMapModule")]
     public class HGWorldMapModule : WorldMapModule
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

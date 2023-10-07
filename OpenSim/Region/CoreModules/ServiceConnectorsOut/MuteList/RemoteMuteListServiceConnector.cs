@@ -41,7 +41,6 @@ using Nini.Config;
 
 namespace OpenSim.Region.CoreModules.ServiceConnectorsOut.MuteList
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "RemoteMuteListServicesConnector")]
     public class RemoteMuteListServicesConnector : ISharedRegionModule, IMuteListService
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

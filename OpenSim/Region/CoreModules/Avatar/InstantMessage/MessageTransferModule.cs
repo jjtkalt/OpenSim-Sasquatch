@@ -45,7 +45,6 @@ using System.Net.Http;
 
 namespace OpenSim.Region.CoreModules.Avatar.InstantMessage
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "MessageTransferModule")]
     public class MessageTransferModule : ISharedRegionModule, IMessageTransferModule
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

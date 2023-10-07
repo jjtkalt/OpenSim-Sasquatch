@@ -37,7 +37,7 @@ using OpenSim.Framework;
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
 
-namespace OpenSim.Region.OptionalModules
+namespace OpenSim.Region.OptionalModules.PrimLimitsModule
 {
     /// <summary>
     /// Enables Prim limits for parcel.
@@ -45,7 +45,6 @@ namespace OpenSim.Region.OptionalModules
     /// <remarks>
     /// This module selectivly enables parcel prim limits.
     /// </remarks>
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "PrimLimitsModule")]
     public class PrimLimitsModule : INonSharedRegionModule
     {
         protected IDialogModule m_dialogModule;

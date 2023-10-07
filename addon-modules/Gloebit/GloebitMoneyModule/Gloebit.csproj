@@ -1,10 +1,17 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+    <AssemblyTitle>Gloebit</AssemblyTitle>
+    <PackageId>Gloebit</PackageId>
+    <Description>OpenSim Addin for Gloebit Money Module</Description>
+    <Authors>gloebit@gloebit.com</Authors>
+    <Company>Gloebit LLC</Company>  
   </PropertyGroup>
+  
   <Target Name="CopyFiles">
     <Copy SourceFiles="@(FilesToCopy_0000)" DestinationFolder="../../../bin/" />
   </Target>
+
   <ItemGroup>
     <Reference Include="Npgsql">
       <HintPath>..\..\..\bin\Npgsql.dll</HintPath>
@@ -53,6 +60,7 @@
     <EmbeddedResource Include="Resources\GloebitUsersMySQL.migrations" />
     <EmbeddedResource Include="Resources\GloebitUsersPGSQL.migrations" />
     <EmbeddedResource Include="Resources\GloebitUsersSQLite.migrations" />
+    <EmbeddedResource Include="Resources\Gloebit.addin.xml" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="log4net" Version="2.0.15" />
