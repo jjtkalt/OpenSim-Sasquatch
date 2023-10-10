@@ -54,7 +54,6 @@
     <ProjectReference Include="..\..\..\ThirdParty\SmartThreadPool\SmartThreadPool.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\OpenSim.Region.CoreModules.Wind.addin.xml" />
     <EmbeddedResource Include="Resources\OpenSim.Region.CoreModules.addin.xml" />
   </ItemGroup>
   <ItemGroup>

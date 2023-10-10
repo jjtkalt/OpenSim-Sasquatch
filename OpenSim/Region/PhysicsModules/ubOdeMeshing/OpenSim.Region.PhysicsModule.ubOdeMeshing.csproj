@@ -9,6 +9,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Resources\OpenSim.Region.PhysicsModule.ubOdeMeshing.addin.xml" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="log4net" Version="2.0.15" />
     <PackageReference Include="Mono.Addins" Version="1.4.1" />
     <PackageReference Include="RawScape.Nini" Version="1.0.0" />

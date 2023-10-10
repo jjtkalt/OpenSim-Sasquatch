@@ -1,4 +1,4 @@
-<Addin id="OpenSim.Region.OptionalModules.Currency" version="0.9.3.0">
+<Addin id="OpenSim.Region.PhysicsModule.ubOdeMeshing" version="0.9.3.0">
     
   <Runtime>
     <Import assembly="OpenSim.dll"/>
@@ -9,17 +9,15 @@
   <Dependencies>
       <Addin id="OpenSim" version="0.9.3.0" />
   </Dependencies>
-  
+
   <ExtensionPoint path="/OpenSim/RegionModules">
     <ExtensionNode name="RegionModule"
                     type="Mono.Addins.TypeExtensionNode"
                     objectType="OpenSim.Region.Framework.Interfaces.IRegionModuleBase"/>
   </ExtensionPoint>
-  
-  <Extension path = "/OpenSim/RegionModules">
-    
-        <RegionModule id="DTLNSLMoneyModule" class="OpenSim.Region.OptionalModules.Currency.DTLNSLMoneyModule" />
-        
+
+	<Extension path = "/OpenSim/RegionModules">    
+        <RegionModule id="ubODEMeshmerizer" class="OpenSim.Region.PhysicsModule.ubODEMeshing.ubMeshmerizer" />
 	</Extension>
   
 </Addin>

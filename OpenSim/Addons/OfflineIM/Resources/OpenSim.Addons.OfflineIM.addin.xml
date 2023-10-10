@@ -1,8 +1,9 @@
 ﻿<Addin id="OpenSim.Addons.OfflineIM" version="0.9.3.0">
 
   <Runtime>
+    <Import assembly="OpenSim.dll"/>
     <Import assembly="OpenSim.Region.Framework.dll" />
-    <Import assembly="OpenSim.Addons.OfflineIM.dll"/>
+    <Import assembly="Mono.Addins.dll"/>
   </Runtime>
 
   <Dependencies>
@@ -13,7 +14,7 @@
     <ExtensionNode name="RegionModule"
                    type="Mono.Addins.TypeExtensionNode"
                    objectType="OpenSim.Region.Framework.Interfaces.IRegionModuleBase"/>
-  </ExtensionPoint>
+  </ExtensionPoint>  
 
   <Extension path = "/OpenSim/RegionModules">
     <RegionModule id="OfflineIMConnectorModule" class="OpenSim.OfflineIM.OfflineIMRegionModule" />  

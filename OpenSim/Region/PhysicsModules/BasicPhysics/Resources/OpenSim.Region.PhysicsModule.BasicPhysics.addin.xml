@@ -1,24 +1,23 @@
 <Addin id="OpenSim.Region.PhysicsModule.BasicPhysics" version="0.9.3.0">
     
-    <Runtime>
-        <Import assembly="OpenSim.Region.Framework.dll" />
-        <Import assembly="OpenSim.Region.PhysicsModule.BasicPhysics.dll"/>
-    </Runtime>
+  <Runtime>
+    <Import assembly="OpenSim.dll"/>
+    <Import assembly="OpenSim.Region.Framework.dll" />
+    <Import assembly="Mono.Addins.dll"/>
+  </Runtime>
 
-    <Dependencies>
-        <Addin id="OpenSim" version="0.9.3.0" />
-    </Dependencies>
+  <Dependencies>
+      <Addin id="OpenSim" version="0.9.3.0" />
+  </Dependencies>
 
   <ExtensionPoint path="/OpenSim/RegionModules">
     <ExtensionNode name="RegionModule"
-                   type="Mono.Addins.TypeExtensionNode"
-                   objectType="OpenSim.Region.Framework.Interfaces.IRegionModuleBase"/>
-  </ExtensionPoint>
-  
-	<Extension path = "/OpenSim/RegionModules">
-    
+                    type="Mono.Addins.TypeExtensionNode"
+                    objectType="OpenSim.Region.Framework.Interfaces.IRegionModuleBase"/>
+  </ExtensionPoint>  
+
+	<Extension path = "/OpenSim/RegionModules">    
         <RegionModule id="BasicPhysicsScene" class="OpenSim.Region.PhysicsModule.BasicPhysics.BasicScene" />
-    
 	</Extension>
   
 </Addin>

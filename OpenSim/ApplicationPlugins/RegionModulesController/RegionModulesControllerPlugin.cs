@@ -28,6 +28,8 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Security.Policy;
+
 using log4net;
 using Nini.Config;
 using Mono.Addins;
@@ -35,6 +37,7 @@ using OpenSim;
 using OpenSim.Framework;
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
+using Microsoft.Extensions.DependencyModel;
 
 namespace OpenSim.ApplicationPlugins.RegionModulesController
 {
@@ -58,14 +61,11 @@ namespace OpenSim.ApplicationPlugins.RegionModulesController
         private string m_name;
 
         // Internal lists to collect information about modules present
-        private List<TypeExtensionNode> m_nonSharedModules =
-                new List<TypeExtensionNode>();
-        private List<TypeExtensionNode> m_sharedModules =
-                new List<TypeExtensionNode>();
+        private List<TypeExtensionNode> m_nonSharedModules = new List<TypeExtensionNode>();
+        private List<TypeExtensionNode> m_sharedModules = new List<TypeExtensionNode>();
 
         // List of shared module instances, for adding to Scenes
-        private List<ISharedRegionModule> m_sharedInstances =
-                new List<ISharedRegionModule>();
+        private List<ISharedRegionModule> m_sharedInstances = new List<ISharedRegionModule>();
 
 #region Debug Support
 
@@ -79,6 +79,11 @@ namespace OpenSim.ApplicationPlugins.RegionModulesController
             m_log.Info ("[PLUGINS]: Plugin Loaded: " + args.AddinId);
         }
 
+        private void on_addinunloaded_(object sender, AddinEventArgs args)
+        {
+            m_log.Info("[PLUGINS]: Plugin Unloaded: " + args.AddinId);
+        }
+
         private void on_addinloaderror_(object sender, AddinErrorEventArgs args)
         {
             if (args.Exception == null)
@@ -90,9 +95,38 @@ namespace OpenSim.ApplicationPlugins.RegionModulesController
                         + args.Exception.StackTrace);
         }
 
-#endregion
+        #endregion
 
-#region IApplicationPlugin implementation
+        public IEnumerable<T> GetAll<T>()
+        {
+            var assembly = Assembly.GetEntryAssembly();
+            var assemblies = assembly.GetReferencedAssemblies();
+
+            foreach (var assemblyName in assemblies)
+            {
+                assembly = Assembly.Load(assemblyName);
+
+                foreach (var ti in assembly.DefinedTypes)
+                {
+                    if (ti.ImplementedInterfaces.Contains(typeof(T)))
+                    {
+                        yield return (T)assembly.CreateInstance(ti.FullName);
+                    }
+                }
+            }
+        }
+        private IEnumerable<Type> GetAllTypesOf<T>()
+        {
+            var platform = Environment.OSVersion.Platform.ToString();
+            var runtimeAssemblyNames = DependencyContext.Default.GetRuntimeAssemblyNames(platform);
+
+            return runtimeAssemblyNames
+                .Select(Assembly.Load)
+                .SelectMany(a => a.ExportedTypes)
+                .Where(t => typeof(T).IsAssignableFrom(t));
+        }
+
+        #region IApplicationPlugin implementation
 
         public void Initialise (OpenSimBase openSim)
         {
@@ -101,6 +135,7 @@ namespace OpenSim.ApplicationPlugins.RegionModulesController
 
             AddinManager.AddinLoadError += on_addinloaderror_;
             AddinManager.AddinLoaded += on_addinloaded_;
+            AddinManager.AddinUnloaded += on_addinunloaded_;
             
             m_openSim = openSim;
             m_openSim.ApplicationRegistry.RegisterInterface<IRegionModulesController>(this);
@@ -120,10 +155,38 @@ namespace OpenSim.ApplicationPlugins.RegionModulesController
                 m_name = id;
             else
                 m_name = id.Substring(pos + 1);
-                
+
+            //// Try this with reflection and see what we find.
+            //// Load a base module to populate the AppDomain
+            //m_log.Info("[PLUGINS]: Using Reflection to Find Plugins");
+            //AppDomain currentDomain = AppDomain.CurrentDomain;
+            //System.Reflection.Assembly ass = System.Reflection.Assembly.GetEntryAssembly();
+
+            //currentDomain.Load("OpenSim.Region.CoreModules");
+
+            //var types = GetAllTypesOf<IRegionModuleBase>();
+            
+            //foreach (var type in types)
+            //{
+            //    if (type.IsClass && typeof(IRegionModuleBase).IsAssignableFrom(type))
+            //    {
+            //        m_log.Info($"[PLUGINS]: Plugin Loaded: {type.Name} from Assembly {type.Assembly.FullName}");
+            //    }
+            //}
+
+            ////foreach (Assembly assembly in currentDomain.GetAssemblies())
+            ////{
+            //foreach (var type in assembly.GetTypes())
+            //    {
+            //        if (type.IsClass && typeof(IRegionModuleBase).IsAssignableFrom(type))
+            //        {
+            //            m_log.Info($"[PLUGINS]: Plugin Loaded: {type.Name} from Assembly {type.Assembly.FullName}");
+            //        }
+            //    }
+            //}
+
             // Scan modules and load all that aren't disabled
-            foreach (TypeExtensionNode node in
-                    AddinManager.GetExtensionNodes("/OpenSim/RegionModules"))
+            foreach (TypeExtensionNode node in AddinManager.GetExtensionNodes("/OpenSim/RegionModules"))
             {
                 if (typeof(ISharedRegionModule).IsAssignableFrom(node.Type))
                 {
@@ -132,6 +195,10 @@ namespace OpenSim.ApplicationPlugins.RegionModulesController
                         m_log.DebugFormat("[REGIONMODULES]: Found shared region module {0}, class {1}", node.Id, node.Type);
                         m_sharedModules.Add(node);
                     }
+                    else
+                    {
+                        m_log.DebugFormat("[REGIONMODULES]: Found disabled shared region module {0}, class {1}", node.Id, node.Type);
+                    }
                 }
                 else if (typeof(INonSharedRegionModule).IsAssignableFrom(node.Type))
                 {
@@ -139,6 +206,10 @@ namespace OpenSim.ApplicationPlugins.RegionModulesController
                     {
                         m_log.DebugFormat("[REGIONMODULES]: Found non-shared region module {0}, class {1}", node.Id, node.Type);
                         m_nonSharedModules.Add(node);
+                    }
+                    else
+                    {
+                        m_log.DebugFormat("[REGIONMODULES]: Found disabled non-shared region module {0}, class {1}", node.Id, node.Type);
                     }
                 }
                 else
