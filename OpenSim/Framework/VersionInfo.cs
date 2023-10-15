@@ -39,31 +39,18 @@ namespace OpenSim
     {
         public const string VersionNumber = "0.9.3.0";
         public const string AssemblyVersionNumber = "0.9.3.0";
-        public const string Release = "8681";
+        public const string Release = "8688";
 
-        public const Flavour VERSION_FLAVOUR = Flavour.Dev;
         public const int VERSIONINFO_VERSION_LENGTH = 48;
-
-        public enum Flavour
-        {
-            Unknown,
-            Dev,
-            RC1,
-            RC2,
-            RC3,
-            Release,
-            Post_Fixes,
-            Extended
-        }
 
         public static string Version
         {
-            get { return GetVersionString(VersionNumber, Release, VERSION_FLAVOUR); }
+            get { return GetVersionString(VersionNumber, Release); }
         }
 
-        public static string GetVersionString(string versionNumber, string release, Flavour flavour)
+        public static string GetVersionString(string versionNumber, string release)
         {
-            string versionString = $"OpenSim-NGC {versionNumber}.{release} Tranquility {flavour}";
+            string versionString = $"OpenSim-NGC Tranquillity {versionNumber}.{release}";
             return versionString.PadRight(VERSIONINFO_VERSION_LENGTH);
         }
 
