@@ -25,23 +25,16 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Linq;
 using System.Reflection;
 using System.Timers;
-using System.IO;
-using System.Diagnostics;
-using System.Threading;
-using System.Collections.Generic;
 using log4net;
 using Nini.Config;
 using OpenMetaverse;
 using OpenSim.Framework;
-using OpenSim.Framework.Console;
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
-using Timer=System.Timers.Timer;
-using Mono.Addins;
+
+using Timer = System.Timers.Timer;
 
 namespace OpenSim.Region.CoreModules.World.Region
 {

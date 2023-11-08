@@ -39,11 +39,9 @@ using OpenSim.Region.PhysicsModules.SharedBase;
 using Nini.Config;
 using log4net;
 using OpenMetaverse;
-using Mono.Addins;
 
 namespace OpenSim.Region.PhysicsModule.BulletS
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "BulletSPhysicsScene")]
     public sealed class BSScene : PhysicsScene, IPhysicsParameters, INonSharedRegionModule
     {
         internal static readonly ILog m_log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);

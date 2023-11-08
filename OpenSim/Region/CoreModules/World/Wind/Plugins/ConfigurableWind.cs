@@ -25,20 +25,16 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
 using System.Reflection;
 
 using log4net;
 using OpenMetaverse;
-using Mono.Addins;
 
 using OpenSim.Region.Framework.Interfaces;
-using OpenSim.Region.CoreModules.World.Wind;
 
 namespace OpenSim.Region.CoreModules.World.Wind.Plugins
 {
-    class ConfigurableWind : Mono.Addins.TypeExtensionNode, IWindModelPlugin
+    class ConfigurableWind : IWindModelPlugin
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -52,8 +48,6 @@ namespace OpenSim.Region.CoreModules.World.Wind.Plugins
         private float m_rateChange = 1.0f; //
 
         private Vector2 m_curPredominateWind = new Vector2();
-
-
 
         #region IPlugin Members
 

@@ -1,20 +1,26 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace OpenSim.Server.RegionServer
 {
     public sealed class RegionService : IHostedService
     {
         private readonly Task _completedTask = Task.CompletedTask;
+
+        private readonly IServiceProvider _serviceProvider;
+        private readonly IConfiguration _configuration;
         private readonly ILogger<RegionService> _logger;
 
         private int m_res;
 
-        public RegionService(ILogger<RegionService> logger)
+        public RegionService(
+            IServiceProvider serviceProvider,
+            IConfiguration configuration,
+            ILogger<RegionService> logger)
         {
+            _serviceProvider = serviceProvider;
+            _configuration = configuration;
             _logger = logger;
         }
 
@@ -22,11 +28,9 @@ namespace OpenSim.Server.RegionServer
         {
             _logger.LogInformation("{Service} is running.", nameof(RegionServer));
 
-            string[] args = Environment.GetCommandLineArgs();
+            Application.ServiceProvider = _serviceProvider;
 
-            // Not the way we ultimately want to do this...  
-            // Reach into the OpenSim Namespace and run the main there passing in args.
-            Application.Main(args);
+            Application.Start();
 
             return _completedTask;
         }

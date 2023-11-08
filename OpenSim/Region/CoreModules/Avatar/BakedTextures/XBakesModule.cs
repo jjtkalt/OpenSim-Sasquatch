@@ -27,13 +27,9 @@
 
 using OpenMetaverse;
 using Nini.Config;
-using System;
-using System.IO;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
-using System.Collections;
-using System.Collections.Generic;
 using System.Reflection;
 using log4net;
 using OpenSim.Framework;
@@ -41,7 +37,6 @@ using OpenSim.Framework.ServiceAuth;
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
 using OpenSim.Services.Interfaces;
-using Mono.Addins;
 
 namespace OpenSim.Region.CoreModules.Avatar.BakedTextures
 {

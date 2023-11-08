@@ -25,25 +25,20 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.IO;
 using System.Net;
-using System.Text;
 using System.Xml;
-using System.Collections.Generic;
 using System.Reflection;
-using System.Threading;
 using OpenMetaverse;
 using log4net;
-using Mono.Addins;
 using Nini.Config;
 using OpenSim.Framework;
-
+using OpenMetaverse.StructuredData;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
+
 using Caps = OpenSim.Framework.Capabilities.Caps;
-using OpenMetaverse.StructuredData;
+
 
 namespace OpenSim.Region.OptionalModules.Avatar.Voice.VivoxVoice
 {

@@ -25,24 +25,23 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
-using System.Threading;
-using System.Xml;
 using log4net;
 using Nini.Config;
 using OpenSim.Framework;
+using System.Reflection;
+using System.Xml;
 
-namespace OpenSim
+namespace OpenSim.Server.RegionServer
 {
     /// <summary>
     /// Loads the Configuration files into nIni
     /// </summary>
     public class ConfigurationLoader
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        /// <summary>
+        /// A source of Configuration data
+        /// </summary>
+        protected IConfigSource m_config;
 
         /// <summary>
         /// Various Config settings the region needs to start
@@ -50,17 +49,14 @@ namespace OpenSim
         /// StorageDLL, Storage Connection String, Estate connection String, Client Stack
         /// Standalone settings.
         /// </summary>
-        protected ConfigSettings m_configSettings;
-
-        /// <summary>
-        /// A source of Configuration data
-        /// </summary>
-        protected OpenSimConfigSource m_config;
+        public ConfigSettings ConfigSettings { get; private set; } = new ConfigSettings();
 
         /// <summary>
         /// Grid Service Information.  This refers to classes and addresses of the grid service
         /// </summary>
-        protected NetworkServersInfo m_networkServersInfo;
+        public NetworkServersInfo NetworkServersInfo { get; set; } = new NetworkServersInfo();
+
+        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         /// <summary>
         /// Loads the region configuration
@@ -69,12 +65,8 @@ namespace OpenSim
         /// <param name="configSettings"></param>
         /// <param name="networkInfo"></param>
         /// <returns>A configuration that gets passed to modules</returns>
-        public OpenSimConfigSource LoadConfigSettings(
-                IConfigSource argvSource, out ConfigSettings configSettings, out NetworkServersInfo networkInfo)
+        public IConfigSource LoadConfigSettings(IConfigSource argvSource)
         {
-            m_configSettings = configSettings = new ConfigSettings();
-            m_networkServersInfo = networkInfo = new NetworkServersInfo();
-
             bool iniFileExists = false;
 
             IConfig startupConfig = argvSource.Configs["Startup"];
@@ -137,12 +129,11 @@ namespace OpenSim
                 }
             }
 
-            m_config = new OpenSimConfigSource();
-            m_config.Source = new IniConfigSource();
+            m_config = new IniConfigSource();
 
             m_log.Info("[CONFIG]: Reading configuration settings");
 
-            for (int i = 0 ; i < sources.Count ; i++)
+            for (int i = 0; i < sources.Count; i++)
             {
                 if (ReadConfig(m_config, sources[i]))
                 {
@@ -174,13 +165,11 @@ namespace OpenSim
                     }
                 }
 
-
                 if (overrideSources.Count > 0)
                 {
-                    OpenSimConfigSource overrideConfig = new OpenSimConfigSource();
-                    overrideConfig.Source = new IniConfigSource();
+                    IConfigSource overrideConfig = new IniConfigSource();
 
-                    for (int i = 0 ; i < overrideSources.Count ; i++)
+                    for (int i = 0; i < overrideSources.Count; i++)
                     {
                         if (ReadConfig(overrideConfig, overrideSources[i]))
                         {
@@ -188,7 +177,7 @@ namespace OpenSim
                             AddIncludes(overrideConfig, overrideSources);
                         }
                     }
-                    m_config.Source.Merge(overrideConfig.Source);
+                    m_config.Merge(overrideConfig);
                 }
             }
 
@@ -210,9 +199,9 @@ namespace OpenSim
             //Util.MergeEnvironmentToConfig(m_config.Source);
 
             // Make sure command line options take precedence
-            m_config.Source.Merge(argvSource);
+            m_config.Merge(argvSource);
 
-            m_config.Source.ReplaceKeyValues();
+            m_config.ReplaceKeyValues();
 
             ReadConfigSettings();
 
@@ -220,13 +209,31 @@ namespace OpenSim
         }
 
         /// <summary>
+        /// Read initial region settings from the ConfigSource
+        /// </summary>
+        protected virtual void ReadConfigSettings()
+        {
+            IConfig startupConfig = m_config.Configs["Startup"];
+            if (startupConfig != null)
+            {
+                ConfigSettings.PhysicsEngine = startupConfig.GetString("physics");
+                ConfigSettings.MeshEngineName = startupConfig.GetString("meshing");
+
+                ConfigSettings.ClientstackDll
+                    = startupConfig.GetString("clientstack_plugin", "OpenSim.Region.ClientStack.LindenUDP.dll");
+            }
+
+            NetworkServersInfo.loadFromConfiguration(m_config);
+        }
+
+        /// <summary>
         /// Adds the included files as ini configuration files
         /// </summary>
         /// <param name="sources">List of URL strings or filename strings</param>
-        private void AddIncludes(OpenSimConfigSource configSource, List<string> sources)
+        private void AddIncludes(IConfigSource configSource, List<string> sources)
         {
             //loop over config sources
-            foreach (IConfig config in configSource.Source.Configs)
+            foreach (IConfig config in configSource.Configs)
             {
                 // Look for Include-* in the key name
                 string[] keys = config.GetKeys();
@@ -275,12 +282,13 @@ namespace OpenSim
                 }
             }
         }
+
         /// <summary>
         /// Check if we can convert the string to a URI
         /// </summary>
         /// <param name="file">String uri to the remote resource</param>
         /// <returns>true if we can convert the string to a Uri object</returns>
-        bool IsUri(string file)
+        private bool IsUri(string file)
         {
             Uri configUri;
 
@@ -293,7 +301,7 @@ namespace OpenSim
         /// </summary>
         /// <param name="iniPath">Full path to the ini</param>
         /// <returns></returns>
-        private bool ReadConfig(OpenSimConfigSource configSource, string iniPath)
+        private bool ReadConfig(IConfigSource configSource, string iniPath)
         {
             bool success = false;
 
@@ -301,7 +309,7 @@ namespace OpenSim
             {
                 m_log.InfoFormat("[CONFIG]: Reading configuration file {0}", Path.GetFullPath(iniPath));
 
-                configSource.Source.Merge(new IniConfigSource(iniPath));
+                configSource.Merge(new IniConfigSource(iniPath));
                 success = true;
             }
             else
@@ -314,7 +322,7 @@ namespace OpenSim
                 {
                     XmlReader r = XmlReader.Create(iniPath);
                     XmlConfigSource cs = new XmlConfigSource(r);
-                    configSource.Source.Merge(cs);
+                    configSource.Merge(cs);
 
                     success = true;
                 }
@@ -325,24 +333,6 @@ namespace OpenSim
                 }
             }
             return success;
-        }
-
-        /// <summary>
-        /// Read initial region settings from the ConfigSource
-        /// </summary>
-        protected virtual void ReadConfigSettings()
-        {
-            IConfig startupConfig = m_config.Source.Configs["Startup"];
-            if (startupConfig != null)
-            {
-                m_configSettings.PhysicsEngine = startupConfig.GetString("physics");
-                m_configSettings.MeshEngineName = startupConfig.GetString("meshing");
-
-                m_configSettings.ClientstackDll
-                    = startupConfig.GetString("clientstack_plugin", "OpenSim.Region.ClientStack.LindenUDP.dll");
-            }
-
-            m_networkServersInfo.loadFromConfiguration(m_config.Source);
         }
     }
 }

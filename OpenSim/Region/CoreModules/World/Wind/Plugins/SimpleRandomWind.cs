@@ -25,17 +25,13 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
-
 using OpenMetaverse;
-using Mono.Addins;
 
 using OpenSim.Region.Framework.Interfaces;
 
 namespace OpenSim.Region.CoreModules.World.Wind.Plugins
 {
-    class SimpleRandomWind : Mono.Addins.TypeExtensionNode, IWindModelPlugin
+    class SimpleRandomWind : IWindModelPlugin
     {
         private Vector2[] m_windSpeeds = new Vector2[16 * 16];
         private float m_strength = 1.0f;

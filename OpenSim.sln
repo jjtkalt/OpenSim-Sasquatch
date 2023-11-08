@@ -133,8 +133,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Services.UserProfil
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Tools.Configger", "OpenSim\Tools\Configger\OpenSim.Tools.Configger.csproj", "{2F0C334A-0000-0000-0000-000000000000}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSimMutelist.Modules", "addon-modules\OpenSimMutelist\Modules\OpenSimMutelist.Modules.csproj", "{87C4E6E3-0000-0000-0000-000000000000}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSimSearch.Modules", "addon-modules\OpenSimSearch\Modules\OpenSimSearch.Modules.csproj", "{BE5D1132-0000-0000-0000-000000000000}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "pCampBot", "OpenSim\Tools\pCampBot\pCampBot.csproj", "{AF52AEDC-0000-0000-0000-000000000000}"
@@ -149,7 +147,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Region.OptionalModu
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Server.MoneyServer", "OpenSim\Server\MoneyServer\OpenSim.Server.MoneyServer.csproj", "{C3AEE6AC-BE40-4003-A7A3-E8AA039E4451}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSim.Server.RegionServer", "OpenSim\Server\RegionServer\OpenSim.Server.RegionServer.csproj", "{03E1D988-8F42-44E2-B42A-6952090AEC88}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Server.RegionServer", "OpenSim\Server\RegionServer\OpenSim.Server.RegionServer.csproj", "{03E1D988-8F42-44E2-B42A-6952090AEC88}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -417,10 +415,6 @@ Global
 		{2F0C334A-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2F0C334A-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2F0C334A-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
-		{87C4E6E3-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{87C4E6E3-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{87C4E6E3-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{87C4E6E3-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
 		{BE5D1132-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{BE5D1132-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BE5D1132-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU

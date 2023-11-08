@@ -26,10 +26,7 @@
  */
 
 using log4net;
-using Mono.Addins;
-using System;
 using System.Reflection;
-using System.Collections.Generic;
 using Nini.Config;
 using OpenSim.Framework;
 using OpenSim.Services.Connectors;

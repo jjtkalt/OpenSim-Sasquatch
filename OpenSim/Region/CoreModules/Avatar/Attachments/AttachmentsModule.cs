@@ -33,7 +33,6 @@ using System.Text;
 using System.Threading;
 using System.Xml;
 using log4net;
-using Mono.Addins;
 using Nini.Config;
 using OpenMetaverse;
 using OpenSim.Framework;

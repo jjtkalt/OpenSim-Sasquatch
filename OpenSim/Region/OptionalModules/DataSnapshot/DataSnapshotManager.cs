@@ -26,24 +26,16 @@
 *
 */
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
 using System.Reflection;
-using System.Threading;
 using System.Text;
 using System.Xml;
 using log4net;
 using Nini.Config;
 using OpenMetaverse;
-using Mono.Addins;
 using OpenSim.Framework;
 using OpenSim.Region.OptionalModules.DataSnapshot.Interfaces;
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
-using System.Net.Http;
 
 namespace OpenSim.Region.OptionalModules.DataSnapshot
 {

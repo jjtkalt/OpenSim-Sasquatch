@@ -32,6 +32,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using OpenSim.Data;
+using Autofac.Extensions.DependencyInjection;
+using Autofac;
 
 namespace OpenSim.Server.MoneyServer
 {
@@ -51,6 +53,7 @@ namespace OpenSim.Server.MoneyServer
             XmlConfigurator.Configure();
 
             IHostBuilder builder = Host.CreateDefaultBuilder()
+                .UseServiceProviderFactory(new AutofacServiceProviderFactory())
                 .ConfigureAppConfiguration(configuration =>
                 {
                     configuration.AddCommandLine(args, switchMappings);
@@ -59,6 +62,13 @@ namespace OpenSim.Server.MoneyServer
                 .ConfigureServices(services =>
                 {
                     services.AddHostedService<MoneyService>();
+                })
+                .ConfigureContainer<ContainerBuilder>(builder =>
+                {
+                    // Declare your services with proper lifetime
+                    //builder.RegisterType<AppLogger>().As<IAppLogger>().SingleInstance();
+                    //builder.RegisterType<DataAccess>().As<IDataAccess>().InstancePerLifetimeScope();
+
                 });
 
             IHost host = builder.Build();

@@ -31,6 +31,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
+using Autofac.Extensions.DependencyInjection;
+using Autofac;
 
 namespace OpenSim.Server.RobustServer
 {
@@ -51,15 +53,23 @@ namespace OpenSim.Server.RobustServer
             XmlConfigurator.Configure();
 
             IHostBuilder builder = Host.CreateDefaultBuilder()
+                .UseServiceProviderFactory(new AutofacServiceProviderFactory())
                 .ConfigureAppConfiguration(configuration =>
                 {
-                    configuration.AddCommandLine(args, switchMappings);
+                    //configuration.AddCommandLine(args, switchMappings);
                     configuration.AddIniFile("RobustServer.ini", optional: true, reloadOnChange: true);
                 })
                 .ConfigureServices(services =>
                 {
                     services.AddHostedService<RobustService>();
-                });
+                })
+                .ConfigureContainer<ContainerBuilder>(builder =>
+                 {
+                     // Declare your services with proper lifetime
+                     //builder.RegisterType<AppLogger>().As<IAppLogger>().SingleInstance();
+                     //builder.RegisterType<DataAccess>().As<IDataAccess>().InstancePerLifetimeScope();
+
+                 });
 
             IHost host = builder.Build();
 

@@ -109,6 +109,7 @@ namespace OpenSim.Services.Connectors
                 m_log.Error("[INVENTORY CONNECTOR]: No Server URI named in section InventoryService");
                 throw new Exception("Inventory connector init error");
             }
+
             if (serviceURI.EndsWith('/'))
                 m_InventoryURL = serviceURI + "xinventory";
             else

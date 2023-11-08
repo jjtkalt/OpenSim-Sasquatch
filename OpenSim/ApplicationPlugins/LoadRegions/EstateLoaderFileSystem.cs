@@ -25,14 +25,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Reflection;
 using log4net;
 using Nini.Config;
 using OpenMetaverse;
 using OpenSim.Framework;
+using OpenSim.Region.Framework;
 
 namespace OpenSim.ApplicationPlugins.LoadRegions
 {
@@ -42,9 +40,9 @@ namespace OpenSim.ApplicationPlugins.LoadRegions
 
         private IConfigSource m_configSource;
 
-        private OpenSimBase m_application;
+        private IOpenSimBase m_application;
 
-        public EstateLoaderFileSystem(OpenSimBase openSim)
+        public EstateLoaderFileSystem(IOpenSimBase openSim)
         {
             m_application = openSim;
         }

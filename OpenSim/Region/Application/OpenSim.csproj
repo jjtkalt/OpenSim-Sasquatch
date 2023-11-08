@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <OutputType>Exe</OutputType>
     <AssemblyTitle>OpenSim</AssemblyTitle>
     <Company>http://opensimulator.org</Company>
     <Product>OpenSim</Product>
@@ -27,21 +26,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Data\OpenSim.Data.csproj" />
-    <ProjectReference Include="..\..\Framework\OpenSim.Framework.csproj" />
-    <ProjectReference Include="..\..\Framework\Console\OpenSim.Framework.Console.csproj" />
-    <ProjectReference Include="..\..\Framework\Monitoring\OpenSim.Framework.Monitoring.csproj" />
-    <ProjectReference Include="..\..\Framework\Servers\OpenSim.Framework.Servers.csproj" />
-    <ProjectReference Include="..\..\Framework\Servers\HttpServer\OpenSim.Framework.Servers.HttpServer.csproj" />
-    <ProjectReference Include="..\CoreModules\OpenSim.Region.CoreModules.csproj" />
-    <ProjectReference Include="..\Framework\OpenSim.Region.Framework.csproj" />
-    <ProjectReference Include="..\PhysicsModules\SharedBase\OpenSim.Region.PhysicsModules.SharedBase.csproj" />
-    <ProjectReference Include="..\..\Server\Base\OpenSim.Server.Base.csproj" />
-    <ProjectReference Include="..\..\Services\Base\OpenSim.Services.Base.csproj" />
-    <ProjectReference Include="..\..\Services\Interfaces\OpenSim.Services.Interfaces.csproj" />
-    <ProjectReference Include="..\..\Services\UserAccountService\OpenSim.Services.UserAccountService.csproj" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="$(SolutionDir)\bin\**\*.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -50,11 +34,9 @@
     <EmbeddedResource Include="Resources/OpenSim.addin.xml" />
   </ItemGroup> 
   <ItemGroup>
+    <PackageReference Include="Autofac" Version="7.1.0" />
     <PackageReference Include="log4net" Version="2.0.15" />
     <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="6.0.0" />
-    <PackageReference Include="Mono.Addins" Version="1.4.1" />
-    <PackageReference Include="Mono.Addins.CecilReflector" Version="1.4.1" />
-    <PackageReference Include="Mono.Addins.Setup" Version="1.4.1" />
     <PackageReference Include="NDesk.Options.Core" Version="1.2.5" />
     <PackageReference Include="RawScape.Nini" Version="1.0.0" />
   </ItemGroup>

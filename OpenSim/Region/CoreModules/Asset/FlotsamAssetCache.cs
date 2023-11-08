@@ -35,7 +35,6 @@ using System.Threading;
 using System.Timers;
 using log4net;
 using Nini.Config;
-using Mono.Addins;
 using OpenMetaverse;
 using OpenSim.Framework;
 using OpenSim.Framework.Monitoring;

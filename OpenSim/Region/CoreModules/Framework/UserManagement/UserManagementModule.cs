@@ -24,12 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-using System;
-using System.Collections.Generic;
-using System.Collections.Concurrent;
-using System.IO;
 using System.Reflection;
-using System.Threading;
 
 using OpenSim.Framework;
 using OpenSim.Framework.Console;
@@ -41,7 +36,6 @@ using OpenSim.Services.Connectors.Hypergrid;
 using OpenMetaverse;
 using log4net;
 using Nini.Config;
-using Mono.Addins;
 
 
 namespace OpenSim.Region.CoreModules.Framework.UserManagement

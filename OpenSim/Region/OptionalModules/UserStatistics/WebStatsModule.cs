@@ -25,14 +25,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Net; // to be used for REST-->Grid shortly
 using System.Reflection;
 using System.Text;
-using System.Threading;
 using log4net;
 using Nini.Config;
 using OpenMetaverse;
@@ -43,10 +38,8 @@ using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
 using System.Data.SQLite;
-using Mono.Addins;
 
 using Caps = OpenSim.Framework.Capabilities.Caps;
-
 using OSD = OpenMetaverse.StructuredData.OSD;
 using OSDMap = OpenMetaverse.StructuredData.OSDMap;
 

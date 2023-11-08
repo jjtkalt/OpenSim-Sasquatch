@@ -24,14 +24,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-using System;
-using System.IO;
 using System.Reflection;
 
 using Nini.Config;
 using OpenMetaverse;
-using log4net;
-using Mono.Addins;
 
 using OpenSim.Framework;
 using OpenSim.Region.Framework.Interfaces;

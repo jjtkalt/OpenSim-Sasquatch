@@ -49,7 +49,7 @@ namespace OpenSim.Server.RobustServer
         protected static HttpServerBase m_Server = null;
         protected static List<IServiceConnector> m_ServiceConnectors = new();
 
-        protected static PluginLoader loader;
+ //       protected static PluginLoader loader;
         private static bool m_NoVerifyCertChain = false;
         private static bool m_NoVerifyCertHostname = false;
 
@@ -121,7 +121,6 @@ namespace OpenSim.Server.RobustServer
 
             m_NoVerifyCertChain = serverConfig.GetBoolean("NoVerifyCertChain", m_NoVerifyCertChain);
             m_NoVerifyCertHostname = serverConfig.GetBoolean("NoVerifyCertHostname", m_NoVerifyCertHostname);
-
 
             string connList = serverConfig.GetString("ServiceConnectors", string.Empty);
 
@@ -212,7 +211,7 @@ namespace OpenSim.Server.RobustServer
 
             PrintFileToConsole("robuststartuplogo.txt");
 
-            loader = new PluginLoader(m_Server.Config, registryLocation);
+//            loader = new PluginLoader(m_Server.Config, registryLocation);
 
             return m_Server.Run();
         }

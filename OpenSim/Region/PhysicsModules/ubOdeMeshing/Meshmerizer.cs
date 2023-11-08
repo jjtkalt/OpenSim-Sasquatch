@@ -44,11 +44,8 @@ using Nini.Config;
 using System.Reflection;
 using System.IO;
 
-using Mono.Addins;
-
 namespace OpenSim.Region.PhysicsModule.ubODEMeshing
 {
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "ubODEMeshmerizer")]
     public class ubMeshmerizer : IMesher, INonSharedRegionModule
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

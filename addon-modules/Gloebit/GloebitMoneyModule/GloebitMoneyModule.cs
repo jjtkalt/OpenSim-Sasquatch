@@ -65,18 +65,13 @@
 
 #define NEWHTTPFLOW
 
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Reflection;
-using System.Threading;
 using System.Text;
 using log4net;
 using Nini.Config;
 using Nwc.XmlRpc;
-using Mono.Addins;
 using OpenMetaverse;
 using OpenSim.Framework;
 using OpenSim.Framework.Servers;
@@ -84,7 +79,7 @@ using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
 using OpenSim.Services.Interfaces;
-using OpenMetaverse.StructuredData;     // TODO: turn transactionData into a dictionary of <string, object> and remove this.
+using OpenMetaverse.StructuredData;                     // TODO: turn transactionData into a dictionary of <string, object> and remove this.
 using OpenSim.Region.ScriptEngine.Shared.ScriptBase;    // For ScriptBaseClass permissions constants
 
 namespace Gloebit.GloebitMoneyModule

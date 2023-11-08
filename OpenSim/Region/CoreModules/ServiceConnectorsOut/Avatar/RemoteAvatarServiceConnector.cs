@@ -25,8 +25,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using Mono.Addins;
 using Nini.Config;
 using log4net;
 using System.Reflection;

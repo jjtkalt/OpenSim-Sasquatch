@@ -27,10 +27,36 @@
 
 
 using log4net.Config;
+using Nini.Config;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
-using System.Collections.Generic;
+using Autofac.Extensions.DependencyInjection;
+using Autofac;
+
+using OpenSim.ApplicationPlugins.LoadRegions;
+using OpenSim.ApplicationPlugins.RegionModulesController;
+using OpenSim.ApplicationPlugins.RemoteController;
+
+using OpenSim.Region.OptionalModules;
+using OpenSim.Region.CoreModules;
+using OpenSim.Region.Framework;
+
+using OpenSim.Services.SimulationService;
+using OpenSim.Services.EstateService;
+using OpenSim.Region.PhysicsModule.BasicPhysics;
+using OpenSim.Region.ClientStack.LindenUDP;
+using OpenSim.Region.ClientStack.Linden;
+using OpenSim.Region.PhysicsModule.Meshing;
+using OpenSim.Region.PhysicsModule.POS;
+using OpenSim.Region.PhysicsModule.BulletS;
+using OpenSim.Region.PhysicsModule.ubOde;
+using OpenSim.Region.PhysicsModule.ubOdeMeshing;
+using OpenSim.Region.CoreModules.Framework.Search;
+using OpenSimSearch.Modules.OpenSearch;
+using OpenSim.Groups;
+using Gloebit.GloebitMoneyModule;
+using OpenSim.Region.ScriptEngine.Yengine;
 
 namespace OpenSim.Server.RegionServer
 {
@@ -40,34 +66,70 @@ namespace OpenSim.Server.RegionServer
         {
             var switchMappings = new Dictionary<string, string>()
             {
-                { "-background", "background" },
-                { "-gui", "gui" },
                 { "-console", "console" },
                 { "-logfile", "logfile" },
-                { "-logconfig", "logconfig" },
                 { "-inifile", "inifile" },
                 { "-inimaster", "inimaster" },
-                { "-inidirectory", "inidirectory" },
-                { "-physics", "physics" },
-                { "-save_crashes", "save_crashes" },
-                { "-crash_dir", "crash_dir" }
+                { "-prompt", "prompt" },
+                { "-logconfig", "logconfig" }
             };
-            
+
             XmlConfigurator.Configure();
+            Application.Configure(args); 
 
             IHostBuilder builder = Host.CreateDefaultBuilder()
+                .UseServiceProviderFactory(new AutofacServiceProviderFactory())
                 .ConfigureAppConfiguration(configuration =>
                 {
-                    configuration.AddCommandLine(args, switchMappings);
-                    configuration.AddIniFile("OpenSimServer.ini", optional: true, reloadOnChange: true);
+                    configuration.AddIniFile("OpenSimDefaults.ini", optional: true, reloadOnChange: true);
                 })
                 .ConfigureServices(services =>
                 {
                     services.AddHostedService<RegionService>();
+                })
+                .ConfigureContainer<ContainerBuilder>(builder =>
+                {
+                    // Register the main configuration
+                    builder.Register(x => Application.Configuration)
+                        .As<IConfigSource>()
+                        .SingleInstance();
+
+                    // Startup Application Plugins
+                    builder.RegisterType<RegionModulesControllerPlugin>()
+                        .As<IApplicationPlugin>()
+                        .SingleInstance();
+
+                    builder.RegisterType<LoadRegionsPlugin>().
+                        As<IApplicationPlugin>()
+                        .SingleInstance();
+
+                    builder.RegisterType<RemoteAdminPlugin>()
+                        .As<IApplicationPlugin>()
+                        .SingleInstance();
+
+                    // Data Services
+                    builder.RegisterModule(new SimulationDataServiceModule());
+                    builder.RegisterModule(new EstateDataServiceModule());
+
+                    // Register Region Modules
+                    builder.RegisterModule(new CoreModulesModule());
+                    builder.RegisterModule(new OptionalModulesModule());
+                    builder.RegisterModule(new LindenUDPModule());
+                    builder.RegisterModule(new LindenCapsModule());
+                    builder.RegisterModule(new BasicPhysicsModule());
+                    builder.RegisterModule(new POSModule());
+                    builder.RegisterModule(new BulletSModule());
+                    builder.RegisterModule(new ubOdePhysicsModule());
+                    builder.RegisterModule(new MeshingModule());
+                    builder.RegisterModule(new ubOdePhysicsMeshingModule());
+                    builder.RegisterModule(new YEngineModule());
+                    builder.RegisterModule(new OpenSimSearchModule());
+                    builder.RegisterModule(new GroupsAddonModule());
+                    builder.RegisterModule(new GloebitModule());
                 });
 
             IHost host = builder.Build();
-
+            
             host.Run();
         }
     }

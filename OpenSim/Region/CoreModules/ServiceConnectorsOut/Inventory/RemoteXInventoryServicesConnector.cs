@@ -26,13 +26,9 @@
  */
 
 using log4net;
-using System;
-using System.Collections.Generic;
 using System.Reflection;
-using Mono.Addins;
 using Nini.Config;
 using OpenSim.Framework;
-using OpenSim.Framework.Monitoring;
 using OpenSim.Services.Connectors;
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;

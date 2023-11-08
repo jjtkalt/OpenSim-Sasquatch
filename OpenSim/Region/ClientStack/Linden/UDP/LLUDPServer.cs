@@ -42,7 +42,7 @@ using OpenSim.Framework.Monitoring;
 using OpenSim.Region.Framework.Scenes;
 using OpenSim.Region.Framework.Interfaces;
 using OpenMetaverse;
-using Mono.Addins;
+
 using TokenBucket = OpenSim.Region.ClientStack.LindenUDP.TokenBucket;
 
 

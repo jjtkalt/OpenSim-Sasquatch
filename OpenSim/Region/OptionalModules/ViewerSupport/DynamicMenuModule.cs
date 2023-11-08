@@ -25,11 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
 using System.Net;
 using System.Reflection;
-
-using System.Collections.Generic;
 using OpenMetaverse;
 using OpenMetaverse.StructuredData;
 using OpenSim.Region.Framework.Scenes;
@@ -38,7 +35,7 @@ using OpenSim.Framework;
 using OpenSim.Framework.Servers.HttpServer;
 using Nini.Config;
 using log4net;
-using Mono.Addins;
+
 using Caps = OpenSim.Framework.Capabilities.Caps;
 using OSDMap = OpenMetaverse.StructuredData.OSDMap;
 

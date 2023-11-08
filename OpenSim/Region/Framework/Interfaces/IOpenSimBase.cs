@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) Contributors, http://opensimulator.org/
  * See CONTRIBUTORS.TXT for a full list of copyright holders.
  *
@@ -25,43 +25,44 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+using Nini.Config;
 using OpenSim.Framework;
-using Mono.Addins;
+using OpenSim.Region.Framework.Interfaces;
+using OpenSim.Region.Framework.Scenes;
+using OpenSim.Services.Interfaces;
 
-namespace OpenSim
+namespace OpenSim.Region.Framework
 {
-    /// <summary>
-    /// OpenSimulator Application Plugin framework interface
-    /// </summary>
-    [TypeExtensionPoint(Path="/OpenSim/Startup", NodeName="Plugin")]
-    public interface IApplicationPlugin : IPlugin
+    public interface IOpenSimBase
     {
-        /// <summary>
-        /// Initialize the Plugin
-        /// </summary>
-        /// <param name="openSim">The Application instance</param>
-        void Initialise(OpenSimBase openSim);
+        IRegistryCore ApplicationRegistry { get; }
 
-        /// <summary>
-        /// Called when the application loading is completed
-        /// </summary>
-        void PostInitialise();
-    }
+        ConfigSettings ConfigurationSettings { get; set; }
+        bool EnableInitialPluginLoad { get; set; }
+        uint HttpServerPort { get; }
+        bool LoadEstateDataService { get; set; }
 
+        void CloseRegion(Scene scene);
+        void CloseRegion(string name);
+        bool CreateEstate(RegionInfo regInfo, Dictionary<string, EstateSettings> estatesByName, string estateName);
+        void CreateRegion(RegionInfo regionInfo, bool portadd_flag, bool do_post_init, out IScene mscene);
+        void CreateRegion(RegionInfo regionInfo, bool portadd_flag, out IScene scene);
+        void CreateRegion(RegionInfo regionInfo, out IScene scene);
+        void GetAvatarNumber(out int usernum);
+        void GetRegionNumber(out int regionnum);
+        void GetRunTime(out string starttime, out string uptime);
+        bool PopulateRegionEstateInfo(RegionInfo regInfo);
+        void RemoveRegion(Scene scene, bool cleanup);
+        void RemoveRegion(string name, bool cleanUp);
 
-    public class ApplicationPluginInitialiser : PluginInitialiserBase
-    {
-        private OpenSimBase server;
+        // From RegionApplicationBase
+        IEstateDataService EstateDataService { get; }
+        NetworkServersInfo NetServersInfo { get; }
+        SceneManager SceneManager { get; }
+        ISimulationDataService SimulationDataService { get; }
 
-        public ApplicationPluginInitialiser(OpenSimBase s)
-        {
-            server = s;
-        }
-
-        public override void Initialise(IPlugin plugin)
-        {
-            IApplicationPlugin p = plugin as IApplicationPlugin;
-            p.Initialise(server);
-        }
+        //From ServerBase
+        public string GetVersionText();
+        public void Shutdown();
     }
 }

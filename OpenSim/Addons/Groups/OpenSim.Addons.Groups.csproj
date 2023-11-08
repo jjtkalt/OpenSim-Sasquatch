@@ -7,8 +7,8 @@
     <Copyright>Copyright (c) OpenSimulator.org Developers</Copyright>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Autofac" Version="7.1.0" />
     <PackageReference Include="log4net" Version="2.0.15" />
-    <PackageReference Include="Mono.Addins" Version="1.4.1" />
     <PackageReference Include="RawScape.Nini" Version="1.0.0" />
   </ItemGroup>
   <ItemGroup>
@@ -36,6 +36,7 @@
     <ProjectReference Include="..\..\Server\Handlers\OpenSim.Server.Handlers.csproj" />
     <ProjectReference Include="..\..\Services\Base\OpenSim.Services.Base.csproj" />
     <ProjectReference Include="..\..\Services\Interfaces\OpenSim.Services.Interfaces.csproj" />
+    <ProjectReference Include="..\OfflineIM\OpenSim.Addons.OfflineIM.csproj" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\OpenSim.Addons.Groups.addin.xml" />

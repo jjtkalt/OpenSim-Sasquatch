@@ -26,9 +26,6 @@
  */
 
 using log4net;
-using Mono.Addins;
-using System;
-using System.Collections.Generic;
 using System.Reflection;
 using Nini.Config;
 using OpenMetaverse;

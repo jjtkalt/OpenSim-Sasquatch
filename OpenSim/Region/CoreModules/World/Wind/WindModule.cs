@@ -25,16 +25,16 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
+
 using System.Reflection;
 using log4net;
-using Mono.Addins;
+using Microsoft.Extensions.Logging;
 using Nini.Config;
 using OpenMetaverse;
 using OpenSim.Framework;
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace OpenSim.Region.CoreModules.World.Wind
 {
@@ -58,6 +58,13 @@ namespace OpenSim.Region.CoreModules.World.Wind
 
         // Simplified windSpeeds based on the fact that the client protocal tracks at a resolution of 16m
         private Vector2[] windSpeeds = new Vector2[16 * 16];
+
+        private readonly IServiceProvider _serviceProvider;
+
+        public WindModule(IServiceProvider serviceProvider)
+        {
+            this._serviceProvider = serviceProvider;
+        }
 
         #region INonSharedRegionModule Methods
 
@@ -94,11 +101,17 @@ namespace OpenSim.Region.CoreModules.World.Wind
 
             m_scene = scene;
             m_frame = 0;
-            // Register all the Wind Model Plug-ins
-            foreach (IWindModelPlugin windPlugin in AddinManager.GetExtensionObjects("/OpenSim/WindModule", false))
+
+            using (var scope = _serviceProvider.CreateScope())
             {
-                m_log.InfoFormat("[WIND] Found Plugin: {0}", windPlugin.Name);
-                m_availableWindPlugins.Add(windPlugin.Name, windPlugin);
+                m_log.InfoFormat($"[REGIONMODULES]: Initializing ISharedRegionModules");
+
+                var windPlugins = scope.ServiceProvider.GetServices<IWindModelPlugin>();
+                foreach (var windPlugin in windPlugins)
+                {
+                    m_log.InfoFormat($"[WIND] Found Plugin: {windPlugin.Name}");
+                    m_availableWindPlugins.Add(windPlugin.Name, windPlugin);
+                }
             }
 
             // Check for desired plugin

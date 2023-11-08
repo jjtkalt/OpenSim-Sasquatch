@@ -25,50 +25,24 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System.Reflection;
-using System.Threading;
-using log4net;
-using Nini.Config;
+using OpenSim.Framework;
 
-namespace OpenSim
+namespace OpenSim.Region.Framework
 {
     /// <summary>
-    /// Consoleless OpenSimulator region server
+    /// OpenSimulator Application Plugin framework interface
     /// </summary>
-    public class OpenSimBackground : OpenSim
+    public interface IApplicationPlugin : IPlugin
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
-        private ManualResetEvent WorldHasComeToAnEnd = new ManualResetEvent(false);
-
-        public OpenSimBackground(IConfigSource configSource) : base(configSource)
-        {
-        }
+        /// <summary>
+        /// Initialize the Plugin
+        /// </summary>
+        /// <param name="openSim">The Application instance</param>
+        void Initialise(IOpenSimBase openSim);
 
         /// <summary>
-        /// Performs initialisation of the scene, such as loading configuration from disk.
+        /// Called when the application loading is completed
         /// </summary>
-        public override void Startup()
-        {
-            m_gui = false;
-
-            base.Startup();
-
-            m_log.InfoFormat("[OPENSIM MAIN]: Startup complete, serving {0} region{1}",
-                             SceneManager.Scenes.Count, SceneManager.Scenes.Count > 1 ? "s" : "");
-
-            WorldHasComeToAnEnd.WaitOne();
-            WorldHasComeToAnEnd.Close();
-        }
-
-        /// <summary>
-        /// Performs any last-minute sanity checking and shuts down the region server
-        /// </summary>
-        public override void Shutdown()
-        {
-            WorldHasComeToAnEnd.Set();
-            m_log.Info("[OPENSIM MAIN]: World has come to an end");
-            base.Shutdown();
-        }
+        void PostInitialise();
     }
 }
