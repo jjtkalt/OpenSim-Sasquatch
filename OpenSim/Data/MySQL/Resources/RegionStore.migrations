@@ -553,3 +553,8 @@ COMMIT;
 :VERSION 64         #----- material overrides
 ALTER TABLE `primshapes` ADD COLUMN `MatOvrd` blob default NULL;
 COMMIT;
+
+:VERSION 65         #----- add linkset data storage column
+BEGIN;
+ALTER TABLE `prims` ADD COLUMN `linksetdata` MEDIUMTEXT default NULL;
+COMMIT;

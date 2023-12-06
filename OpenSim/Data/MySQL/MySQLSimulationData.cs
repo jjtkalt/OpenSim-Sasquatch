@@ -177,7 +177,8 @@ namespace OpenSim.Data.MySQL
                                     "AttachedPosY, AttachedPosZ, " +
                                     "PhysicsShapeType, Density, GravityModifier, " +
                                     "Friction, Restitution, Vehicle, PhysInertia, DynAttrs, " +
-                                    "RotationAxisLocks, sopanims, sitactrange, pseudocrc" + 
+                                    "RotationAxisLocks, sopanims, sitactrange, pseudocrc, " +
+                                    "linksetdata" +
                                     ") values (" + "?UUID, " +
                                     "?CreationDate, ?Name, ?Text, " +
                                     "?Description, ?SitName, ?TouchName, " +
@@ -212,7 +213,8 @@ namespace OpenSim.Data.MySQL
                                     "?AttachedPosY, ?AttachedPosZ, " +
                                     "?PhysicsShapeType, ?Density, ?GravityModifier, " +
                                     "?Friction, ?Restitution, ?Vehicle, ?PhysInertia, ?DynAttrs," +
-                                    "?RotationAxisLocks, ?sopanims, ?sitactrange, ?pseudocrc)";
+                                    "?RotationAxisLocks, ?sopanims, ?sitactrange, ?pseudocrc, " +
+                                    "?linksetdata)";
 
                             FillPrimCommand(cmd, prim, obj.UUID, regionUUID);
 
@@ -1196,6 +1198,11 @@ namespace OpenSim.Data.MySQL
             if(pseudocrc != 0)
                 prim.PseudoCRC = pseudocrc;
 
+            if (!(row["linksetdata"] is DBNull))
+            {
+                prim.DeserializeLinksetData((string)row["linksetdata"]);
+            }
+
             return prim;
         }
 
@@ -1616,6 +1623,15 @@ namespace OpenSim.Data.MySQL
 
             cmd.Parameters.AddWithValue("sitactrange", prim.SitActiveRange);
             cmd.Parameters.AddWithValue("pseudocrc", prim.PseudoCRC);
+
+            if (prim.LinksetData != null)
+            {
+                cmd.Parameters.AddWithValue("linksetdata", prim.SerializeLinksetData());
+            }
+            else 
+            {
+                cmd.Parameters.AddWithValue("linksetdata", null);
+            }           
         }
 
         /// <summary>
