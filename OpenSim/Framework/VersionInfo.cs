@@ -39,7 +39,7 @@ namespace OpenSim
     {
         public const string VersionNumber = "0.9.3.0";
         public const string AssemblyVersionNumber = "0.9.3.0";
-        public const string Release = "8740";
+        public const string Release = "8754";
 
         public const int VERSIONINFO_VERSION_LENGTH = 48;
 
