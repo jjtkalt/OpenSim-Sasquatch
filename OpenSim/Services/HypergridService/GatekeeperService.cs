@@ -147,7 +147,7 @@ namespace OpenSim.Services.HypergridService
 
                 if (simService is not null)
                     m_SimulationService = simService;
-                else if (!string.IsNullOrEmpty(simulationService))
+                else if (simulationService != string.Empty)
                         m_SimulationService = ServerUtils.LoadPlugin<ISimulationService>(simulationService, args);
 
                 string[] possibleAccessControlConfigSections = new string[] { "AccessControl", "GatekeeperService" };

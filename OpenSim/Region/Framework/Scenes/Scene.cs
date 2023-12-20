@@ -2597,8 +2597,7 @@ namespace OpenSim.Region.Framework.Scenes
 
 
             sceneObject.InvalidateDeepEffectivePerms();
-            sceneObject.ScheduleGroupForFullAnimUpdate();
-
+            sceneObject.ScheduleGroupForUpdate(PrimUpdateFlags.FullUpdatewithAnimMatOvr);
             return sceneObject;
         }
 
@@ -2793,9 +2792,11 @@ namespace OpenSim.Region.Framework.Scenes
             for(int i = 0; i < partList.Length; ++i)
             {
                 SceneObjectPart part = partList[i];
+                if (part is null)
+                    continue;
 
                 if (removeScripts)
-                    part.Inventory.SendReleaseScriptsControl();
+                    part.Inventory?.SendReleaseScriptsControl();
 
                 if (part.KeyframeMotion is not null)
                 {

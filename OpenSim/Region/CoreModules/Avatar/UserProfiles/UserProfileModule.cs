@@ -1491,6 +1491,113 @@ namespace OpenSim.Region.CoreModules.Avatar.UserProfiles
                 }
                 Monitor.Exit(m_asyncRequestsLock);
             }
+
+            /*
+            string serverURI = string.Empty;
+            bool foreign = GetUserProfileServerURI(avatarID, out serverURI);
+
+            UserAccount account = null;
+            Dictionary<string,object> userInfo;
+
+            if (!foreign)
+            {
+                account = Scene.UserAccountService.GetUserAccount(Scene.RegionInfo.ScopeID, avatarID);
+            }
+            else
+            {
+                userInfo = new Dictionary<string, object>();
+            }
+
+            Byte[] membershipType = new Byte[1];
+            string born = string.Empty;
+            uint flags = 0x00;
+
+            if (null != account)
+            {
+                if (account.UserTitle.Length == 0)
+                    membershipType[0] = (Byte)((account.UserFlags & 0xf00) >> 8);
+                else
+                    membershipType = Utils.StringToBytes(account.UserTitle);
+
+                born = Util.ToDateTime(account.Created).ToString(
+                                  "M/d/yyyy", CultureInfo.InvariantCulture);
+                flags = (uint)(account.UserFlags & 0xff);
+            }
+            else
+            {
+                if (GetUserAccountData(avatarID, out userInfo) == true)
+                {
+                    if ((string)userInfo["user_title"].Length == 0)
+                        membershipType[0] = (Byte)(((Byte)userInfo["user_flags"] & 0xf00) >> 8);
+                    else
+                        membershipType = Utils.StringToBytes((string)userInfo["user_title"]);
+
+                    int val_born = (int)userInfo["user_created"];
+                    if(val_born != 0)
+                        born = Util.ToDateTime(val_born).ToString(
+                                  "M/d/yyyy", CultureInfo.InvariantCulture);
+
+                    // picky, picky
+                    int val_flags = (int)userInfo["user_flags"];
+                    flags = (uint)(val_flags & 0xff);
+                }
+            }
+
+            props = new UserProfileProperties();
+            props.UserId = avatarID;
+
+            string result = string.Empty;
+            if(!GetProfileData(ref props, foreign, serverURI, out result))
+            {
+                props.AboutText ="Profile not available at this time. User may still be unknown to this grid";
+            }
+
+            if(!m_allowUserProfileWebURLs)
+                props.WebUrl ="";
+
+            HashSet<IClientAPI> clients;
+            lock(m_profilesCache)
+            {
+                if(!m_profilesCache.TryGetValue(props.UserId, out uce) || uce == null)
+                    uce = new UserProfileCacheEntry();
+                uce.props = props;
+                uce.born = born;
+                uce.membershipType = membershipType;
+                uce.flags = flags;
+                clients = uce.ClientsWaitingProps;
+                uce.ClientsWaitingProps = null;
+                m_profilesCache.AddOrUpdate(props.UserId, uce, PROFILECACHEEXPIRE);
+            }
+
+            // if on same region force online
+            if(p != null && !p.IsDeleted)
+                flags |= 0x10;
+
+            if(clients == null)
+            {
+                remoteClient.SendAvatarProperties(props.UserId, props.AboutText, born, membershipType , props.FirstLifeText, flags,
+                                              props.FirstLifeImageId, props.ImageId, props.WebUrl, props.PartnerId);
+
+                remoteClient.SendAvatarInterestsReply(props.UserId, (uint)props.WantToMask, props.WantToText,
+                                             (uint)props.SkillsMask, props.SkillsText, props.Language);
+            }
+            else
+            {
+                if(!clients.Contains(remoteClient))
+                    clients.Add(remoteClient);
+                foreach(IClientAPI cli in clients)
+                {
+                    if(!cli.IsActive)
+                        continue;
+                    cli.SendAvatarProperties(props.UserId, props.AboutText, born, membershipType , props.FirstLifeText, flags,
+                                              props.FirstLifeImageId, props.ImageId, props.WebUrl, props.PartnerId);
+
+                    cli.SendAvatarInterestsReply(props.UserId, (uint)props.WantToMask, props.WantToText,
+                                             (uint)props.SkillsMask, props.SkillsText, props.Language);
+
+                }
+            }
+            */
         }
 
         /// <summary>

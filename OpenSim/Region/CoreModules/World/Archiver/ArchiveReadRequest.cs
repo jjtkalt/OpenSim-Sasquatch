@@ -1053,9 +1053,8 @@ namespace OpenSim.Region.CoreModules.World.Archiver
                 Data = data
             };
 
-            //m_assetService.Store(asset);
-            //return true; // not right
-            return !string.IsNullOrEmpty(m_assetService.Store(asset));
+            m_assetService.Store(asset);
+            return true; // not right
         }
 
         /// <summary>

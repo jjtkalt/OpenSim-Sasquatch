@@ -928,26 +928,21 @@ namespace OpenSim.Region.OptionalModules.Materials
                     else
                         overridedata = string.Empty;
 
+                    bool changed = false;
                     if (map.TryGetValue("asset_id", out tmp))
                     {
                         UUID assetID = tmp.AsUUID();
                         if (assetID.IsNotZero())
                         {
-                            if (pbs.RenderMaterials is null)
-                            {
-                                var entries = new Primitive.RenderMaterials.RenderMaterialEntry[1];
-                                entries[0].te_index = (byte)side;
-                                entries[0].id = assetID;
-                                pbs.RenderMaterials = new Primitive.RenderMaterials { entries = entries };
-                            }
-                            else
-                            {
+                            pbs.RenderMaterials ??= new Primitive.RenderMaterials();
+
                                 if (pbs.RenderMaterials.entries is null)
                                 {
                                     var entries = new Primitive.RenderMaterials.RenderMaterialEntry[1];
                                     entries[0].te_index = (byte)side;
                                     entries[0].id = assetID;
                                     pbs.RenderMaterials.entries = entries;
+                                changed = true;
                                 }
                                 else
                                 {
@@ -956,7 +951,11 @@ namespace OpenSim.Region.OptionalModules.Materials
                                     {
                                         if (pbs.RenderMaterials.entries[indx].te_index == side)
                                         {
+                                        if(pbs.RenderMaterials.entries[indx].id .NotEqual(assetID))
+                                        {
                                             pbs.RenderMaterials.entries[indx].id = assetID;
+                                            changed = true;
+                                        }
                                             break;
                                         }
                                         indx++;
@@ -966,23 +965,26 @@ namespace OpenSim.Region.OptionalModules.Materials
                                         Array.Resize(ref pbs.RenderMaterials.entries, indx + 1);
                                         pbs.RenderMaterials.entries[indx].te_index = (byte)side;
                                         pbs.RenderMaterials.entries[indx].id = assetID;
-                                    }
+                                    changed = true;
                                 }
                             }
                             if (string.IsNullOrEmpty(overridedata))
-                                RemoveMaterialOverride(ref pbs.RenderMaterials.overrides, side);
+                                changed |= RemoveMaterialOverride(ref pbs.RenderMaterials.overrides, side);
                             else
-                                AddMaterialOverride(ref pbs.RenderMaterials.overrides, overridedata, side);
+                                changed |= AddMaterialOverride(ref pbs.RenderMaterials.overrides, overridedata, side);
 
+                            if(changed)
                             changedSOPs.Add(sop);
                         }
                         else if(pbs.RenderMaterials is not null)
                         {
-                            bool changed = RemoveMaterialEntry(ref pbs.RenderMaterials.entries, side);
+                            changed = RemoveMaterialEntry(ref pbs.RenderMaterials.entries, side);
                             changed |= RemoveMaterialOverride(ref pbs.RenderMaterials.overrides, side);
 
-                            if(pbs.RenderMaterials.entries is null && pbs.RenderMaterials.overrides is null)
-                                pbs.RenderMaterials = null;
+                            //if(pbs.RenderMaterials.entries is null && pbs.RenderMaterials.overrides is null)
+                            //    pbs.RenderMaterials = null;
+                            // keep not null so viewer caches can be updated
+
                             if(changed)
                                 changedSOPs.Add(sop);
                         }
@@ -991,7 +993,8 @@ namespace OpenSim.Region.OptionalModules.Materials
                     {
                         if (string.IsNullOrEmpty(overridedata))
                         {
-
+                            if (RemoveMaterialOverride(ref pbs.RenderMaterials.overrides, side))
+                                changedSOPs.Add(sop);
                         }
                         else
                         {
@@ -1003,7 +1006,7 @@ namespace OpenSim.Region.OptionalModules.Materials
                 foreach (SceneObjectPart sop in changedSOPs)
                 {
                     sop.ParentGroup.HasGroupChanged = true;
-                    sop.ScheduleFullUpdate();
+                    sop.ScheduleUpdate(PrimUpdateFlags.MaterialOvr | PrimUpdateFlags.FullUpdate);
                 }
 
                 httpResponse.RawBuffer = XMLkeyMaterialSucess;
@@ -1051,8 +1054,7 @@ namespace OpenSim.Region.OptionalModules.Materials
                 return false;
 
             int indx = 0;
-            while(overrides[indx].te_index != side && indx < overrides.Length)
-                indx++;
+            while( overrides[indx].te_index != side && ++indx < overrides.Length);
 
             if (indx >= overrides.Length)
                 return false;
@@ -1074,6 +1076,316 @@ namespace OpenSim.Region.OptionalModules.Materials
         
         private static bool AddMaterialOverride(ref RenderMaterials.RenderMaterialOverrideEntry[] overrides, string data, int side)
         {
+            OSD tst;
+            try
+            {
+                tst = OSDParser.DeserializeJson(data);
+                if(tst is not OSDMap mainArr)
+                    return false;
+ 
+                OSD tmposd;
+ 
+                if (!mainArr.TryGetValue("materials", out tmposd) || 
+                        tmposd is not OSDArray materialsArray || 
+                        materialsArray.Count < 1 || 
+                        materialsArray[0] is not OSDMap material)
+                    return false;
+
+                UUID[] texturesURIs = null;
+                if (mainArr.TryGetValue("images", out tmposd) && tmposd is OSDArray imagesArray && imagesArray.Count > 0 && imagesArray.Count < 16)
+                {
+                    Span<UUID> imageURIs = stackalloc UUID[imagesArray.Count];
+                    for (int i = 0; i < imagesArray.Count; i++)
+                    {
+                        if (imagesArray[i] is OSDMap tmpim && tmpim.TryGetValue("uri", out OSD tmpimuri) && tmpimuri is OSDString tmpimuristr)
+                        {
+                            if(UUID.TryParse(tmpimuristr.value, out UUID tmpid))
+                                imageURIs[i] = tmpid;
+                        }
+                    }
+
+                    if (mainArr.TryGetValue("textures", out tmposd) && tmposd is OSDArray texturesArray && texturesArray.Count > 0 && texturesArray.Count < 16)
+                    {
+                        texturesURIs = new UUID[texturesArray.Count];
+                        for (int i = 0; i < texturesArray.Count; i++)
+                        {
+                            if (texturesArray[i] is OSDMap tmptm && tmptm.TryGetValue("source", out OSD tmptmsrc) && tmptmsrc is OSDInteger tmptmsrci)
+                            {
+                                int v = tmptmsrci.value;
+                                if( v < imageURIs.Length)
+                                    texturesURIs[i] = imageURIs[v];
+                            }
+                        }
+                    }
+                 }
+
+                bool hasTexURIS = texturesURIs is not null;
+
+                OSDMap outosd = new();
+                OSDArray ti = new OSDArray(4);
+
+                bool texturesChanged = false;
+                Span<UUID> textureIDs = stackalloc UUID[4];
+                Span<bool> textureIDchanged = stackalloc bool[4];
+
+                if (material.TryGetValue("pbrMetallicRoughness", out tmposd) && tmposd is OSDMap pmrMap && pmrMap.Count > 0)
+                {
+                    if (pmrMap.TryGetValue("baseColorTexture", out tmposd) && tmposd is OSDMap pmrMapbct && pmrMapbct.Count > 0)
+                    {
+                        if (hasTexURIS && pmrMapbct.TryGetValue("index", out tmposd) && tmposd is OSDInteger pmrMapbcti)
+                        {
+                            int v = pmrMapbcti.value;
+                            if (v < texturesURIs.Length)
+                            {
+                                textureIDs[0] = texturesURIs[v];
+                                textureIDchanged[0] = true;
+                                texturesChanged = true;
+                            }
+                        }
+                        if (pmrMapbct.TryGetValue("extensions", out tmposd) && tmposd is OSDMap bcext)
+                        {
+                            if (bcext.TryGetValue("KHR_texture_transform", out tmposd) && tmposd is OSDMap bctr)
+                            {
+                                OSDMap tmpmap = new OSDMap();
+                                if (bctr.TryGetValue("offset", out tmposd) && tmposd is OSDArray bcoffset)
+                                {
+                                    tmpmap["o"] = bcoffset;
+                                }
+                                if (bctr.TryGetValue("rotation", out tmposd) && tmposd is OSDReal bcrotation)
+                                {
+                                    tmpmap["r"] = bcrotation;
+                                }
+                                if (bctr.TryGetValue("scale", out tmposd) && tmposd is OSDArray bcscale)
+                                {
+                                    tmpmap["s"] = bcscale;
+                                }
+                                ti.Add(tmpmap);
+                            }
+                        }
+                    }
+                    if (pmrMap.TryGetValue("metallicRoughnessTexture", out tmposd) && tmposd is OSDMap pmrMapmrt && pmrMapmrt.Count > 0)
+                    {
+                        if (hasTexURIS && pmrMapmrt.TryGetValue("index", out tmposd) && tmposd is OSDInteger pmrMapbcti)
+                        {
+                            int v = pmrMapbcti.value;
+                            if (v < texturesURIs.Length)
+                            {
+                                textureIDs[2] = texturesURIs[v];
+                                textureIDchanged[2] = true;
+                                texturesChanged = true;
+                            }
+                        }
+                        if (pmrMapmrt.TryGetValue("extensions", out tmposd) && tmposd is OSDMap bcext)
+                        {
+                            if (bcext.TryGetValue("KHR_texture_transform", out tmposd) && tmposd is OSDMap bctr)
+                            {
+                                OSDMap tmpmap = new OSDMap();
+                                if (bctr.TryGetValue("offset", out tmposd) && tmposd is OSDArray bcoffset)
+                                {
+                                    tmpmap["o"] = bcoffset;
+                                }
+                                if (bctr.TryGetValue("rotation", out tmposd) && tmposd is OSDReal bcrotation)
+                                {
+                                    tmpmap["r"] = bcrotation;
+                                }
+                                if (bctr.TryGetValue("scale", out tmposd) && tmposd is OSDArray bcscale)
+                                {
+                                    tmpmap["s"] = bcscale;
+                                }
+                                while(ti.Count < 2)
+                                    ti.Add(new OSD());
+                                ti.Add(tmpmap);
+                            }
+                        }
+                    }
+                    if (pmrMap.TryGetValue("baseColorFactor", out tmposd) && tmposd is OSDArray baseColorFactor)
+                    {
+                        outosd["bc"] = baseColorFactor;
+                    }
+                    if (pmrMap.TryGetValue("metallicFactor", out tmposd) && tmposd is OSDReal metallicFactor)
+                    {
+                        outosd["mf"] = metallicFactor;
+                    }
+                    if (pmrMap.TryGetValue("roughnessFactor", out tmposd) && tmposd is OSDReal roughnessFactor)
+                    {
+                        outosd["rf"] = roughnessFactor;
+                    }
+                }
+
+                if (material.TryGetValue("normalTexture", out tmposd) && tmposd is OSDMap ntMap && ntMap.Count > 0)
+                {
+                    if (hasTexURIS && ntMap.TryGetValue("index", out tmposd) && tmposd is OSDInteger ntMapi)
+                    {
+                        int v = ntMapi.value;
+                        if (v < texturesURIs.Length)
+                        {
+                            textureIDs[1] = texturesURIs[v];
+                            textureIDchanged[1] = true;
+                            texturesChanged = true;
+                        }
+                    }
+                    if (ntMap.TryGetValue("extensions", out tmposd) && tmposd is OSDMap bcext)
+                    {
+                        if (bcext.TryGetValue("KHR_texture_transform", out tmposd) && tmposd is OSDMap bctr)
+                        {
+                            OSDMap tmpmap = new OSDMap();
+                            if (bctr.TryGetValue("offset", out tmposd) && tmposd is OSDArray bcoffset)
+                            {
+                                tmpmap["o"] = bcoffset;
+                            }
+                            if (bctr.TryGetValue("rotation", out tmposd) && tmposd is OSDReal bcrotation)
+                            {
+                                tmpmap["r"] = bcrotation;
+                            }
+                            if (bctr.TryGetValue("scale", out tmposd) && tmposd is OSDArray bcscale)
+                            {
+                                tmpmap["s"] = bcscale;
+                            }
+                            if (ti.Count < 2)
+                            {
+                                if (ti.Count == 0)
+                                    ti.Add(new OSD());
+                                ti.Add(tmpmap);
+                            }
+                            else
+                                ti[1] = tmpmap;
+                        }
+                    }
+                }
+
+                if (material.TryGetValue("occlusionTexture", out tmposd) && tmposd is OSDMap otMap && otMap.Count > 0)
+                {
+                    if (hasTexURIS && otMap.TryGetValue("index", out tmposd) && tmposd is OSDInteger otMapi)
+                    {
+                        int v = otMapi.value;
+                        if (v < texturesURIs.Length)
+                        {
+                            textureIDs[2] = texturesURIs[v];
+                            textureIDchanged[2] = true;
+                            texturesChanged = true;
+                        }
+                    }
+                    if (otMap.TryGetValue("extensions", out tmposd) && tmposd is OSDMap bcext)
+                    {
+                        if (bcext.TryGetValue("KHR_texture_transform", out tmposd) && tmposd is OSDMap bctr)
+                        {
+                            OSDMap tmpmap = new OSDMap();
+                            if (bctr.TryGetValue("offset", out tmposd) && tmposd is OSDArray bcoffset)
+                            {
+                                tmpmap["o"] = bcoffset;
+                            }
+                            if (bctr.TryGetValue("rotation", out tmposd) && tmposd is OSDReal bcrotation)
+                            {
+                                tmpmap["r"] = bcrotation;
+                            }
+                            if (bctr.TryGetValue("scale", out tmposd) && tmposd is OSDArray bcscale)
+                            {
+                                tmpmap["s"] = bcscale;
+                            }
+                            if (ti.Count > 2)
+                                ti[2] = tmpmap;
+                            else
+                            {
+                                while (ti.Count < 2)
+                                    ti.Add(new OSD());
+                                ti.Add(tmpmap);
+                            }
+                        }
+                    }
+                }
+
+                if (material.TryGetValue("emissiveTexture", out tmposd) && tmposd is OSDMap etMap && etMap.Count > 0)
+                {
+                    if (hasTexURIS && etMap.TryGetValue("index", out tmposd) && tmposd is OSDInteger etMapi)
+                    {
+                        int v = etMapi.value;
+                        if (v < texturesURIs.Length)
+                        {
+                            textureIDs[3] = texturesURIs[v];
+                            textureIDchanged[3] = true;
+                            texturesChanged = true;
+                        }
+                    }
+                    if (etMap.TryGetValue("extensions", out tmposd) && tmposd is OSDMap bcext)
+                    {
+                        if (bcext.TryGetValue("KHR_texture_transform", out tmposd) && tmposd is OSDMap bctr)
+                        {
+                            OSDMap tmpmap = new OSDMap();
+                            if (bctr.TryGetValue("offset", out tmposd) && tmposd is OSDArray bcoffset)
+                            {
+                                tmpmap["o"] = bcoffset;
+                            }
+                            if (bctr.TryGetValue("rotation", out tmposd) && tmposd is OSDReal bcrotation)
+                            {
+                                tmpmap["r"] = bcrotation;
+                            }
+                            if (bctr.TryGetValue("scale", out tmposd) && tmposd is OSDArray bcscale)
+                            {
+                                tmpmap["s"] = bcscale;
+                            }
+                            if (ti.Count > 3)
+                                ti[3] = tmpmap;
+                            else
+                            {
+                                while (ti.Count < 3)
+                                    ti.Add(new OSD());
+                                ti.Add(tmpmap);
+                            }
+                        }
+                    }
+                }
+
+                if (material.TryGetValue("alphaMode", out tmposd) && tmposd is OSDString aMode)
+                {
+                    outosd["am"] = aMode.value switch
+                    {
+                        "BLEND" => 1,
+                        "MASK"  => 2,
+                        _ => 0
+                    };
+                }
+
+                if (material.TryGetValue("alphaCutoff", out tmposd) && tmposd is OSDReal alphaCutoff)
+                {
+                    outosd["ac"] = alphaCutoff;
+                }
+
+                if (material.TryGetValue("emissiveFactor", out tmposd) && tmposd is OSDArray emissiveFactor)
+                {
+                    outosd["ec"] = emissiveFactor;
+                }
+                if (material.TryGetValue("doubleSided", out tmposd) && tmposd is OSDBoolean doubleSided)
+                {
+                    outosd["ds"] = doubleSided;
+                }
+
+                if (texturesChanged)
+                {
+                    OSDArray tex = new(textureIDs.Length);
+                    for(int i = 0; i < textureIDs.Length; i++)
+                    {
+                        if (textureIDchanged[i])
+                            tex.Add(textureIDs[i]);
+                        else
+                            tex.Add(new OSD());
+                    }
+                    outosd["tex"] = tex;
+                }
+
+                if(ti.Count > 0)
+                    outosd["ti"] = ti;
+
+                if (outosd.Count == 0)
+                    return false;
+
+                data = OSDParser.SerializeLLSDNotation(outosd);
+
+            }
+            catch
+            {
+                return false;
+            }
+
             if (overrides is null)
             {
                 var entries = new RenderMaterials.RenderMaterialOverrideEntry[1];
@@ -1088,22 +1400,20 @@ namespace OpenSim.Region.OptionalModules.Materials
             {
                 if (overrides[indx].te_index == side)
                 {
-                    overrides[indx].data = data;
-                    return true;
-                }
-                indx++;
-            }
-            if (indx == overrides.Length)
-            {
-                Array.Resize(ref overrides, indx + 1);
-                overrides[indx].te_index = (byte)side;
                 if(overrides[indx].data != data)
                 {
                     overrides[indx].data = data;
                     return true;
                 }
-            }
             return false;
+        }
+                indx++;
+            }
+
+            Array.Resize(ref overrides, indx + 1);
+            overrides[indx].te_index = (byte)side;
+            overrides[indx].data = data;
+            return true;
         }
     }
 }

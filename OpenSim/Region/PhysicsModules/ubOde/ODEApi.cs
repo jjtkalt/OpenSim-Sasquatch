@@ -249,6 +249,7 @@ namespace OpenSim.Region.PhysicsModule.ubOde
         [StructLayout(LayoutKind.Sequential)]
         internal struct ContactGeom
         {
+
             internal Vector3 pos;
             internal Vector3 normal;
             internal dReal depth;
@@ -268,6 +269,7 @@ namespace OpenSim.Region.PhysicsModule.ubOde
             internal Vector3 f2;
             internal Vector3 t2;
         }
+
 
         [StructLayout(LayoutKind.Sequential)]
         internal struct Mass
