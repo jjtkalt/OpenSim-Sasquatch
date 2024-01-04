@@ -23,7 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Data\OpenSim.Data.csproj" />
     <ProjectReference Include="..\OpenSim.Framework.csproj" />
-    <ProjectReference Include="..\Console\OpenSim.Framework.Console.csproj" />
+    <ProjectReference Include="..\..\..\Source\OpenSim.Framework.Console\OpenSim.Framework.Console.csproj" />
     <ProjectReference Include="..\Monitoring\OpenSim.Framework.Monitoring.csproj" />
     <ProjectReference Include="..\Servers\HttpServer\OpenSim.Framework.Servers.HttpServer.csproj" />
   </ItemGroup>
@@ -101,6 +101,9 @@
   <ItemGroup>
     <PackageReference Include="Autofac" Version="7.1.0" />
     <PackageReference Include="log4net" Version="2.0.15" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Ini" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.4" />
     <PackageReference Include="RawScape.Nini" Version="1.0.0" />
   </ItemGroup>
 </Project>

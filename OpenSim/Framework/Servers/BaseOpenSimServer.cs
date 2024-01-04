@@ -48,7 +48,7 @@ namespace OpenSim.Framework.Servers
     /// <summary>
     /// Common base for the main OpenSimServers (user, grid, inventory, region, etc)
     /// </summary>
-    public abstract class BaseOpenSimServer : ServerBase
+    public class BaseOpenSimServer : ServerBase
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -74,6 +74,7 @@ namespace OpenSim.Framework.Servers
         public BaseHttpServer HttpServer
         {
             get { return m_httpServer; }
+            set { m_httpServer = value; }
         }
 
         public BaseOpenSimServer() : base()
@@ -102,6 +103,7 @@ namespace OpenSim.Framework.Servers
 
             return false;
         }
+
         /// <summary>
         /// Must be overriden by child classes for their own server specific startup behaviour.
         /// </summary>
@@ -179,7 +181,7 @@ namespace OpenSim.Framework.Servers
         {
             m_log.Info("[STARTUP]: Beginning startup processing");
 
-            m_log.Info("[STARTUP]: version: " + m_version);
+            m_log.Info("[STARTUP]: version: " + Version);
             m_log.InfoFormat("[STARTUP]: Operating system version: {0}, .NET platform {1}, Runtime {2}",
                     Environment.OSVersion, Util.RuntimePlatformStr, Environment.Version.ToString());
             m_log.InfoFormat("[STARTUP]: Processor Architecture: {0}({1} {2}bit)",
@@ -209,11 +211,11 @@ namespace OpenSim.Framework.Servers
             // If we catch a request for "callback", wrap the response in the value for jsonp
             if (httpRequest.QueryAsDictionary.TryGetValue("callback", out string cb) && ! string.IsNullOrEmpty(cb))
             {
-                return cb + "(" + StatsManager.SimExtraStats.XReport((DateTime.Now - m_startuptime).ToString() , m_version, id) + ");";
+                return cb + "(" + StatsManager.SimExtraStats.XReport((DateTime.Now - m_startuptime).ToString() , Version, id) + ");";
             }
             else
             {
-                return StatsManager.SimExtraStats.XReport((DateTime.Now - m_startuptime).ToString() , m_version, id);
+                return StatsManager.SimExtraStats.XReport((DateTime.Now - m_startuptime).ToString() , Version, id);
             }
         }
     }

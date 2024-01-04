@@ -22,7 +22,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\Framework\OpenSim.Framework.csproj" />
-    <ProjectReference Include="..\..\..\Framework\Console\OpenSim.Framework.Console.csproj" />
+    <ProjectReference Include="..\..\..\..\Source\OpenSim.Framework.Console\OpenSim.Framework.Console.csproj" />
     <ProjectReference Include="..\..\..\Framework\Monitoring\OpenSim.Framework.Monitoring.csproj" />
     <ProjectReference Include="..\..\Framework\OpenSim.Region.Framework.csproj" />
     <ProjectReference Include="..\Meshing\OpenSim.Region.PhysicsModule.Meshing.csproj" />

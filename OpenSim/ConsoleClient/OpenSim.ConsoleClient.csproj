@@ -19,10 +19,10 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Framework\OpenSim.Framework.csproj" />
-    <ProjectReference Include="..\Framework\Console\OpenSim.Framework.Console.csproj" />
     <ProjectReference Include="..\Framework\Servers\OpenSim.Framework.Servers.csproj" />
     <ProjectReference Include="..\Framework\Servers\HttpServer\OpenSim.Framework.Servers.HttpServer.csproj" />
     <ProjectReference Include="..\Server\Base\OpenSim.Server.Base.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Framework.Console\OpenSim.Framework.Console.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Properties\AssemblyInfo.cs" />

@@ -33,17 +33,6 @@
     <ProjectReference Include="..\..\ThirdParty\SmartThreadPool\SmartThreadPool.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Remove="Console\CommandConsole.cs" />
-    <Compile Remove="Console\ConsoleBase.cs" />
-    <Compile Remove="Console\ConsoleDisplayList.cs" />
-    <Compile Remove="Console\ConsoleDisplayTable.cs" />
-    <Compile Remove="Console\ConsoleDisplayUtil.cs" />
-    <Compile Remove="Console\ConsolePluginCommand.cs" />
-    <Compile Remove="Console\ConsoleUtil.cs" />
-    <Compile Remove="Console\LocalConsole.cs" />
-    <Compile Remove="Console\MockConsole.cs" />
-    <Compile Remove="Console\OpenSimAppender.cs" />
-    <Compile Remove="Console\RemoteConsole.cs" />
     <Compile Remove="Monitoring\AssetStatsCollector.cs" />
     <Compile Remove="Monitoring\BaseStatsCollector.cs" />
     <Compile Remove="Monitoring\ChecksManager.cs" />
@@ -149,6 +138,7 @@
   <ItemGroup>
     <PackageReference Include="Autofac" Version="7.1.0" />
     <PackageReference Include="log4net" Version="2.0.15" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="6.0.0" />
     <PackageReference Include="RawScape.Nini" Version="1.0.0" />
     <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
   </ItemGroup>

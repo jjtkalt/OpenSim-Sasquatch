@@ -141,13 +141,13 @@ namespace OpenSim.Server.Base
             if (consoleType == "basic")
                 MainConsole.Instance = new CommandConsole(prompt);
             else if (consoleType == "rest")
-                MainConsole.Instance = new RemoteConsole(prompt);
+                MainConsole.Instance = new RemoteConsole(null, prompt);     // XXX
             else if (consoleType == "mock")
                 MainConsole.Instance = new MockConsole();
             else if (consoleType == "local")
-                MainConsole.Instance = new LocalConsole(prompt, startupConfig);
+                MainConsole.Instance = new LocalConsole(null, null, prompt);    // XXX
 
-            MainConsole.Instance.ReadConfig(Config);
+            MainConsole.Instance.ReadConfig(/*Config*/);                        // XXX
             m_console = MainConsole.Instance;
 
             if (!string.IsNullOrEmpty(logConfig))
@@ -291,7 +291,7 @@ namespace OpenSim.Server.Base
                             // If the include path contains no wildcards, then warn the user that it wasn't found.
                             if (wildcardIndex == -1 && paths.Length == 0)
                             {
-                                Console.WriteLine("[CONFIG]: Could not find include file {0}", path);
+                                Console.Output($"[CONFIG]: Could not find include file {path}\n");
                             }
                             else
                             {

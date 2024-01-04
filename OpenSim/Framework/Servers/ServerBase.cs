@@ -52,9 +52,16 @@ namespace OpenSim.Framework.Servers
         public IConfigSource Config { get; protected set; }
 
         /// <summary>
+        /// Server version information.  Usually VersionInfo + information about git commit, operating system, etc.
+        /// </summary>
+        private string m_version;
+        public string Version { get => m_version; set => m_version = value; }
+
+        /// <summary>
         /// Console to be used for any command line output.  Can be null, in which case there should be no output.
         /// </summary>
         protected ICommandConsole m_console;
+        public ICommandConsole Console { get => m_console; set => m_console = value; }
 
         protected OpenSimAppender m_consoleAppender;
         protected FileAppender m_logFileAppender;
@@ -67,15 +74,10 @@ namespace OpenSim.Framework.Servers
 
         protected ServerStatsCollector m_serverStatsCollector;
 
-        /// <summary>
-        /// Server version information.  Usually VersionInfo + information about git commit, operating system, etc.
-        /// </summary>
-        protected string m_version;
-
         public ServerBase()
         {
             m_startuptime = DateTime.Now;
-            m_version = VersionInfo.Version;
+            Version = VersionInfo.Version;
             EnhanceVersionInformation();
         }
 
@@ -133,7 +135,7 @@ namespace OpenSim.Framework.Servers
             // XmlConfigurator calls first accross servers.
             m_log.InfoFormat("[SERVER BASE]: Starting in {0}", m_startupDirectory);
 
-            m_log.InfoFormat("[SERVER BASE]: OpenSimulator version: {0}", m_version);
+            m_log.InfoFormat("[SERVER BASE]: OpenSimulator version: {0}", Version);
 
             // clr version potentially is more confusing than helpful, since it doesn't tell us if we're running under Mono/MS .NET and
             // the clr version number doesn't match the project version number under Mono.
@@ -768,7 +770,7 @@ namespace OpenSim.Framework.Servers
                 using (StreamReader CommitFile = File.OpenText(manualVersionFileName))
                     buildVersion = CommitFile.ReadLine();
 
-                m_version += buildVersion ?? "";
+                Version += buildVersion ?? "";
             }
             else if (File.Exists(gitRefPointerPath))
             {
@@ -796,7 +798,7 @@ namespace OpenSim.Framework.Servers
                         using (StreamReader refFile = File.OpenText(gitRefPath))
                         {
                             string gitHash = refFile.ReadLine();
-                            m_version += gitHash.Substring(0, 7);
+                            Version += gitHash.Substring(0, 7);
                         }
                     }
                 }
@@ -806,7 +808,7 @@ namespace OpenSim.Framework.Servers
         public string GetVersionText()
         {
             return String.Format("Version: {0} (SIMULATION/{1} - SIMULATION/{2})",
-                m_version, VersionInfo.SimulationServiceVersionSupportedMin, VersionInfo.SimulationServiceVersionSupportedMax);
+                Version, VersionInfo.SimulationServiceVersionSupportedMin, VersionInfo.SimulationServiceVersionSupportedMax);
         }
 
         /// <summary>

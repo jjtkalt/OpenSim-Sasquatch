@@ -29,7 +29,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\OpenSim\Data\OpenSim.Data.csproj" />
     <ProjectReference Include="..\..\..\OpenSim\Framework\OpenSim.Framework.csproj" />
-    <ProjectReference Include="..\..\..\OpenSim\Framework\Console\OpenSim.Framework.Console.csproj" />
+    <ProjectReference Include="..\..\..\Source\OpenSim.Framework.Console\OpenSim.Framework.Console.csproj" />
     <ProjectReference Include="..\..\..\OpenSim\Framework\Servers\OpenSim.Framework.Servers.csproj" />
     <ProjectReference Include="..\..\..\OpenSim\Framework\Servers\HttpServer\OpenSim.Framework.Servers.HttpServer.csproj" />
     <ProjectReference Include="..\..\..\OpenSim\Region\Framework\OpenSim.Region.Framework.csproj" />
