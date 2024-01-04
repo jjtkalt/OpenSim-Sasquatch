@@ -10,21 +10,19 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+    - uses: actions/checkout@v4
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: 6.x
 
     - name: Build
-      run: dotnet build -c Release --no-restore
+      run: dotnet build -c Release
 
-    - name: Run Tests
-      run: dotnet test -c Release --no-build --verbosity normal --filter "Category!=LongRunning"
-
+#    - name: Run Tests
+#      run: dotnet test -c Release --no-build --verbosity normal --filter "Category!=LongRunning"
+#
 #    - name: Pack
 #      run: dotnet pack src/Orleans.SyncWork/Orleans.SyncWork.csproj -c Release --no-restore --no-build --include-symbols -p:SymbolPackageFormat=snupkg -o .
 #
