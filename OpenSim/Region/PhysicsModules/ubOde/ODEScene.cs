@@ -857,7 +857,7 @@ namespace OpenSim.Region.PhysicsModule.ubOde
                 Collision_accounting_events(p1, p2, ref maxDepthContact);
             }
         }
-        
+
         private void CharPrimNearCallback(IntPtr space, IntPtr g1, IntPtr g2)
         {
             //  no lock here!  It's invoked from within Simulate(), which is thread-locked
@@ -965,12 +965,12 @@ namespace OpenSim.Region.PhysicsModule.ubOde
             {
                 ref UBOdeNative.ContactGeom curctc = ref m_contacts[i];
                 useAltcontact = false;
-
+                 
                 if ((((OdeCharacter)p1).Collide(g2, false, ref curctc, ref altWorkContact, ref useAltcontact, ref FeetCollision)))
                 {
                     if(p2.rootVelocity.LengthSquared() > 0.0f)
                         p2.CollidingObj = true;
-
+ 
                     Joint = useAltcontact ?
                                 CreateContacJoint(ref altWorkContact, false) :
                                 CreateContacJoint(ref curctc, false);
@@ -1144,13 +1144,13 @@ namespace OpenSim.Region.PhysicsModule.ubOde
                                         OdeCharacter chr2 = charsSpan[j];
                                         if (chr2.Colliderfilter < -1)
                                             continue;
-                                    
+
                                         if(Mx < chr2._AABB2D.minx ||
                                            mx > chr2._AABB2D.maxx ||
                                            My < chr2._AABB2D.miny ||
                                            my > chr2._AABB2D.maxy)
                                             continue;
-
+ 
                                         CollideCharChar(chr, chr2);
                                     }
                                 }
@@ -1549,16 +1549,6 @@ namespace OpenSim.Region.PhysicsModule.ubOde
             ChangesQueue.Enqueue(item);
         }
 
-        /// <summary>
-        /// Called after our prim properties are set Scale, position etc.
-        /// We use this event queue like method to keep changes to the physical scene occuring in the threadlocked mutex
-        /// This assures us that we have no race conditions
-        /// </summary>
-        /// <param name="prim"></param>
-        public override void AddPhysicsActorTaint(PhysicsActor prim)
-        {
-        }
-
         // does all pending changes generated during region load process
         public override void ProcessPreSimulation()
         {
@@ -1791,18 +1781,18 @@ namespace OpenSim.Region.PhysicsModule.ubOde
                         }
                         */
                         //tmpTime =  Util.GetTimeStampMS();
-                            lock (_activegroups)
+                        lock (_activegroups)
+                        {
                             {
+                                foreach (OdePrim actor in _activegroups)
                                 {
-                                    foreach (OdePrim actor in _activegroups)
+                                    if (actor.IsPhysical)
                                     {
-                                        if (actor.IsPhysical)
-                                        {
-                                                actor.UpdatePositionAndVelocity(framecount);
-                                        }
+                                        actor.UpdatePositionAndVelocity(framecount);
                                     }
                                 }
                             }
+                        }
 
                         //updatesTime += Util.GetTimeStampMS() - tmpTime;
                     }
