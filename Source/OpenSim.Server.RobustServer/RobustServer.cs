@@ -25,21 +25,22 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+using System.Net;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Nini.Config;
+
 using OpenSim.Framework;
 using OpenSim.Framework.Servers;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Base;
 using OpenSim.Server.Handlers.Base;
-using System.Net;
-using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
 
 namespace OpenSim.Server.RobustServer
 {
-    public class OpenSimServer
+    public class RobustServer
     {
         protected HttpServerBase m_Server = null;
         protected List<IServiceConnector> m_ServiceConnectors = new();
@@ -47,18 +48,21 @@ namespace OpenSim.Server.RobustServer
         private bool m_NoVerifyCertChain = false;
         private bool m_NoVerifyCertHostname = false;
 
-        private readonly ILogger<OpenSimServer> _logger;
-        private readonly IConfiguration _configuration;
+        private readonly IServiceProvider m_serviceProvider;
+        private readonly ILogger<RobustServer> m_logger;
+        private readonly IConfiguration m_configuration;
 
-        public OpenSimServer(
+        public RobustServer(
+            IServiceProvider provider,
             IConfiguration configuration, 
-            ILogger<OpenSimServer> logger,
-            HttpServerBase server
+            ILogger<RobustServer> logger
+//            HttpServerBase server
             )
         {
-            _configuration = configuration;
-            _logger = logger;
-            m_Server = server;
+            m_serviceProvider = provider;
+            m_configuration = configuration;
+            m_logger = logger;
+//            m_Server = server;
         }
 
         private bool ValidateServerCertificate(
@@ -93,7 +97,7 @@ namespace OpenSim.Server.RobustServer
                     string currentLine;
                     while ((currentLine = readFile.ReadLine()) is not null)
                     {
-                        _logger.LogInformation("[!]" + currentLine);
+                        m_logger.LogInformation("[!]" + currentLine);
                     }
                 }
             }
@@ -119,39 +123,35 @@ namespace OpenSim.Server.RobustServer
 
             string registryLocation;
 
-            IConfig serverConfig = m_Server.Config.Configs["Startup"];
-            if (serverConfig == null)
-            {
-                System.Console.WriteLine("Startup config section missing in .ini file");
-                throw new Exception("Configuration error");
-            }
+            var serverConfig = m_configuration.GetSection("Startup");
 
-            int dnsTimeout = serverConfig.GetInt("DnsTimeout", 30000);
+            int dnsTimeout = serverConfig.GetValue<int>("DnsTimeout", 30000);
             try { ServicePointManager.DnsRefreshTimeout = dnsTimeout; } catch { }
 
-            m_NoVerifyCertChain = serverConfig.GetBoolean("NoVerifyCertChain", m_NoVerifyCertChain);
-            m_NoVerifyCertHostname = serverConfig.GetBoolean("NoVerifyCertHostname", m_NoVerifyCertHostname);
+            m_NoVerifyCertChain = serverConfig.GetValue<bool>("NoVerifyCertChain", m_NoVerifyCertChain);
+            m_NoVerifyCertHostname = serverConfig.GetValue<bool>("NoVerifyCertHostname", m_NoVerifyCertHostname);
 
-            string connList = serverConfig.GetString("ServiceConnectors", string.Empty);
+            string connList = serverConfig.GetValue<string>("ServiceConnectors", string.Empty);
+            registryLocation = serverConfig.GetValue<string>("RegistryLocation", ".");
 
-            registryLocation = serverConfig.GetString("RegistryLocation", ".");
+            var servicesConfig = m_configuration.GetSection("ServiceList");
 
-            IConfig servicesConfig = m_Server.Config.Configs["ServiceList"];
-            if (servicesConfig != null)
+            List<string> servicesList = new();
+            if (!string.IsNullOrEmpty(connList))
+                servicesList.Add(connList);
+            
+            foreach (var k in servicesConfig.AsEnumerable())
             {
-                List<string> servicesList = new();
-                if (!string.IsNullOrEmpty(connList))
-                    servicesList.Add(connList);
-
-                foreach (string k in servicesConfig.GetKeys())
+                string[] keyparts = k.Key.Split(":");
+                if ((keyparts.Length > 1) && (keyparts[0] == "ServiceList"))
                 {
-                    string v = servicesConfig.GetString(k);
+                    string v = servicesConfig.GetValue<string>(keyparts[1]);
                     if (!string.IsNullOrEmpty(v))
                         servicesList.Add(v);
                 }
-
-                connList = string.Join(",", servicesList.ToArray());
             }
+
+            connList = string.Join(",", servicesList.ToArray());
 
             string[] conns = connList.Split(new char[] { ',', ' ', '\n', '\r', '\t' });
 
@@ -195,7 +195,7 @@ namespace OpenSim.Server.RobustServer
                 if (friendlyName == "LLLoginServiceInConnector")
                     server.AddSimpleStreamHandler(new IndexPHPHandler(server));
 
-                _logger.LogInformation("[SERVER]: Loading {0} on port {1}", friendlyName, server.Port);
+                m_logger.LogInformation("[SERVER]: Loading {0} on port {1}", friendlyName, server.Port);
 
                 IServiceConnector connector = null;
 
@@ -211,11 +211,11 @@ namespace OpenSim.Server.RobustServer
                 if (connector != null)
                 {
                     m_ServiceConnectors.Add(connector);
-                    _logger.LogInformation("[SERVER]: {0} loaded successfully", friendlyName);
+                    m_logger.LogInformation("[SERVER]: {0} loaded successfully", friendlyName);
                 }
                 else
                 {
-                    _logger.LogError($"[SERVER]: Failed to load {conn}");
+                    m_logger.LogError($"[SERVER]: Failed to load {conn}");
                 }
             }
 

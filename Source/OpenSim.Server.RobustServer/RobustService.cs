@@ -10,14 +10,14 @@ namespace OpenSim.Server.RobustServer
 
         private readonly ILogger<RobustService> _logger;
         private readonly IConfiguration _configuration;
-        private readonly OpenSimServer _openSimServer;
+        private readonly RobustServer _openSimServer;
 
         private int m_res;
 
         public RobustService(
             IConfiguration configuration, 
             ILogger<RobustService> logger,
-            OpenSimServer openSimServer
+            RobustServer openSimServer
             )
         {
             _configuration = configuration;
@@ -27,7 +27,7 @@ namespace OpenSim.Server.RobustServer
 
         public Task StartAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("{Service} is running.", nameof(RobustServer));
+            _logger.LogInformation("{Service} is running.", nameof(Server.RobustServer));
 
             m_res = _openSimServer.Startup();
 
@@ -36,7 +36,7 @@ namespace OpenSim.Server.RobustServer
 
         public Task StopAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("{Service} is stopping.", nameof(RobustServer));
+            _logger.LogInformation("{Service} is stopping.", nameof(Server.RobustServer));
 
             _openSimServer.Shutdown(m_res);
 

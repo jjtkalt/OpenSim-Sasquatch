@@ -33,6 +33,11 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 using Autofac.Extensions.DependencyInjection;
 using Autofac;
+using OpenSim.Framework.Console;
+using OpenSim.Framework;
+using OpenSim.Server.Common;
+using OpenSim.Server.Base;
+using ConfigurationSubstitution;
 
 namespace OpenSim.Server.RobustServer
 {
@@ -50,25 +55,21 @@ namespace OpenSim.Server.RobustServer
             var promptOption = new Option<string>
                 (name: "--prompt", description: "Overide the server prompt",
                 getDefaultValue: () => "ROBUST> ");
-            var logconfigOption = new Option<string>
-                (name: "--logconfig", description: "Instruct log4net to use this file as configuration file.",
-                getDefaultValue: () => "Robust.exe.config");
 
             rootCommand.AddGlobalOption(consoleOption);
             rootCommand.AddGlobalOption(inifileOption);
             rootCommand.AddGlobalOption(promptOption);
-            rootCommand.AddGlobalOption(logconfigOption);
 
-            rootCommand.SetHandler((console, inifile, prompt, logconfig) =>
+            rootCommand.SetHandler((console, inifile, prompt) =>
             {
-                StartRobust(console, inifile, prompt, logconfig);
+                StartRobust(console, inifile, prompt);
             },
-            consoleOption, inifileOption, promptOption, logconfigOption);
+            consoleOption, inifileOption, promptOption);
 
             return await rootCommand.InvokeAsync(args);
         }
 
-        private static void StartRobust(string console, List<string> inifile, string prompt, string logconfig)
+        private static void StartRobust(string console, List<string> inifile, string prompt)
         {
             XmlConfigurator.Configure();
 
@@ -82,17 +83,29 @@ namespace OpenSim.Server.RobustServer
                     {
                         configuration.AddIniFile(item, optional: true, reloadOnChange: true);
                     }
-                })
-                .ConfigureServices(services =>
-                {
-                    services.AddHostedService<RobustService>();
+                    configuration.EnableSubstitutions("$(", ")");
                 })
                 .ConfigureContainer<ContainerBuilder>(builder =>
                 {
                     // Declare your services with proper lifetime
                     //builder.RegisterType<AppLogger>().As<IAppLogger>().SingleInstance();
                     //builder.RegisterType<DataAccess>().As<IDataAccess>().InstancePerLifetimeScope();
+                    builder.RegisterType<OpenSimServer>().SingleInstance();
+                    builder.RegisterType<RobustServer>().SingleInstance();
 
+                    if (console == "basic")
+                        builder.RegisterType<MainConsole>().As<ICommandConsole>().SingleInstance();
+                    else if (console == "rest")
+                        builder.RegisterType<RemoteConsole>().As<ICommandConsole>().SingleInstance();
+                    else if (console == "mock")
+                        builder.RegisterType<MockConsole>().As<ICommandConsole>().SingleInstance();
+                    else
+                        builder.RegisterType<LocalConsole>().As<ICommandConsole>().SingleInstance();
+                })
+                .ConfigureServices(services =>
+                {
+                    services.AddHostedService<RobustService>();
+                    services.AddHostedService<PidFileService>();
                 });
 
             IHost host = builder.Build();

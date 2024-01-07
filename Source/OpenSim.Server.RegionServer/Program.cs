@@ -59,6 +59,7 @@ using OpenSim.Groups;
 using Gloebit.GloebitMoneyModule;
 using OpenSim.Region.ScriptEngine.Yengine;
 using OpenSim.Server.Common;
+using ConfigurationSubstitution;
 
 
 namespace OpenSim.Server.RegionServer
@@ -138,6 +139,7 @@ namespace OpenSim.Server.RegionServer
                             configuration.AddIniFile(item, optional: true, reloadOnChange: true);
                         }
                     }
+                    configuration.EnableSubstitutions("$(", ")");
                 })
                 .ConfigureServices(services =>
                 {

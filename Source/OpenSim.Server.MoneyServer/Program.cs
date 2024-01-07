@@ -40,6 +40,7 @@ using OpenSim.Framework.Servers;
 using OpenSim.Server.Base;
 using OpenSim.Framework.Console;
 using OpenSim.Framework;
+using ConfigurationSubstitution;
 
 namespace OpenSim.Server.MoneyServer
 {
@@ -81,6 +82,8 @@ namespace OpenSim.Server.MoneyServer
                     {
                         configuration.AddIniFile(item, optional: true, reloadOnChange: true);
                     }
+
+                    configuration.EnableSubstitutions("$(", ")");
                 })
                 .ConfigureContainer<ContainerBuilder>(builder =>
                 {
