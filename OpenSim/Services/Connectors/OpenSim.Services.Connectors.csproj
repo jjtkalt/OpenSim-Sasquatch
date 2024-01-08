@@ -33,10 +33,10 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Capabilities\OpenSim.Capabilities.csproj" />
     <ProjectReference Include="..\..\Data\OpenSim.Data.csproj" />
-    <ProjectReference Include="..\..\Framework\OpenSim.Framework.csproj" />
+    <ProjectReference Include="..\..\..\Source\OpenSim.Framework\OpenSim.Framework.csproj" />
     <ProjectReference Include="..\..\..\Source\OpenSim.Framework.Console\OpenSim.Framework.Console.csproj" />
-    <ProjectReference Include="..\..\Framework\Monitoring\OpenSim.Framework.Monitoring.csproj" />
-    <ProjectReference Include="..\..\Framework\Servers\HttpServer\OpenSim.Framework.Servers.HttpServer.csproj" />
+    <ProjectReference Include="..\..\..\Source\OpenSim.Framework.Monitoring\OpenSim.Framework.Monitoring.csproj" />
+    <ProjectReference Include="..\..\..\Source\OpenSim.Framework.Servers.HttpServer\OpenSim.Framework.Servers.HttpServer.csproj" />
     <ProjectReference Include="..\..\Region\Framework\OpenSim.Region.Framework.csproj" />
     <ProjectReference Include="..\..\Server\Base\OpenSim.Server.Base.csproj" />
     <ProjectReference Include="..\Base\OpenSim.Services.Base.csproj" />

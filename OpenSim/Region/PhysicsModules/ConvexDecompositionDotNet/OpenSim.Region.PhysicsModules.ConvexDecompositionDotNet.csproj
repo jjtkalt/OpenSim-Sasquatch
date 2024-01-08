@@ -12,6 +12,6 @@
     <PackageReference Include="RawScape.Nini" Version="1.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Framework\OpenSim.Framework.csproj" />
+    <ProjectReference Include="..\..\..\..\Source\OpenSim.Framework\OpenSim.Framework.csproj" />
   </ItemGroup>
 </Project>

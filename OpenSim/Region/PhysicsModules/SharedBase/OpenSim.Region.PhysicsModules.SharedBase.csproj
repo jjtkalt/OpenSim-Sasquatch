@@ -18,7 +18,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Framework\OpenSim.Framework.csproj" />
+    <ProjectReference Include="..\..\..\..\Source\OpenSim.Framework\OpenSim.Framework.csproj" />
     <ProjectReference Include="..\..\..\..\Source\OpenSim.Framework.Console\OpenSim.Framework.Console.csproj" />
   </ItemGroup>
 </Project>

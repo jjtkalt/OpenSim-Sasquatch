@@ -8,24 +8,24 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="OpenMetaverse.StructuredData">
-      <HintPath>..\..\..\bin\OpenMetaverse.StructuredData.dll</HintPath>
+      <HintPath>..\..\bin\OpenMetaverse.StructuredData.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="OpenMetaverseTypes">
-      <HintPath>..\..\..\bin\OpenMetaverseTypes.dll</HintPath>
+      <HintPath>..\..\bin\OpenMetaverseTypes.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="XMLRPC">
-      <HintPath>..\..\..\bin\XMLRPC.dll</HintPath>
+      <HintPath>..\..\bin\XMLRPC.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Data\OpenSim.Data.csproj" />
-    <ProjectReference Include="..\OpenSim.Framework.csproj" />
-    <ProjectReference Include="..\..\..\Source\OpenSim.Framework.Console\OpenSim.Framework.Console.csproj" />
-    <ProjectReference Include="..\Monitoring\OpenSim.Framework.Monitoring.csproj" />
-    <ProjectReference Include="..\Servers\HttpServer\OpenSim.Framework.Servers.HttpServer.csproj" />
+    <ProjectReference Include="..\..\OpenSim\Data\OpenSim.Data.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Framework\OpenSim.Framework.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Framework.Console\OpenSim.Framework.Console.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Framework.Monitoring\OpenSim.Framework.Monitoring.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Framework.Servers.HttpServer\OpenSim.Framework.Servers.HttpServer.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="HttpServer\BaseHTTPHandler.cs" />
