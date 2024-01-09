@@ -17,21 +17,21 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.ApplicationPlugins.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.ApplicationPlugins.RemoteController", "OpenSim\ApplicationPlugins\RemoteController\OpenSim.ApplicationPlugins.RemoteController.csproj", "{B6A4EEC3-0000-0000-0000-000000000000}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Capabilities", "OpenSim\Capabilities\OpenSim.Capabilities.csproj", "{FF56527B-0000-0000-0000-000000000000}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Capabilities", "Source\OpenSim.Capabilities\OpenSim.Capabilities.csproj", "{FF56527B-0000-0000-0000-000000000000}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Capabilities.Handlers", "OpenSim\Capabilities\Handlers\OpenSim.Capabilities.Handlers.csproj", "{002BDDF6-0000-0000-0000-000000000000}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Capabilities.Handlers", "Source\OpenSim.Capabilities.Handlers\OpenSim.Capabilities.Handlers.csproj", "{002BDDF6-0000-0000-0000-000000000000}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.ConsoleClient", "OpenSim\ConsoleClient\OpenSim.ConsoleClient.csproj", "{CB348113-0000-0000-0000-000000000000}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Data", "OpenSim\Data\OpenSim.Data.csproj", "{7E218E2D-0000-0000-0000-000000000000}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Data", "Source\OpenSim.Data\OpenSim.Data.csproj", "{7E218E2D-0000-0000-0000-000000000000}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Data.MySQL", "OpenSim\Data\MySQL\OpenSim.Data.MySQL.csproj", "{1E894ECD-0000-0000-0000-000000000000}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Data.MySQL", "Source\OpenSim.Data.MySQL\OpenSim.Data.MySQL.csproj", "{1E894ECD-0000-0000-0000-000000000000}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Data.Null", "OpenSim\Data\Null\OpenSim.Data.Null.csproj", "{8D314DCC-0000-0000-0000-000000000000}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Data.Null", "Source\OpenSim.Data.Null\OpenSim.Data.Null.csproj", "{8D314DCC-0000-0000-0000-000000000000}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Data.PGSQL", "OpenSim\Data\PGSQL\OpenSim.Data.PGSQL.csproj", "{10024C78-0000-0000-0000-000000000000}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Data.PGSQL", "Source\OpenSim.Data.PGSQL\OpenSim.Data.PGSQL.csproj", "{10024C78-0000-0000-0000-000000000000}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Data.SQLite", "OpenSim\Data\SQLite\OpenSim.Data.SQLite.csproj", "{675096A5-0000-0000-0000-000000000000}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Data.SQLite", "Source\OpenSim.Data.SQLite\OpenSim.Data.SQLite.csproj", "{675096A5-0000-0000-0000-000000000000}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Framework", "Source\OpenSim.Framework\OpenSim.Framework.csproj", "{BCCDBB55-0000-0000-0000-000000000000}"
 EndProject

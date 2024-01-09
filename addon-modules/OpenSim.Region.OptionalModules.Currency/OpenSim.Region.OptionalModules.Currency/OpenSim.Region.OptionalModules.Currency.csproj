@@ -39,7 +39,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\OpenSim\Data\OpenSim.Data.csproj" />
+    <ProjectReference Include="..\..\..\Source\OpenSim.Data\OpenSim.Data.csproj" />
     <ProjectReference Include="..\..\OpenSim.Data.MySQL.MoneyData\OpenSim.Data.MySQL.MoneyData\OpenSim.Data.MySQL.MoneyData.csproj" />
     <ProjectReference Include="..\..\..\Source\OpenSim.Framework\OpenSim.Framework.csproj" />
     <ProjectReference Include="..\..\..\Source\OpenSim.Framework.Console\OpenSim.Framework.Console.csproj" />
