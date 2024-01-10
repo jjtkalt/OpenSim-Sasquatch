@@ -24,7 +24,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Framework\OpenSim.Framework.csproj" />
     <ProjectReference Include="..\..\Framework\Console\OpenSim.Framework.Console.csproj" />
-    <ProjectReference Include="..\..\Region\ScriptEngine\Shared\CodeTools\OpenSim.Region.ScriptEngine.Shared.CodeTools.csproj" />
+    <ProjectReference Include="..\..\..\Soorce\OpenSim.Region.ScriptEngine.Shared\OpenSim.Region.ScriptEngine.Shared.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />

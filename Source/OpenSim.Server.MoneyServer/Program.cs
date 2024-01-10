@@ -76,14 +76,14 @@ namespace OpenSim.Server.MoneyServer
                 .UseServiceProviderFactory(new AutofacServiceProviderFactory())
                 .ConfigureAppConfiguration(configuration =>
                 {
-                    configuration.AddIniFile("MoneyServer.ini", optional: true, reloadOnChange: true);
+                    configuration.AddIniFile("MoneyServer.ini", optional: true, reloadOnChange: false);
 
                     foreach (var item in inifile)
                     {
-                        configuration.AddIniFile(item, optional: true, reloadOnChange: true);
+                        configuration.AddIniFile(item, optional: true, reloadOnChange: false);
                     }
 
-                    configuration.EnableSubstitutions("$(", ")");
+//                    configuration.EnableSubstitutions("$(", ")");
                 })
                 .ConfigureContainer<ContainerBuilder>(builder =>
                 {
@@ -107,8 +107,10 @@ namespace OpenSim.Server.MoneyServer
                     services.AddHostedService<PidFileService>();
                 });
 
-            IHost host = builder.Build();
-            host.Run();
+            using var host = builder.Build();
+            {
+                host.Run();
+            }
         }
     }
 }

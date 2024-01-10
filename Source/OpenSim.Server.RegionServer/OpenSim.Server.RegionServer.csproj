@@ -40,7 +40,7 @@
     <ProjectReference Include="..\..\OpenSim\Region\PhysicsModules\POS\OpenSim.Region.PhysicsModule.POS.csproj" />
     <ProjectReference Include="..\..\OpenSim\Region\PhysicsModules\ubOdeMeshing\OpenSim.Region.PhysicsModule.ubOdeMeshing.csproj" />
     <ProjectReference Include="..\..\OpenSim\Region\PhysicsModules\ubOde\OpenSim.Region.PhysicsModule.ubOde.csproj" />
-    <ProjectReference Include="..\..\OpenSim\Region\ScriptEngine\YEngine\OpenSim.Region.ScriptEngine.YEngine.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Region.ScriptEngine.YEngine\OpenSim.Region.ScriptEngine.YEngine.csproj" />
     <ProjectReference Include="..\..\OpenSim\Server\Base\OpenSim.Server.Base.csproj" />
     <ProjectReference Include="..\..\OpenSim\Server\Handlers\OpenSim.Server.Handlers.csproj" />
     <ProjectReference Include="..\..\OpenSim\Services\EstateService\OpenSim.Services.EstateService.csproj" />

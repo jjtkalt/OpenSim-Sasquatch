@@ -73,17 +73,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Region.PhysicsModul
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Region.PhysicsModules.SharedBase", "OpenSim\Region\PhysicsModules\SharedBase\OpenSim.Region.PhysicsModules.SharedBase.csproj", "{EFA63A0B-0000-0000-0000-000000000000}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Region.ScriptEngine.Shared", "OpenSim\Region\ScriptEngine\Shared\OpenSim.Region.ScriptEngine.Shared.csproj", "{F93F91AD-0000-0000-0000-000000000000}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Region.ScriptEngine.Shared", "Source\OpenSim.Region.ScriptEngine.Shared\OpenSim.Region.ScriptEngine.Shared.csproj", "{F93F91AD-0000-0000-0000-000000000000}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Region.ScriptEngine.Shared.Api", "OpenSim\Region\ScriptEngine\Shared\Api\Implementation\OpenSim.Region.ScriptEngine.Shared.Api.csproj", "{C18E3417-0000-0000-0000-000000000000}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Region.ScriptEngine.Shared.Api.Runtime", "OpenSim\Region\ScriptEngine\Shared\Api\Runtime\OpenSim.Region.ScriptEngine.Shared.Api.Runtime.csproj", "{FC92C9C9-0000-0000-0000-000000000000}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Region.ScriptEngine.Shared.CodeTools", "OpenSim\Region\ScriptEngine\Shared\CodeTools\OpenSim.Region.ScriptEngine.Shared.CodeTools.csproj", "{1A7CAB35-0000-0000-0000-000000000000}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Region.ScriptEngine.Shared.Instance", "OpenSim\Region\ScriptEngine\Shared\Instance\OpenSim.Region.ScriptEngine.Shared.Instance.csproj", "{B185E548-0000-0000-0000-000000000000}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Region.ScriptEngine.YEngine", "OpenSim\Region\ScriptEngine\YEngine\OpenSim.Region.ScriptEngine.YEngine.csproj", "{798B4867-0000-0000-0000-000000000000}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Region.ScriptEngine.YEngine", "Source\OpenSim.Region.ScriptEngine.YEngine\OpenSim.Region.ScriptEngine.YEngine.csproj", "{798B4867-0000-0000-0000-000000000000}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Server.Base", "OpenSim\Server\Base\OpenSim.Server.Base.csproj", "{2E0569BB-0000-0000-0000-000000000000}"
 EndProject
@@ -299,22 +291,6 @@ Global
 		{F93F91AD-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F93F91AD-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F93F91AD-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C18E3417-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C18E3417-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C18E3417-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C18E3417-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FC92C9C9-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FC92C9C9-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FC92C9C9-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FC92C9C9-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1A7CAB35-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1A7CAB35-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1A7CAB35-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1A7CAB35-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B185E548-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B185E548-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B185E548-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B185E548-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
 		{798B4867-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{798B4867-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{798B4867-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
