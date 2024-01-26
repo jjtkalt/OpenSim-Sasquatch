@@ -58,7 +58,7 @@ namespace OpenSim.Region.CoreModules.ServiceConnectorsOut.UserAccounts
             get { return "RemoteUserAccountServicesConnector"; }
         }
 
-        public override void Initialise(IConfigSource source)
+        public override void Initialise(IConfiguration source)
         {
             IConfig moduleConfig = source.Configs["Modules"];
             if (moduleConfig != null)

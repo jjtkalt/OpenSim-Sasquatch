@@ -38,6 +38,7 @@ using OpenSim.Services.Interfaces;
 using GridRegion = OpenSim.Services.Interfaces.GridRegion;
 using OpenSim.Server.Base;
 using OpenMetaverse;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.Connectors
 {
@@ -58,21 +59,21 @@ namespace OpenSim.Services.Connectors
             m_ServerURI = serverURI.TrimEnd('/');
         }
 
-        public GridUserServicesConnector(IConfigSource source)
+        public GridUserServicesConnector(IConfiguration source)
         {
             Initialise(source);
         }
 
-        public virtual void Initialise(IConfigSource source)
+        public virtual void Initialise(IConfiguration source)
         {
-            IConfig gridConfig = source.Configs["GridUserService"];
-            if (gridConfig == null)
+            var gridConfig = source.GetSection("GridUserService");
+            if (gridConfig.Exists() is false)
             {
                 m_log.Error("[GRID USER CONNECTOR]: GridUserService missing from OpenSim.ini");
                 throw new Exception("GridUser connector init error");
             }
 
-            string serviceURI = gridConfig.GetString("GridUserServerURI", string.Empty);
+            string serviceURI = gridConfig.GetValue("GridUserServerURI", string.Empty);
 
             if (string.IsNullOrWhiteSpace(serviceURI))
             {
@@ -81,6 +82,7 @@ namespace OpenSim.Services.Connectors
             }
 
             OSHHTPHost tmp = new OSHHTPHost(serviceURI, true);
+            
             if (!tmp.IsResolvedHost)
             {
                 m_log.ErrorFormat("[GRIDUSER CONNECTOR]: {0}", tmp.IsValidHost ? "Could not resolve GridUserServerURI" : "GridUserServerURI is a invalid host");

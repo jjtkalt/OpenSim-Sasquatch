@@ -45,7 +45,7 @@ namespace OpenSim.Region.CoreModules.Avatar.Lure
         private IMessageTransferModule m_TransferModule = null;
         private bool m_Enabled = false;
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             if (config.Configs["Messaging"] != null)
             {

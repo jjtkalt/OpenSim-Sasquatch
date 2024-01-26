@@ -42,12 +42,12 @@ namespace OpenSim.Region.CoreModules.ServiceConnectorsIn.Login
         private static bool m_Enabled = false;
         private static bool m_Registered = false;
 
-        private IConfigSource m_Config;
+        private IConfiguration m_Config;
         private List<Scene> m_Scenes = new List<Scene>();
 
         #region Region Module interface
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             m_Config = config;
 

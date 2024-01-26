@@ -150,7 +150,7 @@ namespace OpenSim.Server.RegionServer
                 {
                     // Register the main configuration
                     builder.Register(x => Application.Configuration)
-                        .As<IConfigSource>()
+                        .As<IConfiguration>()
                         .SingleInstance();
 
                     // Startup Application Plugins

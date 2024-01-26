@@ -25,16 +25,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Reflection;
-using Nini.Config;
 using log4net;
 using OpenSim.Framework;
-using OpenSim.Data;
 using OpenSim.Services.Interfaces;
 using OpenMetaverse;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.AssetService
 {
@@ -44,12 +40,10 @@ namespace OpenSim.Services.AssetService
 
         protected static AssetService m_RootInstance;
 
-        public AssetService(IConfigSource config)
-            : this(config, "AssetService")
-        {
-        }
+        public AssetService(IConfiguration config) : this(config, "AssetService")
+        { }
 
-        public AssetService(IConfigSource config, string configName) : base(config, configName)
+        public AssetService(IConfiguration config, string configName) : base(config, configName)
         {
             if (m_RootInstance == null)
             {
@@ -57,14 +51,13 @@ namespace OpenSim.Services.AssetService
 
                 if (m_AssetLoader != null)
                 {
-                    IConfig assetConfig = config.Configs[m_ConfigName];
-                    if (assetConfig == null)
-                        throw new Exception("No " + m_ConfigName + " configuration");
+                    var assetConfig = config.GetSection(configName);
+                    if (assetConfig.Exists() is false)
+                        throw new Exception("No " + configName + " configuration");
 
-                    string loaderArgs = assetConfig.GetString("AssetLoaderArgs",
-                            String.Empty);
+                    string loaderArgs = assetConfig.GetValue("AssetLoaderArgs", String.Empty);
 
-                    bool assetLoaderEnabled = assetConfig.GetBoolean("AssetLoaderEnabled", true);
+                    bool assetLoaderEnabled = assetConfig.GetValue<bool>("AssetLoaderEnabled", true);
 
                     if (assetLoaderEnabled)
                     {

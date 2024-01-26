@@ -69,7 +69,7 @@ namespace OpenSim.Region.OptionalModules.Materials
 
         private static readonly byte[] GetPutEmptyResponseBytes = osUTF8.GetASCIIBytes("<llsd><map><key>Zipped</key><binary>eNqLZgCCWAAChQC5</binary></map></llsd>");
 
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
             m_enabled = true; // default is enabled
 

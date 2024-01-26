@@ -25,16 +25,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.IO;
-using System.Text;
 using System.Reflection;
 using OpenSim.Framework;
 using OpenSim.Services.Base;
 using OpenSim.Services.Interfaces;
-using Nini.Config;
 using log4net;
-using OpenMetaverse;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Server.Handlers.BakedTextures
 {
@@ -44,21 +40,21 @@ namespace OpenSim.Server.Handlers.BakedTextures
 
         protected string m_FSBase;
 
-        public XBakes(IConfigSource config) : base(config)
+        public XBakes(IConfiguration config) : base(config)
         {
             MainConsole.Instance.Commands.AddCommand("fs", false,
                     "delete bakes", "delete bakes <ID>",
                     "Delete agent's baked textures from server",
                     HandleDeleteBakes);
 
-            IConfig assetConfig = config.Configs["BakedTextureService"];
-            if (assetConfig == null)
+            var assetConfig = config.GetSection("BakedTextureService");
+            if (assetConfig.Exists() is false)
             {
                 throw new Exception("No BakedTextureService configuration");
             }
 
-            m_FSBase = assetConfig.GetString("BaseDirectory", string.Empty);
-            if (m_FSBase.Length == 0)
+            m_FSBase = assetConfig.GetValue("BaseDirectory", string.Empty);
+            if (string.IsNullOrEmpty(m_FSBase))
             {
                 m_log.ErrorFormat("[BAKES]: BaseDirectory not specified");
                 throw new Exception("Configuration error");

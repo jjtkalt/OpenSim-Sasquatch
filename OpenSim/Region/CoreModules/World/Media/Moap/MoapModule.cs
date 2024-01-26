@@ -59,7 +59,7 @@ namespace OpenSim.Region.CoreModules.World.Media.Moap
         /// </summary>
         protected Scene m_scene;
 
-        public void Initialise(IConfigSource configSource)
+        public void Initialise(IConfiguration configSource)
         {
             IConfig config = configSource.Configs["MediaOnAPrim"];
 

@@ -42,12 +42,12 @@ namespace OpenSim.Region.CoreModules.ServiceConnectorsIn.Simulation
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
         private static bool m_Enabled = false;
 
-        private IConfigSource m_Config;
+        private IConfiguration m_Config;
         bool m_Registered = false;
 
         #region Region Module interface
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             m_Config = config;
 

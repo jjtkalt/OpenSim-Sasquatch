@@ -55,8 +55,8 @@ namespace OpenSim.Server.Base
     /// </summary>
     public class OpenSimServer
     {
+        protected readonly IServiceProvider m_serviceProvider;
         protected readonly IConfiguration m_configuration;
-
         protected readonly ILogger<OpenSimServer> m_logger;
 
         protected ICommandConsole m_console;
@@ -92,11 +92,13 @@ namespace OpenSim.Server.Base
         private string m_version;
 
         public OpenSimServer(
+            IServiceProvider provider,
             IConfiguration configuration, 
             ILogger<OpenSimServer> logger,
             ICommandConsole console
             )
         {
+            m_serviceProvider = provider;
             m_configuration = configuration;
             m_logger = logger;
             m_console = console;
@@ -110,19 +112,11 @@ namespace OpenSim.Server.Base
             Version = VersionInfo.Version;
         }
 
-        public ICommandConsole Console { get => m_console; }
+        public ICommandConsole Console { get => m_console; set => m_console = value; }
 
-        public BaseHttpServer HttpServer
-        {
-            get { return m_httpServer; }
-            set { m_httpServer = value; }
-        }
+        public BaseHttpServer HttpServer { get => m_httpServer; set => m_httpServer = value; }
 
-        public string osSecret
-        {
-            // Secret uuid for the simulator
-            get { return m_osSecret; }
-        }
+        public string osSecret { get => m_osSecret; }            // Secret uuid for the simulator
 
         /// <summary>
         /// Used by tests to suppress Environment.Exit(0) so that post-run operations are possible.

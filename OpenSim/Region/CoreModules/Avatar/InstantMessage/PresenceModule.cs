@@ -64,7 +64,7 @@ namespace OpenSim.Region.CoreModules.Avatar.InstantMessage
             }
         }
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
         }
 

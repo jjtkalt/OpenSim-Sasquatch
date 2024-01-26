@@ -25,39 +25,35 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.IO;
 using System.Net;
-using System.Reflection;
-using System.Threading;
-
-using Nini.Config;
-using log4net;
 
 using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
 using OpenMetaverse;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Server.Handlers.MapImage
 {
-    public class MapGetServiceConnector : ServiceConnector
+    public class MapGetServiceConnector : ServiceConnector, IServiceConnector
     {
-        //private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
         private IMapImageService m_MapService;
 
-        private string m_ConfigName = "MapImageService";
+        private static string _configName = "MapImageService";
 
-        public MapGetServiceConnector(IConfigSource config, IHttpServer server, string configName) :
+        public MapGetServiceConnector(IConfiguration config, IHttpServer server) :
+            this(config, server, _configName)
+        { }
+
+        public MapGetServiceConnector(IConfiguration config, IHttpServer server, string configName) :
             base(config, server, configName)
         {
-            IConfig serverConfig = config.Configs[m_ConfigName];
-            if (serverConfig == null)
-                throw new Exception(String.Format("No section {0} in config file", m_ConfigName));
+            var serverConfig = config.GetSection(configName);
+            if (serverConfig.Exists() is false)
+                throw new Exception($"No section {configName} in config file");
 
-            string gridService = serverConfig.GetString("LocalServiceModule", string.Empty);
-
+            string gridService = serverConfig.GetValue("LocalServiceModule", string.Empty);
             if (string.IsNullOrWhiteSpace(gridService))
                 throw new Exception("No LocalServiceModule in config file");
 

@@ -90,7 +90,7 @@ namespace OpenSim.Framework.Servers.HttpServer
         /// </summary>
         private Stat m_requestsProcessedStat;
 
-        public volatile bool HTTPDRunning = false;
+        public bool HTTPDRunning {get; private set; } = false;
 
         protected tinyHTTPListener m_httpListener;
         protected Dictionary<string, XmlRpcMethod> m_rpcHandlers        = new Dictionary<string, XmlRpcMethod>();
@@ -2286,9 +2286,9 @@ namespace OpenSim.Framework.Servers.HttpServer
 
     public class IndexPHPHandler : SimpleStreamHandler
     {
-        readonly BaseHttpServer m_server;
+        readonly IHttpServer m_server;
 
-        public IndexPHPHandler(BaseHttpServer server)
+        public IndexPHPHandler(IHttpServer server)
             : base("/index.php")
         {
             m_server = server;

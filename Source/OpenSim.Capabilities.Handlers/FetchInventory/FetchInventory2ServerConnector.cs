@@ -40,7 +40,7 @@ namespace OpenSim.Capabilities.Handlers
         private IInventoryService m_InventoryService;
         private string m_ConfigName = "CapsService";
 
-        public FetchInventory2ServerConnector(IConfigSource config, IHttpServer server, string configName)
+        public FetchInventory2ServerConnector(IConfiguration config, IHttpServer server, string configName)
             : base(config, server, configName)
         {
             if (configName != String.Empty)

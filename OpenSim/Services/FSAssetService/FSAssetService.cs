@@ -26,20 +26,18 @@
  */
 
 using log4net;
-using Nini.Config;
+
+using Microsoft.Extensions.Configuration;
+
 using OpenMetaverse;
 using OpenSim.Data;
 using OpenSim.Framework;
 using OpenSim.Framework.Serialization.External;
 using OpenSim.Services.Base;
 using OpenSim.Services.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.IO.Compression;
 using System.Reflection;
 using System.Security.Cryptography;
-using System.Threading;
 
 namespace OpenSim.Services.FSAssetService
 {
@@ -79,15 +77,15 @@ namespace OpenSim.Services.FSAssetService
 
         private bool m_isMainInstance;
 
-        public FSAssetConnector(IConfigSource config)
+        public FSAssetConnector(IConfiguration config)
             : this(config, "AssetService")
         {
         }
 
-        public FSAssetConnector(IConfigSource config, string configName) : base(config)
+        public FSAssetConnector(IConfiguration config, string configName) : base(config)
         {
-            IConfig assetConfig = config.Configs[configName];
-            if (assetConfig == null)
+            var assetConfig = config.GetSection(configName);
+            if (assetConfig.Exists() is false)
                 throw new Exception("No AssetService configuration");
 
             lock (m_initLock)
@@ -95,7 +93,7 @@ namespace OpenSim.Services.FSAssetService
                 if (!m_mainInitialized)
                 {
                     m_mainInitialized = true;
-                    m_isMainInstance = !assetConfig.GetBoolean("SecondaryInstance", false);
+                    m_isMainInstance = !assetConfig.GetValue<bool>("SecondaryInstance", false);
 
                     MainConsole.Instance.Commands.AddCommand("fs", false,
                             "show assets", "show assets", "Show asset stats",
@@ -123,22 +121,21 @@ namespace OpenSim.Services.FSAssetService
             }
 
             // Get Database Connector from Asset Config (If present)
-            string dllName = assetConfig.GetString("StorageProvider", string.Empty);
-            string connectionString = assetConfig.GetString("ConnectionString", string.Empty);
-            string realm = assetConfig.GetString("Realm", "fsassets");
+            string dllName = assetConfig.GetValue("StorageProvider", string.Empty);
+            string connectionString = assetConfig.GetValue("ConnectionString", string.Empty);
+            string realm = assetConfig.GetValue("Realm", "fsassets");
 
-            int SkipAccessTimeDays = assetConfig.GetInt("DaysBetweenAccessTimeUpdates", 0);
+            int SkipAccessTimeDays = assetConfig.GetValue<int>("DaysBetweenAccessTimeUpdates", 0);
 
             // If not found above, fallback to Database defaults
-            IConfig dbConfig = config.Configs["DatabaseService"];
-
-            if (dbConfig != null)
+            var dbConfig = config.GetSection("DatabaseService");
+            if (dbConfig.Exists())
             {
-                if (dllName.Length == 0)
-                    dllName = dbConfig.GetString("StorageProvider", String.Empty);
+                if (string.IsNullOrEmpty(dllName))
+                    dllName = dbConfig.GetValue("StorageProvider", String.Empty);
 
-                if (connectionString.Length == 0)
-                    connectionString = dbConfig.GetString("ConnectionString", String.Empty);
+                if (string.IsNullOrEmpty(connectionString))
+                    connectionString = dbConfig.GetValue("ConnectionString", String.Empty);
             }
 
             // No databse connection found in either config
@@ -158,12 +155,13 @@ namespace OpenSim.Services.FSAssetService
             m_DataConnector.Initialise(connectionString, realm, SkipAccessTimeDays);
 
             // Setup Fallback Service
-            string str = assetConfig.GetString("FallbackService", string.Empty);
+            string str = assetConfig.GetValue("FallbackService", string.Empty);
 
-            if (str.Length > 0)
+            if (!string.IsNullOrEmpty(str))
             {
                 object[] args = new object[] { config };
                 m_FallbackService = LoadPlugin<IAssetService>(str, args);
+
                 if (m_FallbackService != null)
                 {
                     m_log.Info("[FSASSETS]: Fallback service loaded");
@@ -175,40 +173,42 @@ namespace OpenSim.Services.FSAssetService
             }
 
             // Setup directory structure including temp directory
-            m_SpoolDirectory = assetConfig.GetString("SpoolDirectory", "/tmp");
-
+            m_SpoolDirectory = assetConfig.GetValue("SpoolDirectory", "/tmp");
             string spoolTmp = Path.Combine(m_SpoolDirectory, "spool");
 
             Directory.CreateDirectory(spoolTmp);
 
-            m_FSBase = assetConfig.GetString("BaseDirectory", String.Empty);
+            m_FSBase = assetConfig.GetValue("BaseDirectory", String.Empty);
             if (m_FSBase.Length == 0)
             {
                 m_log.ErrorFormat("[FSASSETS]: BaseDirectory not specified");
                 throw new Exception("Configuration error");
             }
 
-            m_useOsgridFormat = assetConfig.GetBoolean("UseOsgridFormat", m_useOsgridFormat);
+            m_useOsgridFormat = assetConfig.GetValue<bool>("UseOsgridFormat", m_useOsgridFormat);
 
             // Default is to show stats to retain original behaviour
-            m_showStats = assetConfig.GetBoolean("ShowConsoleStats", m_showStats);
+            m_showStats = assetConfig.GetValue<bool>("ShowConsoleStats", m_showStats);
 
             if (m_isMainInstance)
             {
-                string loader = assetConfig.GetString("DefaultAssetLoader", string.Empty);
-                if (loader.Length > 0)
+                string loader = assetConfig.GetValue("DefaultAssetLoader", string.Empty);
+
+                if (!string.IsNullOrEmpty(loader))
                 {
                     m_AssetLoader = LoadPlugin<IAssetLoader>(loader);
-                    string loaderArgs = assetConfig.GetString("AssetLoaderArgs", string.Empty);
+                    string loaderArgs = assetConfig.GetValue("AssetLoaderArgs", string.Empty);
                     m_log.InfoFormat("[FSASSETS]: Loading default asset set from {0}", loaderArgs);
-                    m_AssetLoader.ForEachDefaultXmlAsset(loaderArgs,
-                            delegate(AssetBase a)
-                            {
-                                Store(a, false);
-                            });
+
+                    m_AssetLoader.ForEachDefaultXmlAsset(
+                        loaderArgs,
+                        delegate(AssetBase a)
+                        {
+                            Store(a, false);
+                        });
                 }
 
-                if(m_WriterThread == null)
+                if (m_WriterThread == null)
                 {
                     m_WriterThread = new Thread(Writer);
                     m_WriterThread.Start();

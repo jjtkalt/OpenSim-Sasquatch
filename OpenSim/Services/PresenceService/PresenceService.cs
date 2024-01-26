@@ -25,17 +25,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Net;
 using System.Reflection;
-using Nini.Config;
+
 using log4net;
 using OpenSim.Framework;
-using OpenSim.Framework.Console;
 using OpenSim.Data;
 using OpenSim.Services.Interfaces;
 using OpenMetaverse;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.PresenceService
 {
@@ -48,15 +45,14 @@ namespace OpenSim.Services.PresenceService
         static ExpiringCacheOS<UUID, PresenceData> BySessionCache = new ExpiringCacheOS<UUID, PresenceData>(60000);
         static ExpiringCacheOS<string, PresenceData> ByUserCache = new ExpiringCacheOS<string, PresenceData>(60000);
 
-        public PresenceService(IConfigSource config)
-            : base(config)
+        public PresenceService(IConfiguration config) : base( config)
         {
             m_log.Debug("[PRESENCE SERVICE]: Starting presence service");
 
-            IConfig presenceConfig = config.Configs["PresenceService"];
-            if (presenceConfig != null)
+            var presenceConfig = config.GetSection("PresenceService");
+            if (presenceConfig.Exists())
             {
-                m_allowDuplicatePresences = presenceConfig.GetBoolean("AllowDuplicatePresences", m_allowDuplicatePresences);
+                m_allowDuplicatePresences = presenceConfig.GetValue<bool>("AllowDuplicatePresences", m_allowDuplicatePresences);
             }
         }
 

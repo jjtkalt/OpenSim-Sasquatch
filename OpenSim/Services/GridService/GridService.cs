@@ -25,12 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Net;
 using System.Reflection;
 using System.Text;
-using Nini.Config;
 using log4net;
 using OpenSim.Framework;
 using OpenSim.Framework.Console;
@@ -39,6 +35,7 @@ using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using GridRegion = OpenSim.Services.Interfaces.GridRegion;
 using OpenMetaverse;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.GridService
 {
@@ -47,11 +44,12 @@ namespace OpenSim.Services.GridService
         private static readonly ILog m_log =
                 LogManager.GetLogger(
                 MethodBase.GetCurrentMethod().DeclaringType);
+
         private string LogHeader = "[GRID SERVICE]";
 
         private bool m_DeleteOnUnregister = true;
         private static GridService m_RootInstance = null;
-        protected IConfigSource m_config;
+        protected IConfiguration m_config;
         protected static HypergridLinker m_HypergridLinker;
 
         protected IAuthenticationService m_AuthenticationService = null;
@@ -60,33 +58,32 @@ namespace OpenSim.Services.GridService
 
         private static Dictionary<string,object> m_ExtraFeatures = new Dictionary<string, object>();
 
-        public GridService(IConfigSource config)
+        public GridService(IConfiguration config)
             : base(config)
         {
             m_log.DebugFormat("[GRID SERVICE]: Starting...");
 
-            m_config = config;
-            IConfig gridConfig = config.Configs["GridService"];
-
             bool suppressConsoleCommands = false;
 
-            if (gridConfig != null)
+            m_config = config;
+            var gridConfig = config.GetSection("GridService");
+            if (gridConfig.Exists())
             {
-                m_DeleteOnUnregister = gridConfig.GetBoolean("DeleteOnUnregister", true);
+                m_DeleteOnUnregister = gridConfig.GetValue<bool>("DeleteOnUnregister", true);
 
-                string authService = gridConfig.GetString("AuthenticationService", String.Empty);
-
-                if (authService != String.Empty)
+                string authService = gridConfig.GetValue("AuthenticationService", String.Empty);
+                if (string.IsNullOrEmpty(authService) is false)
                 {
                     Object[] args = new Object[] { config };
                     m_AuthenticationService = ServerUtils.LoadPlugin<IAuthenticationService>(authService, args);
                 }
-                m_AllowDuplicateNames = gridConfig.GetBoolean("AllowDuplicateNames", m_AllowDuplicateNames);
-                m_AllowHypergridMapSearch = gridConfig.GetBoolean("AllowHypergridMapSearch", m_AllowHypergridMapSearch);
+
+                m_AllowDuplicateNames = gridConfig.GetValue<bool>("AllowDuplicateNames", m_AllowDuplicateNames);
+                m_AllowHypergridMapSearch = gridConfig.GetValue<bool>("AllowHypergridMapSearch", m_AllowHypergridMapSearch);
 
                 // This service is also used locally by a simulator running in grid mode.  This switches prevents
                 // inappropriate console commands from being registered
-                suppressConsoleCommands = gridConfig.GetBoolean("SuppressConsoleCommands", suppressConsoleCommands);
+                suppressConsoleCommands = gridConfig.GetValue<bool>("SuppressConsoleCommands", suppressConsoleCommands);
             }
 
             if (m_RootInstance == null)
@@ -145,21 +142,21 @@ namespace OpenSim.Services.GridService
             }
         }
 
-        private void SetExtraServiceURLs(IConfigSource config)
+        private void SetExtraServiceURLs(IConfiguration config)
         {
-            IConfig loginConfig = config.Configs["LoginService"];
-            IConfig gridConfig = config.Configs["GridService"];
+            var loginConfig = config.GetSection("LoginService");
+            var gridConfig = config.GetSection("GridService");
 
-            if (loginConfig == null || gridConfig == null)
+            if (loginConfig.Exists() is false || gridConfig.Exists() is false)
                 return;
 
             string configVal;
 
-            configVal = loginConfig.GetString("SearchURL", string.Empty);
+            configVal = loginConfig.GetValue("SearchURL", string.Empty);
             if (!string.IsNullOrEmpty(configVal))
                 m_ExtraFeatures["search-server-url"] = configVal;
 
-            configVal = loginConfig.GetString("MapTileURL", string.Empty);
+            configVal = loginConfig.GetValue("MapTileURL", string.Empty);
             if (!string.IsNullOrEmpty(configVal))
             {
                 // This URL must end with '/', the viewer doesn't check
@@ -169,7 +166,7 @@ namespace OpenSim.Services.GridService
                 m_ExtraFeatures["map-server-url"] = configVal;
             }
 
-            configVal = loginConfig.GetString("DestinationGuide", string.Empty);
+            configVal = loginConfig.GetValue("DestinationGuide", string.Empty);
             if (!string.IsNullOrEmpty(configVal))
                 m_ExtraFeatures["destination-guide-url"] = configVal;
 
@@ -204,7 +201,7 @@ namespace OpenSim.Services.GridService
             if (!string.IsNullOrEmpty(configVal))
                 m_ExtraFeatures["GridStatusRSS"] = configVal;
 
-            m_ExtraFeatures["ExportSupported"] = gridConfig.GetString("ExportSupported", "true");
+            m_ExtraFeatures["ExportSupported"] = gridConfig.GetValue("ExportSupported", "true");
 
             string[] sections = new string[] { "Const, Startup", "Hypergrid", "GatekeeperService" };
             string gatekeeperURIAlias = Util.GetConfigVarFromSections<string>(config, "GatekeeperURIAlias", sections, string.Empty);
@@ -238,7 +235,7 @@ namespace OpenSim.Services.GridService
 
         public string RegisterRegion(UUID scopeID, GridRegion regionInfos)
         {
-            IConfig gridConfig = m_config.Configs["GridService"];
+            var gridConfig = m_config.GetSection("GridService");
 
             if (regionInfos.RegionID.IsZero())
                 return "Invalid RegionID - cannot be zero UUID";
@@ -365,12 +362,12 @@ namespace OpenSim.Services.GridService
             if ((gridConfig != null) && !string.IsNullOrEmpty(rdata.RegionName))
             {
                 string regionName = rdata.RegionName.Trim().Replace(' ', '_');
-                regionFlags = ParseFlags(regionFlags, gridConfig.GetString("DefaultRegionFlags", string.Empty));
-                string byregionname = gridConfig.GetString("Region_" + regionName, string.Empty);
+                regionFlags = ParseFlags(regionFlags, gridConfig.GetValue("DefaultRegionFlags", string.Empty));
+                string byregionname = gridConfig.GetValue("Region_" + regionName, string.Empty);
                 if(!string.IsNullOrEmpty(byregionname))
                     regionFlags = ParseFlags(regionFlags, byregionname);
                 else
-                    regionFlags = ParseFlags(regionFlags, gridConfig.GetString("Region_" + rdata.RegionID.ToString(), string.Empty));
+                    regionFlags = ParseFlags(regionFlags, gridConfig.GetValue("Region_" + rdata.RegionID.ToString(), string.Empty));
             }
 
             regionFlags |= (int)OpenSim.Framework.RegionFlags.RegionOnline;

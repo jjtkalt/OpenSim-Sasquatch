@@ -25,23 +25,15 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using Nini.Config;
 using log4net;
-using System;
 using System.Reflection;
-using System.IO;
-using System.Net;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Xml;
-using System.Xml.Serialization;
-using System.Collections.Generic;
 using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Framework.ServiceAuth;
 using OpenMetaverse;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Server.Handlers.UserAlias
 {
@@ -52,9 +44,9 @@ namespace OpenSim.Server.Handlers.UserAlias
         private IUserAliasService m_UserAliasService;
 
         public UserAliasServerPostHandler(IUserAliasService service)
-            : this(service, null, null) {}
+            : this(service, null) {}
 
-        public UserAliasServerPostHandler(IUserAliasService service, IConfig config, IServiceAuth auth) :
+        public UserAliasServerPostHandler(IUserAliasService service, IServiceAuth auth) :
                 base("POST", "/useralias", auth)
         {
             m_UserAliasService = service;

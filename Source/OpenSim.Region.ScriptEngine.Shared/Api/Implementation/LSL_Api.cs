@@ -447,7 +447,7 @@ namespace OpenSim.Region.ScriptEngine.Shared.Api
                 m_notecardLineReadCharsMax = 65535;
 
             // load limits for particular subsystems.
-            IConfigSource seConfigSource = m_ScriptEngine.ConfigSource;
+            IConfiguration seConfigSource = m_ScriptEngine.ConfigSource;
 
             if (seConfigSource != null)
             {

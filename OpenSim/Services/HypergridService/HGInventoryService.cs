@@ -58,7 +58,7 @@ namespace OpenSim.Services.HypergridService
 
         private UserAccountCache m_Cache;
 
-        public HGInventoryService(IConfigSource config, string configName)
+        public HGInventoryService(IConfiguration config, string configName)
             : base(config, configName)
         {
             m_log.Debug("[HGInventory Service]: Starting");

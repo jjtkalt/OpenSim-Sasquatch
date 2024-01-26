@@ -58,7 +58,7 @@ namespace OpenSim.Region.CoreModules.Avatar.Chat
         protected object m_syncy = new object();
         protected IConfig m_config;
         #region ISharedRegionModule Members
-        public virtual void Initialise(IConfigSource config)
+        public virtual void Initialise(IConfiguration config)
         {
             m_config = config.Configs["Chat"];
 

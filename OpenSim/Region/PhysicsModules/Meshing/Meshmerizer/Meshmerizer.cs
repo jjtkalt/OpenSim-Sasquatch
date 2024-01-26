@@ -26,10 +26,7 @@
  */
 //#define SPAM
 
-using System;
-using System.Collections.Generic;
 using System.Reflection;
-using System.IO;
 using OpenSim.Framework;
 using OpenSim.Region.Framework.Scenes;
 using OpenSim.Region.Framework.Interfaces;
@@ -40,14 +37,14 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO.Compression;
 using PrimMesher;
-using log4net;
-using Nini.Config;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Region.PhysicsModule.Meshing
 {
     public class Meshmerizer : IMesher, INonSharedRegionModule
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
         private static string LogHeader = "[MESH]";
 
         // Setting baseDir to a path will enable the dumping of raw files
@@ -74,6 +71,18 @@ namespace OpenSim.Region.PhysicsModule.Meshing
         // Mesh cache. Static so it can be shared across instances of this class
         private static Dictionary<ulong, Mesh> m_uniqueMeshes = new Dictionary<ulong, Mesh>();
 
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<Meshmerizer> m_logger;
+
+        public Meshmerizer(
+            IConfiguration configuration,
+            ILogger<Meshmerizer> logger
+            )
+        {
+            m_configuration = configuration;
+            m_logger = logger;
+        }
+
         #region INonSharedRegionModule
         public string Name
         {
@@ -85,24 +94,24 @@ namespace OpenSim.Region.PhysicsModule.Meshing
             get { return null; }
         }
 
-        public void Initialise(IConfigSource source)
+        public void Initialise( )
         {
-            IConfig config = source.Configs["Startup"];
-            if (config != null)
+            var config = m_configuration.GetSection("Startup");
+            if (config.Exists())
             {
-                string mesher = config.GetString("meshing", string.Empty);
+                string mesher = config.GetValue("meshing", string.Empty);
                 if (mesher == Name)
                 {
                     m_Enabled = true;
 
-                    IConfig mesh_config = source.Configs["Mesh"];
+                    decodedSculptMapPath = config.GetValue("DecodedSculptMapPath", "j2kDecodeCache");
+                    cacheSculptMaps = config.GetValue<bool>("CacheSculptMaps", cacheSculptMaps);
 
-                    decodedSculptMapPath = config.GetString("DecodedSculptMapPath", "j2kDecodeCache");
-                    cacheSculptMaps = config.GetBoolean("CacheSculptMaps", cacheSculptMaps);
-                    if (mesh_config != null)
+                    var mesh_config = m_configuration.GetSection("Mesh");
+                    if (mesh_config.Exists())
                     {
-                        useMeshiesPhysicsMesh = mesh_config.GetBoolean("UseMeshiesPhysicsMesh", useMeshiesPhysicsMesh);
-                        debugDetail = mesh_config.GetBoolean("LogMeshDetails", debugDetail);
+                        useMeshiesPhysicsMesh = mesh_config.GetValue<bool>("UseMeshiesPhysicsMesh", useMeshiesPhysicsMesh);
+                        debugDetail = mesh_config.GetValue<bool>("LogMeshDetails", debugDetail);
                     }
 
                     try
@@ -112,7 +121,7 @@ namespace OpenSim.Region.PhysicsModule.Meshing
                     }
                     catch (Exception e)
                     {
-                        m_log.WarnFormat("[SCULPT]: Unable to create {0} directory: ", decodedSculptMapPath, e.Message);
+                        m_logger.LogWarning(e, $"Unable to create {decodedSculptMapPath} directory: ");
                     }
 
                 }
@@ -230,9 +239,9 @@ namespace OpenSim.Region.PhysicsModule.Meshing
 
         private void ReportPrimError(string message, string primName, PrimMesh primMesh)
         {
-            m_log.Error(message);
-            m_log.Error("\nPrim Name: " + primName);
-            m_log.Error("****** PrimMesh Parameters ******\n" + primMesh.ParamsToDisplayString());
+            m_logger.LogError(message);
+            m_logger.LogError("\nPrim Name: " + primName);
+            m_logger.LogError("****** PrimMesh Parameters ******\n" + primMesh.ParamsToDisplayString());
         }
 
         /// <summary>
@@ -386,13 +395,13 @@ namespace OpenSim.Region.PhysicsModule.Meshing
                         meshOsd = (OSDMap)osd;
                     else
                     {
-                        m_log.Warn("[Mesh}: unable to cast mesh asset to OSDMap");
+                        m_logger.LogWarning("[Mesh}: unable to cast mesh asset to OSDMap");
                         return false;
                     }
                 }
                 catch (Exception e)
                 {
-                    m_log.Error("[MESH]: Exception deserializing mesh asset header:" + e.ToString());
+                    m_logger.LogError("[MESH]: Exception deserializing mesh asset header:" + e.ToString());
                 }
 
                 start = data.Position;
@@ -405,22 +414,22 @@ namespace OpenSim.Region.PhysicsModule.Meshing
                 if (map.ContainsKey("physics_shape"))
                 {
                     physicsParms = (OSDMap)map["physics_shape"]; // old asset format
-                    if (debugDetail) m_log.DebugFormat("{0} prim='{1}': using 'physics_shape' mesh data", LogHeader, primName);
+                    if (debugDetail) m_logger.LogDebug($"prim='{primName}': using 'physics_shape' mesh data");
                 }
                 else if (map.ContainsKey("physics_mesh"))
                 {
                     physicsParms = (OSDMap)map["physics_mesh"]; // new asset format
-                    if (debugDetail) m_log.DebugFormat("{0} prim='{1}':using 'physics_mesh' mesh data", LogHeader, primName);
+                    if (debugDetail) m_logger.LogDebug($"prim='{primName}':using 'physics_mesh' mesh data");
                 }
                 else if (map.ContainsKey("medium_lod"))
                 {
                     physicsParms = (OSDMap)map["medium_lod"]; // if no physics mesh, try to fall back to medium LOD display mesh
-                    if (debugDetail) m_log.DebugFormat("{0} prim='{1}':using 'medium_lod' mesh data", LogHeader, primName);
+                    if (debugDetail) m_logger.LogDebug($"prim='{primName}':using 'medium_lod' mesh data");
                 }
                 else if (map.ContainsKey("high_lod"))
                 {
                     physicsParms = (OSDMap)map["high_lod"]; // if all else fails, use highest LOD display mesh and hope it works :)
-                    if (debugDetail) m_log.DebugFormat("{0} prim='{1}':using 'high_lod' mesh data", LogHeader, primName);
+                    if (debugDetail) m_logger.LogDebug($"prim='{primName}':using 'high_lod' mesh data");
                 }
 
                 if (map.ContainsKey("physics_convex"))
@@ -443,7 +452,7 @@ namespace OpenSim.Region.PhysicsModule.Meshing
                             }
                             catch (Exception e)
                             {
-                                m_log.ErrorFormat("{0} prim='{1}': exception decoding convex block: {2}", LogHeader, primName, e);
+                                m_logger.LogError(e, $"prim='{primName}': exception decoding convex block");
                                 //return false;
                             }
                         }
@@ -457,7 +466,7 @@ namespace OpenSim.Region.PhysicsModule.Meshing
                                 string keys = LogHeader + " keys found in convexBlock: ";
                                 foreach (KeyValuePair<string, OSD> kvp in convexBlock)
                                     keys += "'" + kvp.Key + "' ";
-                                m_log.Debug(keys);
+                                m_logger.LogDebug(keys);
                             }
 
                             Vector3 min = new Vector3(-0.5f, -0.5f, -0.5f);
@@ -487,7 +496,7 @@ namespace OpenSim.Region.PhysicsModule.Meshing
                                 }
 
                                 mBoundingHull = boundingHull;
-                                if (debugDetail) m_log.DebugFormat("{0} prim='{1}': parsed bounding hull. nVerts={2}", LogHeader, primName, mBoundingHull.Count);
+                                if (debugDetail) m_logger.LogDebug($"prim='{primName}': parsed bounding hull. nVerts={mBoundingHull.Count}");
                             }
 
                             if (convexBlock.ContainsKey("HullList"))
@@ -523,23 +532,23 @@ namespace OpenSim.Region.PhysicsModule.Meshing
                                 }
 
                                 mConvexHulls = hulls;
-                                if (debugDetail) m_log.DebugFormat("{0} prim='{1}': parsed hulls. nHulls={2}", LogHeader, primName, mConvexHulls.Count);
+                                if (debugDetail) m_logger.LogDebug($"prim='{primName}': parsed hulls. nHulls={mConvexHulls.Count}");
                             }
                             else
                             {
-                                if (debugDetail) m_log.DebugFormat("{0} prim='{1}' has physics_convex but no HullList", LogHeader, primName);
+                                if (debugDetail) m_logger.LogDebug($"prim='{primName}' has physics_convex but no HullList");
                             }
                         }
                     }
                     catch (Exception e)
                     {
-                        m_log.WarnFormat("{0} exception decoding convex block: {1}", LogHeader, e);
+                        m_logger.LogWarning(e, $"Exception decoding convex block");
                     }
                 }
 
                 if (physicsParms == null)
                 {
-                    m_log.WarnFormat("[MESH]: No recognized physics mesh found in mesh asset for {0}", primName);
+                    m_logger.LogWarning($"No recognized physics mesh found in mesh asset for {primName}");
                     return false;
                 }
 
@@ -559,7 +568,7 @@ namespace OpenSim.Region.PhysicsModule.Meshing
                 }
                 catch (Exception e)
                 {
-                    m_log.ErrorFormat("{0} prim='{1}': exception decoding physical mesh: {2}", LogHeader, primName, e);
+                    m_logger.LogError(e, $"prim='{primName}': exception decoding physical mesh");
                     return false;
                 }
 
@@ -577,8 +586,7 @@ namespace OpenSim.Region.PhysicsModule.Meshing
                             AddSubMesh(subMeshOsd as OSDMap, size, coords, faces);
                     }
                     if (debugDetail)
-                        m_log.DebugFormat("{0} {1}: mesh decoded. offset={2}, size={3}, nCoords={4}, nFaces={5}",
-                                            LogHeader, primName, physOffset, physSize, coords.Count, faces.Count);
+                        m_logger.LogDebug($"{primName}: mesh decoded. offset={physOffset}, size={physSize}, nCoords={coords.Count}, nFaces={faces.Count}");
                 }
             }
 
@@ -646,7 +654,7 @@ namespace OpenSim.Region.PhysicsModule.Meshing
                 }
                 catch (Exception e)
                 {
-                    m_log.Error("[SCULPT]: unable to load cached sculpt map " + decodedSculptFileName + " " + e.Message);
+                    m_logger.LogError("[SCULPT]: unable to load cached sculpt map " + decodedSculptFileName + " " + e.Message);
 
                 }
                 //if (idata != null)
@@ -668,7 +676,7 @@ namespace OpenSim.Region.PhysicsModule.Meshing
                     {
                         // In some cases it seems that the decode can return a null bitmap without throwing
                         // an exception
-                        m_log.WarnFormat("[PHYSICS]: OpenJPEG decoded sculpt data for {0} to a null bitmap.  Ignoring.", primName);
+                        m_logger.LogWarning("[PHYSICS]: OpenJPEG decoded sculpt data for {0} to a null bitmap.  Ignoring.", primName);
 
                         return false;
                     }
@@ -683,22 +691,22 @@ namespace OpenSim.Region.PhysicsModule.Meshing
                     if (cacheSculptMaps)
                     {
                         try { idata.Save(decodedSculptFileName, ImageFormat.MemoryBmp); }
-                        catch (Exception e) { m_log.Error("[SCULPT]: unable to cache sculpt map " + decodedSculptFileName + " " + e.Message); }
+                        catch (Exception e) { m_logger.LogError("[SCULPT]: unable to cache sculpt map " + decodedSculptFileName + " " + e.Message); }
                     }
                 }
                 catch (DllNotFoundException)
                 {
-                    m_log.Error("[PHYSICS]: OpenJpeg is not installed correctly on this system. Physics Proxy generation failed.  Often times this is because of an old version of GLIBC.  You must have version 2.4 or above!");
+                    m_logger.LogError("[PHYSICS]: OpenJpeg is not installed correctly on this system. Physics Proxy generation failed.  Often times this is because of an old version of GLIBC.  You must have version 2.4 or above!");
                     return false;
                 }
                 catch (IndexOutOfRangeException)
                 {
-                    m_log.Error("[PHYSICS]: OpenJpeg was unable to decode this. Physics Proxy generation failed");
+                    m_logger.LogError("[PHYSICS]: OpenJpeg was unable to decode this. Physics Proxy generation failed");
                     return false;
                 }
                 catch (Exception ex)
                 {
-                    m_log.Error("[PHYSICS]: Unable to generate a Sculpty physics proxy. Sculpty texture decode failed: " + ex.Message);
+                    m_logger.LogError("[PHYSICS]: Unable to generate a Sculpty physics proxy. Sculpty texture decode failed: " + ex.Message);
                     return false;
                 }
             }
@@ -820,7 +828,7 @@ namespace OpenSim.Region.PhysicsModule.Meshing
 
             if (primMesh.errorMessage != null)
                 if (primMesh.errorMessage.Length > 0)
-                    m_log.Error("[ERROR] " + primMesh.errorMessage);
+                    m_logger.LogError("[ERROR] " + primMesh.errorMessage);
 
             primMesh.topShearX = pathShearX;
             primMesh.topShearY = pathShearY;

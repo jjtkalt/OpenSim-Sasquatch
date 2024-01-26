@@ -59,7 +59,7 @@ namespace OpenSim.Region.CoreModules.World.Sound
 
         #region INonSharedRegionModule
 
-        public void Initialise(IConfigSource configSource)
+        public void Initialise(IConfiguration configSource)
         {
             IConfig config = configSource.Configs["Sounds"];
 

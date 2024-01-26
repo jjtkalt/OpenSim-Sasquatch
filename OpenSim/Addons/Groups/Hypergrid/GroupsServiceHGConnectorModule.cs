@@ -53,14 +53,14 @@ namespace OpenSim.Groups
         private List<Scene> m_Scenes;
         private ForeignImporter m_ForeignImporter;
         private string m_ServiceLocation;
-        private IConfigSource m_Config;
+        private IConfiguration m_Config;
 
         private Dictionary<string, GroupsServiceHGConnector> m_NetworkConnectors = new Dictionary<string, GroupsServiceHGConnector>();
         private RemoteConnectorCacheWrapper m_CacheWrapper; // for caching info of external group services
 
         #region ISharedRegionModule
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             IConfig groupsConfig = config.Configs["Groups"];
             if (groupsConfig == null)

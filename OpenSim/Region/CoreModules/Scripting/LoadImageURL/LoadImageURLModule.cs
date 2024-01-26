@@ -103,7 +103,7 @@ namespace OpenSim.Region.CoreModules.Scripting.LoadImageURL
 
         #region ISharedRegionModule Members
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             m_outboundUrlFilter = new OutboundUrlFilter("Script dynamic texture image module", config);
             string proxyurl = config.Configs["Startup"].GetString("HttpProxy");

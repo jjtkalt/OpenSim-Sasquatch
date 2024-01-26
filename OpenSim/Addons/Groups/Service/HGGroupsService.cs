@@ -47,7 +47,7 @@ namespace OpenSim.Groups
         private IUserAccountService m_UserAccounts;
         private string m_HomeURI;
 
-        public HGGroupsService(IConfigSource config, IOfflineIMService im, IUserAccountService users, string homeURI)
+        public HGGroupsService(IConfiguration config, IOfflineIMService im, IUserAccountService users, string homeURI)
             : base(config, string.Empty)
         {
             m_OfflineIM = im;

@@ -25,22 +25,16 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Reflection;
-using Nini.Config;
 using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework.Servers.HttpServer;
-using OpenSim.Framework;
 using OpenSim.Server.Handlers.Base;
-using log4net;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Server.Handlers.Profiles
 {
     public class UserProfilesConnector: ServiceConnector
     {
-//        static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         // Our Local Module
         public IUserProfilesService ServiceModule
         {
@@ -58,28 +52,27 @@ namespace OpenSim.Server.Handlers.Profiles
             get; private set;
         }
 
-        public UserProfilesConnector(IConfigSource config, IHttpServer server, string configName) :
+        public UserProfilesConnector(IConfiguration config, IHttpServer server, string configName) :
             base(config, server, configName)
         {
             ConfigName = "UserProfilesService";
             if(!string.IsNullOrEmpty(configName))
                 ConfigName = configName;
 
-            IConfig serverConfig = config.Configs[ConfigName];
-            if (serverConfig == null)
+            var serverConfig = config.GetSection(ConfigName);
+            if (serverConfig.Exists() is false)
                 throw new Exception(String.Format("No section {0} in config file", ConfigName));
 
-            if(!serverConfig.GetBoolean("Enabled",false))
+            if(serverConfig.GetValue<bool>("Enabled",false) is false)
             {
                 Enabled = false;
                 return;
             }
 
             Enabled = true;
-
             Server = server;
 
-            string service = serverConfig.GetString("LocalServiceModule", String.Empty);
+            string service = serverConfig.GetValue("LocalServiceModule", String.Empty);
 
             Object[] args = new Object[] { config, ConfigName };
             ServiceModule = ServerUtils.LoadPlugin<IUserProfilesService>(service, args);

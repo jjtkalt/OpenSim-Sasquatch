@@ -39,8 +39,8 @@ using OpenSim.Services.Connectors.InstantMessage;
 using OpenSim.Services.Connectors.Hypergrid;
 using OpenMetaverse;
 
-using Nini.Config;
 using log4net;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.HypergridService
 {
@@ -77,36 +77,43 @@ namespace OpenSim.Services.HypergridService
         private static bool m_allowDuplicatePresences = false;
         private static string m_messageKey;
 
-        public GatekeeperService(IConfigSource config, ISimulationService simService)
+        public GatekeeperService(IConfiguration config)
+            : this(config, null)
+        {
+        }
+
+        public GatekeeperService(IConfiguration config, ISimulationService simService)
         {
             if (!m_Initialized)
             {
                 m_Initialized = true;
 
-                IConfig serverConfig = config.Configs["GatekeeperService"];
-                if (serverConfig is null)
+                var serverConfig = config.GetSection("GatekeeperService");
+                if (serverConfig.Exists() is false)
                     throw new Exception(String.Format("No section GatekeeperService in config file"));
 
-                string accountService = serverConfig.GetString("UserAccountService", string.Empty);
-                string homeUsersService = serverConfig.GetString("UserAgentService", string.Empty);
-                string gridService = serverConfig.GetString("GridService", string.Empty);
-                string presenceService = serverConfig.GetString("PresenceService", string.Empty);
-                string simulationService = serverConfig.GetString("SimulationService", string.Empty);
-                string gridUserService = serverConfig.GetString("GridUserService", string.Empty);
-                string bansService = serverConfig.GetString("BansService", string.Empty);
+                string accountService = serverConfig.GetValue("UserAccountService", string.Empty);
+                string homeUsersService = serverConfig.GetValue("UserAgentService", string.Empty);
+                string gridService = serverConfig.GetValue("GridService", string.Empty);
+                string presenceService = serverConfig.GetValue("PresenceService", string.Empty);
+                string simulationService = serverConfig.GetValue("SimulationService", string.Empty);
+                string gridUserService = serverConfig.GetValue("GridUserService", string.Empty);
+                string bansService = serverConfig.GetValue("BansService", string.Empty);
+
                 // These are mandatory, the others aren't
-                if (gridService.Length == 0 || presenceService.Length == 0)
+                if (!string.IsNullOrEmpty(gridService) || !string.IsNullOrEmpty(presenceService))
                     throw new Exception("Incomplete specifications, Gatekeeper Service cannot function.");
 
-                string scope = serverConfig.GetString("ScopeID", UUID.Zero.ToString());
+                string scope = serverConfig.GetValue("ScopeID", UUID.Zero.ToString());
                 UUID.TryParse(scope, out m_ScopeID);
-                //m_WelcomeMessage = serverConfig.GetString("WelcomeMessage", "Welcome to OpenSim!");
-                m_AllowTeleportsToAnyRegion = serverConfig.GetBoolean("AllowTeleportsToAnyRegion", true);
+
+                //m_WelcomeMessage = serverConfig.GetValue("WelcomeMessage", "Welcome to OpenSim!");
+                m_AllowTeleportsToAnyRegion = serverConfig.GetValue<bool>("AllowTeleportsToAnyRegion", true);
 
                 string[] sections = new string[] { "Const, Startup", "Hypergrid", "GatekeeperService" };
                 string externalName = Util.GetConfigVarFromSections<string>(config, "GatekeeperURI", sections, string.Empty);
                 if(string.IsNullOrEmpty(externalName))
-                    externalName = serverConfig.GetString("ExternalName", string.Empty);
+                    externalName = serverConfig.GetValue("ExternalName", string.Empty);
 
                 m_gatekeeperHost = new OSHHTPHost(externalName, true);
                 if (!m_gatekeeperHost.IsResolvedHost)
@@ -114,9 +121,11 @@ namespace OpenSim.Services.HypergridService
                     m_log.Error((m_gatekeeperHost.IsValidHost ? "Could not resolve GatekeeperURI" : "GatekeeperURI is a invalid host ") + externalName ?? "");
                     throw new Exception("GatekeeperURI is invalid");
                 }
+
                 m_gatekeeperURL = m_gatekeeperHost.URIwEndSlash;
 
-                string gatekeeperURIAlias = Util.GetConfigVarFromSections<string>(config, "GatekeeperURIAlias", sections, string.Empty);
+                string gatekeeperURIAlias = 
+                    Util.GetConfigVarFromSections<string>(config, "GatekeeperURIAlias", sections, string.Empty);
 
                 if (!string.IsNullOrWhiteSpace(gatekeeperURIAlias))
                 {
@@ -138,17 +147,24 @@ namespace OpenSim.Services.HypergridService
 
                 if (!string.IsNullOrEmpty(accountService))
                     m_UserAccountService = ServerUtils.LoadPlugin<IUserAccountService>(accountService, args);
+
                 if (!string.IsNullOrEmpty(homeUsersService))
                     m_UserAgentService = ServerUtils.LoadPlugin<IUserAgentService>(homeUsersService, args);
+
                 if (!string.IsNullOrEmpty(gridUserService))
                     m_GridUserService = ServerUtils.LoadPlugin<IGridUserService>(gridUserService, args);
+
                 if (!string.IsNullOrEmpty(bansService))
                     m_BansService = ServerUtils.LoadPlugin<IBansService>(bansService, args);
 
                 if (simService is not null)
+                {
                     m_SimulationService = simService;
+                }
                 else if (simulationService != string.Empty)
-                        m_SimulationService = ServerUtils.LoadPlugin<ISimulationService>(simulationService, args);
+                {
+                    m_SimulationService = ServerUtils.LoadPlugin<ISimulationService>(simulationService, args);
+                }
 
                 string[] possibleAccessControlConfigSections = new string[] { "AccessControl", "GatekeeperService" };
                 string AllowedClients = Util.GetConfigVarFromSections<string>(config, "AllowedClients", possibleAccessControlConfigSections, string.Empty);
@@ -182,7 +198,7 @@ namespace OpenSim.Services.HypergridService
                 m_DeniedMacs = Util.GetConfigVarFromSections<string>(config, "DeniedMacs", possibleAccessControlConfigSections, string.Empty);
                 m_DeniedID0s = Util.GetConfigVarFromSections<string>(config, "DeniedID0s", possibleAccessControlConfigSections, string.Empty);
 
-                m_ForeignAgentsAllowed = serverConfig.GetBoolean("ForeignAgentsAllowed", true);
+                m_ForeignAgentsAllowed = serverConfig.GetValue<bool>("ForeignAgentsAllowed", true);
 
                 LoadDomainExceptionsFromConfig(serverConfig, "AllowExcept", m_ForeignsAllowedExceptions);
                 LoadDomainExceptionsFromConfig(serverConfig, "DisallowExcept", m_ForeignsDisallowedExceptions);
@@ -190,27 +206,25 @@ namespace OpenSim.Services.HypergridService
                 if (m_GridService is null || m_PresenceService is null || m_SimulationService is null)
                     throw new Exception("Unable to load a required plugin, Gatekeeper Service cannot function.");
 
-                IConfig presenceConfig = config.Configs["PresenceService"];
-                if (presenceConfig is not null)
+                var presenceConfig = config.GetSection("PresenceService");
+                if (presenceConfig.Exists())
                 {
-                    m_allowDuplicatePresences = presenceConfig.GetBoolean("AllowDuplicatePresences", m_allowDuplicatePresences);
+                    m_allowDuplicatePresences = presenceConfig.GetValue<bool>("AllowDuplicatePresences", m_allowDuplicatePresences);
                 }
 
-                IConfig messagingConfig = config.Configs["Messaging"];
-                if (messagingConfig is not null)
-                    m_messageKey = messagingConfig.GetString("MessageKey", String.Empty);
+                var messagingConfig = config.GetSection("Messaging");
+                if (messagingConfig.Exists())
+                {
+                    m_messageKey = messagingConfig.GetValue("MessageKey", String.Empty);
+                }
+
                 m_log.Debug("[GATEKEEPER SERVICE]: Starting...");
             }
         }
 
-        public GatekeeperService(IConfigSource config)
-            : this(config, null)
+        protected void LoadDomainExceptionsFromConfig(IConfiguration config, string variable, List<string> exceptions)
         {
-        }
-
-        protected void LoadDomainExceptionsFromConfig(IConfig config, string variable, List<string> exceptions)
-        {
-            string value = config.GetString(variable, string.Empty);
+            string value = config.GetValue(variable, string.Empty);
             string[] parts = value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 
             foreach (string ps in parts)

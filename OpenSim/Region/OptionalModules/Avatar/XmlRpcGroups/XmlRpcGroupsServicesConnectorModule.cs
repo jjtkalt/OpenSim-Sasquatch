@@ -144,7 +144,7 @@ namespace OpenSim.Region.OptionalModules.Avatar.XmlRpcGroups
             get { return null; }
         }
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             IConfig groupsConfig = config.Configs["Groups"];
 

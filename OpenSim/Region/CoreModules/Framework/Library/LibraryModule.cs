@@ -55,7 +55,7 @@ namespace OpenSim.Region.CoreModules.Framework.Library
 
         #region ISharedRegionModule
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             m_Enabled = config.Configs["Modules"].GetBoolean("LibraryModule", m_Enabled);
             if (m_Enabled)

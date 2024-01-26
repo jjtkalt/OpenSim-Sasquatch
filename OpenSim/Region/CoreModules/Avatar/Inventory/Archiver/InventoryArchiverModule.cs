@@ -95,7 +95,7 @@ namespace OpenSim.Region.CoreModules.Avatar.Inventory.Archiver
 
         #region ISharedRegionModule
 
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
         }
 

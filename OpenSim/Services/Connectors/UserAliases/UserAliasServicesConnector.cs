@@ -26,17 +26,12 @@
  */
 
 using log4net;
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Reflection;
-using Nini.Config;
 using OpenSim.Framework;
-
-using OpenSim.Framework.ServiceAuth;
 using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenMetaverse;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.Connectors
 {
@@ -57,21 +52,21 @@ namespace OpenSim.Services.Connectors
             m_ServerURI = serverURI.TrimEnd('/');
         }
 
-        public UserAliasServicesConnector(IConfigSource source)
+        public UserAliasServicesConnector(IConfiguration source)
         {
             Initialise(source);
         }
 
-        public virtual void Initialise(IConfigSource source)
+        public virtual void Initialise(IConfiguration source)
         {
-            IConfig aliasConfig = source.Configs["UserAliasService"];
-            if (aliasConfig == null)
+            var aliasConfig = source.GetSection("UserAliasService");
+            if (aliasConfig.Exists() is false)
             {
                 m_log.Error("[ALIAS CONNECTOR]: UserAliasService missing from OpenSim.ini");
                 throw new Exception("User Alias connector init error");
             }
 
-            string serviceURI = aliasConfig.GetString("UserAliasServerURI", string.Empty);
+            string serviceURI = aliasConfig.GetValue("UserAliasServerURI", string.Empty);
 
             if (string.IsNullOrWhiteSpace(serviceURI))
             {
@@ -80,6 +75,7 @@ namespace OpenSim.Services.Connectors
             }
 
             OSHHTPHost tmp = new OSHHTPHost(serviceURI, true);
+            
             if (!tmp.IsResolvedHost)
             {
                 m_log.ErrorFormat("[ALIAS CONNECTOR]: {0}", tmp.IsValidHost ? "Could not resolve UserAliasServerURI" : "UserAliasServerURI is a invalid host");

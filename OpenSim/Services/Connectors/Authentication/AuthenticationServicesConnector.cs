@@ -36,6 +36,7 @@ using OpenSim.Framework.ServiceAuth;
 using OpenSim.Services.Interfaces;
 using OpenSim.Server.Base;
 using OpenMetaverse;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.Connectors
 {
@@ -56,29 +57,29 @@ namespace OpenSim.Services.Connectors
             m_ServerURI = serverURI.TrimEnd('/');
         }
 
-        public AuthenticationServicesConnector(IConfigSource source)
+        public AuthenticationServicesConnector(IConfiguration source)
             : base(source, "AuthenticationService")
         {
             Initialise(source);
         }
 
-        public virtual void Initialise(IConfigSource source)
+        public virtual void Initialise(IConfiguration source)
         {
-            IConfig assetConfig = source.Configs["AuthenticationService"];
-            if (assetConfig == null)
+            var assetConfig = source.GetSection("AuthenticationService");
+            if (assetConfig.Exists() is false)
             {
                 m_log.Error("[AUTH CONNECTOR]: AuthenticationService missing from OpenSim.ini");
                 throw new Exception("Authentication connector init error");
             }
 
-            string serviceURI = assetConfig.GetString("AuthenticationServerURI",
-                    String.Empty);
+            string serviceURI = assetConfig.GetValue<string>("AuthenticationServerURI", String.Empty);
 
             if (serviceURI.Length == 0)
             {
                 m_log.Error("[AUTH CONNECTOR]: No Server URI named in section AuthenticationService");
                 throw new Exception("Authentication connector init error");
             }
+            
             m_ServerURI = serviceURI;
 
             base.Initialise(source, "AuthenticationService");

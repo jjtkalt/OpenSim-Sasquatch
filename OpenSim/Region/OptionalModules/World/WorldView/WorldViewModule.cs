@@ -47,7 +47,7 @@ namespace OpenSim.Region.OptionalModules.World.WorldView
         private bool m_Enabled = false;
         private IMapImageGenerator m_Generator;
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             IConfig moduleConfig = config.Configs["Modules"];
             if (moduleConfig == null)

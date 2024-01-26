@@ -148,7 +148,7 @@ namespace OpenSim.Region.ClientStack.Linden
 
             m_PrimScaleMin = m_ModelCost.PrimScaleMin;
 
-            IConfigSource config = m_Scene.Config;
+            IConfiguration config = m_Scene.Config;
             if (config != null)
             {
                 IConfig sconfig = config.Configs["Startup"];

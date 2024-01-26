@@ -32,7 +32,7 @@ namespace OpenSim.ApplicationPlugins.LoadRegions
 {
     public interface IRegionLoader
     {
-        void SetIniConfigSource(IConfigSource configSource);
+        void SetIniConfigSource(IConfiguration configSource);
         RegionInfo[] LoadRegions();
     }
 }

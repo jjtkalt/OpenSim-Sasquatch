@@ -47,6 +47,7 @@ using TPFlags = OpenSim.Framework.Constants.TeleportFlags;
 using GridRegion = OpenSim.Services.Interfaces.GridRegion;
 using PermissionMask = OpenSim.Framework.PermissionMask;
 using System.Runtime.CompilerServices;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Region.Framework.Scenes
 {
@@ -324,7 +325,7 @@ namespace OpenSim.Region.Framework.Scenes
         protected IXMLRPC m_xmlrpcModule;
         protected IWorldComm m_worldCommModule;
         protected IAvatarFactoryModule m_AvatarFactory;
-        protected IConfigSource m_config;
+        protected IConfiguration m_config;
         protected IRegionSerialiserModule m_serialiser;
         protected IDialogModule m_dialogModule;
         protected ICapabilitiesModule m_capsModule;
@@ -797,7 +798,7 @@ namespace OpenSim.Region.Framework.Scenes
 
         public Scene(RegionInfo regInfo, AgentCircuitManager authen,
                      ISimulationDataService simDataService, IEstateDataService estateDataService,
-                     IConfigSource config, string simulatorVersion)
+                     IConfiguration config, string simulatorVersion)
             : this(regInfo)
         {
             m_config = config;
@@ -890,19 +891,18 @@ namespace OpenSim.Region.Framework.Scenes
 
             // Region config overrides global config
             //
-            if (m_config.Configs["Startup"] is not null)
+            var startupConfig = m_config.GetSection("Startup");
+            if (startupConfig.Exists())
             {
-                IConfig startupConfig = m_config.Configs["Startup"];
+                StartDisabled = startupConfig.GetValue<bool>("StartDisabled", false);
 
-                StartDisabled = startupConfig.GetBoolean("StartDisabled", false);
-
-                m_defaultDrawDistance = startupConfig.GetFloat("DefaultDrawDistance", m_defaultDrawDistance);
-                m_maxDrawDistance = startupConfig.GetFloat("MaxDrawDistance", m_maxDrawDistance);
-                m_maxRegionViewDistance = startupConfig.GetFloat("MaxRegionsViewDistance", m_maxRegionViewDistance);
-                m_minRegionViewDistance = startupConfig.GetFloat("MinRegionsViewDistance", m_minRegionViewDistance);
+                m_defaultDrawDistance = startupConfig.GetValue<float>("DefaultDrawDistance", m_defaultDrawDistance);
+                m_maxDrawDistance = startupConfig.GetValue<float>("MaxDrawDistance", m_maxDrawDistance);
+                m_maxRegionViewDistance = startupConfig.GetValue<float>("MaxRegionsViewDistance", m_maxRegionViewDistance);
+                m_minRegionViewDistance = startupConfig.GetValue<float>("MinRegionsViewDistance", m_minRegionViewDistance);
 
                 // old versions compatibility
-                LegacySitOffsets = startupConfig.GetBoolean("LegacySitOffsets", LegacySitOffsets);
+                LegacySitOffsets = startupConfig.GetValue<bool>("LegacySitOffsets", LegacySitOffsets);
 
                 if (m_defaultDrawDistance > m_maxDrawDistance)
                     m_defaultDrawDistance = m_maxDrawDistance;
@@ -915,90 +915,98 @@ namespace OpenSim.Region.Framework.Scenes
                 if(m_minRegionViewDistance > m_maxRegionViewDistance)
                     m_minRegionViewDistance = m_maxRegionViewDistance;
 
-                UseBackup = startupConfig.GetBoolean("UseSceneBackup", UseBackup);
+                UseBackup = startupConfig.GetValue<bool>("UseSceneBackup", UseBackup);
                 if (!UseBackup)
                     m_log.Info($"[SCENE]: Backup has been disabled for {RegionInfo.RegionName}");
 
                 //Animation states
-                m_useFlySlow = startupConfig.GetBoolean("enableflyslow", false);
+                m_useFlySlow = startupConfig.GetValue<bool>("enableflyslow", false);
 
-                SeeIntoRegion = startupConfig.GetBoolean("see_into_region", SeeIntoRegion);
+                SeeIntoRegion = startupConfig.GetValue<bool>("see_into_region", SeeIntoRegion);
 
-                MaxUndoCount = startupConfig.GetInt("MaxPrimUndos", 20);
+                MaxUndoCount = startupConfig.GetValue<int>("MaxPrimUndos", 20);
 
-                PhysicalPrims = startupConfig.GetBoolean("physical_prim", true);
-                CollidablePrims = startupConfig.GetBoolean("collidable_prim", true);
+                PhysicalPrims = startupConfig.GetValue<bool>("physical_prim", true);
+                CollidablePrims = startupConfig.GetValue<bool>("collidable_prim", true);
 
-                m_minNonphys = startupConfig.GetFloat("NonPhysicalPrimMin", m_minNonphys);
+                m_minNonphys = startupConfig.GetValue<float>("NonPhysicalPrimMin", m_minNonphys);
+
                 if (RegionInfo.NonphysPrimMin > 0)
                 {
                     m_minNonphys = RegionInfo.NonphysPrimMin;
                 }
+                
                 // don't allow nonsense values
                 if(m_minNonphys < 0.001f)
                     m_minNonphys = 0.001f;
 
-                m_maxNonphys = startupConfig.GetFloat("NonPhysicalPrimMax", m_maxNonphys);
+                m_maxNonphys = startupConfig.GetValue<float>("NonPhysicalPrimMax", m_maxNonphys);
+
                 if (RegionInfo.NonphysPrimMax > 0)
                 {
                     m_maxNonphys = RegionInfo.NonphysPrimMax;
                 }
+
                 if (m_maxNonphys > 65536)
                     m_maxNonphys = 65536;
 
-                m_minPhys = startupConfig.GetFloat("PhysicalPrimMin", m_minPhys);
+                m_minPhys = startupConfig.GetValue<float>("PhysicalPrimMin", m_minPhys);
+
                 if (RegionInfo.PhysPrimMin > 0)
                 {
                     m_minPhys = RegionInfo.PhysPrimMin;
                 }
+
                 if(m_minPhys < 0.01f)
                     m_minPhys = 0.01f;
 
-                m_maxPhys = startupConfig.GetFloat("PhysicalPrimMax", m_maxPhys);
+                m_maxPhys = startupConfig.GetValue<float>("PhysicalPrimMax", m_maxPhys);
 
                 if (RegionInfo.PhysPrimMax > 0)
                 {
                     m_maxPhys = RegionInfo.PhysPrimMax;
                 }
+
                 if (m_maxPhys > 2048)
                     m_maxPhys = 2048;
 
-                m_linksetCapacity = startupConfig.GetInt("LinksetPrims", m_linksetCapacity);
+                m_linksetCapacity = startupConfig.GetValue<int>("LinksetPrims", m_linksetCapacity);
+
                 if (RegionInfo.LinksetCapacity > 0)
                 {
                     m_linksetCapacity = RegionInfo.LinksetCapacity;
                 }
 
-                m_linksetPhysCapacity = startupConfig.GetInt("LinksetPhysPrims", m_linksetPhysCapacity);
+                m_linksetPhysCapacity = startupConfig.GetValue<int>("LinksetPhysPrims", m_linksetPhysCapacity);
 
-
-                SpawnPointRouting = startupConfig.GetString("SpawnPointRouting", "closest");
-                TelehubAllowLandmarks = startupConfig.GetBoolean("TelehubAllowLandmark", false);
+                SpawnPointRouting = startupConfig.GetValue<string>("SpawnPointRouting", "closest");
+                TelehubAllowLandmarks = startupConfig.GetValue<bool>("TelehubAllowLandmark", false);
 
                 // Here, if clamping is requested in either global or
                 // local config, it will be used
                 //
-                m_clampPrimSize = startupConfig.GetBoolean("ClampPrimSize", m_clampPrimSize);
+                m_clampPrimSize = startupConfig.GetValue<bool>("ClampPrimSize", m_clampPrimSize);
+
                 if (RegionInfo.ClampPrimSize)
                 {
                     m_clampPrimSize = true;
                 }
 
-                m_clampNegativeZ = startupConfig.GetBoolean("ClampNegativeZ", m_clampNegativeZ);
+                m_clampNegativeZ = startupConfig.GetValue<bool>("ClampNegativeZ", m_clampNegativeZ);
 
-                m_useTrashOnDelete = startupConfig.GetBoolean("UseTrashOnDelete",m_useTrashOnDelete);
-                m_trustBinaries = startupConfig.GetBoolean("TrustBinaries", m_trustBinaries);
-                m_allowScriptCrossings = startupConfig.GetBoolean("AllowScriptCrossing", m_allowScriptCrossings);
-                m_dontPersistBefore = startupConfig.GetLong("MinimumTimeBeforePersistenceConsidered", DEFAULT_MIN_TIME_FOR_PERSISTENCE);
+                m_useTrashOnDelete = startupConfig.GetValue<bool>("UseTrashOnDelete",m_useTrashOnDelete);
+                m_trustBinaries = startupConfig.GetValue<bool>("TrustBinaries", m_trustBinaries);
+                m_allowScriptCrossings = startupConfig.GetValue<bool>("AllowScriptCrossing", m_allowScriptCrossings);
+                m_dontPersistBefore = startupConfig.GetValue<long>("MinimumTimeBeforePersistenceConsidered", DEFAULT_MIN_TIME_FOR_PERSISTENCE);
                 m_dontPersistBefore *= 10000000;
-                m_persistAfter = startupConfig.GetLong("MaximumTimeBeforePersistenceConsidered", DEFAULT_MAX_TIME_FOR_PERSISTENCE);
+                m_persistAfter = startupConfig.GetValue<long>("MaximumTimeBeforePersistenceConsidered", DEFAULT_MAX_TIME_FOR_PERSISTENCE);
                 m_persistAfter *= 10000000;
 
-                m_defaultScriptEngine = startupConfig.GetString("DefaultScriptEngine", "XEngine");
+                m_defaultScriptEngine = startupConfig.GetValue<string>("DefaultScriptEngine", "XEngine");
                 m_log.InfoFormat("[SCENE]: Default script engine {0}", m_defaultScriptEngine);
 
-                m_strictAccessControl = startupConfig.GetBoolean("StrictAccessControl", m_strictAccessControl);
-                m_seeIntoBannedRegion = startupConfig.GetBoolean("SeeIntoBannedRegion", m_seeIntoBannedRegion);
+                m_strictAccessControl = startupConfig.GetValue<bool>("StrictAccessControl", m_strictAccessControl);
+                m_seeIntoBannedRegion = startupConfig.GetValue<bool>("SeeIntoBannedRegion", m_seeIntoBannedRegion);
 
                 string[] possibleMapConfigSections = new string[] { "Map", "Startup" };
 
@@ -1008,7 +1016,9 @@ namespace OpenSim.Region.Framework.Scenes
                 if (m_generateMaptiles)
                 {
                     int maptileRefresh = Util.GetConfigVarFromSections<int>(config, "MaptileRefresh", possibleMapConfigSections, 0);
+
                     m_log.InfoFormat("[SCENE]: Region {0}, WORLD MAP refresh time set to {1} seconds", RegionInfo.RegionName, maptileRefresh);
+                    
                     if (maptileRefresh != 0)
                     {
                         m_mapGenerationTimer.Interval = maptileRefresh * 1000;
@@ -1047,6 +1057,7 @@ namespace OpenSim.Region.Framework.Scenes
                 }
 
                 grant = Util.GetConfigVarFromSections<string>(config, "DeniedClients", possibleAccessControlConfigSections, string.Empty);
+
                 // Deal with the mess of someone having used a different word at some point
                 if (string.IsNullOrWhiteSpace(grant))
                     grant = Util.GetConfigVarFromSections<string>(config, "BannedClients", possibleAccessControlConfigSections, string.Empty);
@@ -1059,38 +1070,38 @@ namespace OpenSim.Region.Framework.Scenes
                     }
                 }
 
-                FrameTime                 = startupConfig.GetFloat( "FrameTime", FrameTime);
-                FrameTimeWarnPercent      = startupConfig.GetInt( "FrameTimeWarnPercent", FrameTimeWarnPercent);
-                FrameTimeCritPercent      = startupConfig.GetInt( "FrameTimeCritPercent", FrameTimeCritPercent);
-                Normalized55FPS           = startupConfig.GetBoolean( "Normalized55FPS", Normalized55FPS);
+                FrameTime                 = startupConfig.GetValue<float>( "FrameTime", FrameTime);
+                FrameTimeWarnPercent      = startupConfig.GetValue<int>( "FrameTimeWarnPercent", FrameTimeWarnPercent);
+                FrameTimeCritPercent      = startupConfig.GetValue<int>( "FrameTimeCritPercent", FrameTimeCritPercent);
+                Normalized55FPS           = startupConfig.GetValue<bool>( "Normalized55FPS", Normalized55FPS);
 
-                m_update_backup           = startupConfig.GetInt("UpdateStorageEveryNFrames",         m_update_backup);
-                m_update_coarse_locations = startupConfig.GetInt("UpdateCoarseLocationsEveryNFrames", m_update_coarse_locations);
-                m_update_entitymovement   = startupConfig.GetInt("UpdateEntityMovementEveryNFrames",  m_update_entitymovement);
-                m_update_events           = startupConfig.GetInt("UpdateEventsEveryNFrames",          m_update_events);
-                m_update_objects          = startupConfig.GetInt("UpdateObjectsEveryNFrames",         m_update_objects);
-                m_update_physics          = startupConfig.GetInt("UpdatePhysicsEveryNFrames",         m_update_physics);
-                m_update_presences        = startupConfig.GetInt("UpdateAgentsEveryNFrames",          m_update_presences);
-                m_update_terrain          = startupConfig.GetInt("UpdateTerrainEveryNFrames",         m_update_terrain);
-                m_update_temp_cleaning    = startupConfig.GetInt("UpdateTempCleaningEveryNSeconds",   m_update_temp_cleaning);
-
+                m_update_backup           = startupConfig.GetValue<int>("UpdateStorageEveryNFrames",         m_update_backup);
+                m_update_coarse_locations = startupConfig.GetValue<int>("UpdateCoarseLocationsEveryNFrames", m_update_coarse_locations);
+                m_update_entitymovement   = startupConfig.GetValue<int>("UpdateEntityMovementEveryNFrames",  m_update_entitymovement);
+                m_update_events           = startupConfig.GetValue<int>("UpdateEventsEveryNFrames",          m_update_events);
+                m_update_objects          = startupConfig.GetValue<int>("UpdateObjectsEveryNFrames",         m_update_objects);
+                m_update_physics          = startupConfig.GetValue<int>("UpdatePhysicsEveryNFrames",         m_update_physics);
+                m_update_presences        = startupConfig.GetValue<int>("UpdateAgentsEveryNFrames",          m_update_presences);
+                m_update_terrain          = startupConfig.GetValue<int>("UpdateTerrainEveryNFrames",         m_update_terrain);
+                m_update_temp_cleaning    = startupConfig.GetValue<int>("UpdateTempCleaningEveryNSeconds",   m_update_temp_cleaning);
             }
 
             #endregion Region Config
 
-            IConfig entityTransferConfig = m_config.Configs["EntityTransfer"];
-            if (entityTransferConfig is not null)
+            var entityTransferConfig = m_config.GetSection("EntityTransfer");
+            if (entityTransferConfig.Exists())
             {
-                AllowAvatarCrossing = entityTransferConfig.GetBoolean("AllowAvatarCrossing", AllowAvatarCrossing);
-                DisableObjectTransfer = entityTransferConfig.GetBoolean("DisableObjectTransfer", false);
+                AllowAvatarCrossing = entityTransferConfig.GetValue<bool>("AllowAvatarCrossing", AllowAvatarCrossing);
+                DisableObjectTransfer = entityTransferConfig.GetValue<bool>("DisableObjectTransfer", false);
             }
 
             #region Interest Management
 
-            IConfig interestConfig = m_config.Configs["InterestManagement"];
-            if (interestConfig is not null)
+            var interestConfig = m_config.GetSection("InterestManagement");
+            if (interestConfig.Exists())
             {
-                string update_prioritization_scheme = interestConfig.GetString("UpdatePrioritizationScheme", "Time").Trim().ToLower();
+                string update_prioritization_scheme = 
+                    interestConfig.GetValue<string>("UpdatePrioritizationScheme", "Time").Trim().ToLower();
 
                 try
                 {
@@ -1103,17 +1114,17 @@ namespace OpenSim.Region.Framework.Scenes
                 }
 
                 IsReprioritizationEnabled
-                    = interestConfig.GetBoolean("ReprioritizationEnabled", IsReprioritizationEnabled);
+                    = interestConfig.GetValue<bool>("ReprioritizationEnabled", IsReprioritizationEnabled);
                 ReprioritizationInterval
-                    = interestConfig.GetFloat("ReprioritizationInterval", ReprioritizationInterval);
+                    = interestConfig.GetValue<float>("ReprioritizationInterval", ReprioritizationInterval);
                 ReprioritizationDistance
-                    = interestConfig.GetFloat("RootReprioritizationDistance", ReprioritizationDistance);
+                    = interestConfig.GetValue<float>("RootReprioritizationDistance", ReprioritizationDistance);
 
                 if(ReprioritizationDistance < m_minReprioritizationDistance)
                     ReprioritizationDistance = m_minReprioritizationDistance;
 
                 ObjectsCullingByDistance
-                    = interestConfig.GetBoolean("ObjectsCullingByDistance", ObjectsCullingByDistance);
+                    = interestConfig.GetValue<bool>("ObjectsCullingByDistance", ObjectsCullingByDistance);
 
             }
 
@@ -1126,10 +1137,11 @@ namespace OpenSim.Region.Framework.Scenes
             StatsReporter.OnSendStatsResult += SendSimStatsPackets;
             StatsReporter.OnStatsIncorrect += m_sceneGraph.RecalculateStats;
 
-            IConfig restartConfig = config.Configs["RestartModule"];
-            if (restartConfig is not null)
+            var restartConfig = config.GetSection("RestartModule");
+            if (restartConfig.Exists())
             {
-                string markerPath = restartConfig.GetString("MarkerPath", String.Empty);
+                string markerPath = restartConfig.GetValue<string>("MarkerPath", String.Empty);
+
                 if (!string.IsNullOrEmpty(markerPath))
                 {
                     string path = Path.Combine(markerPath, RegionInfo.RegionID.ToString() + ".started");
@@ -1401,10 +1413,10 @@ namespace OpenSim.Region.Framework.Scenes
         // This causes the region to restart immediatley.
         public void RestartNow()
         {
-            IConfig startupConfig = m_config.Configs["Startup"];
-            if (startupConfig is not null)
+            var startupConfig = m_config.GetSection("Startup");
+            if (startupConfig.Exists())
             {
-                if (startupConfig.GetBoolean("InworldRestartShutsDown", false))
+                if (startupConfig.GetValue<bool>("InworldRestartShutsDown", false))
                 {
                     MainConsole.Instance.RunCommand("shutdown");
                     return;
@@ -1802,10 +1814,10 @@ namespace OpenSim.Region.Framework.Scenes
                             // Region ready should always be set
                             Ready = true;
 
-                            IConfig restartConfig = m_config.Configs["RestartModule"];
-                            if (restartConfig is not null)
+                            var restartConfig = m_config.GetSection("RestartModule");
+                            if (restartConfig.Exists())
                             {
-                                string markerPath = restartConfig.GetString("MarkerPath", String.Empty);
+                                string markerPath = restartConfig.GetValue<string>("MarkerPath", String.Empty);
 
                                 if (!string.IsNullOrEmpty(markerPath))
                                 {
@@ -2199,10 +2211,13 @@ namespace OpenSim.Region.Framework.Scenes
                     {
                         // This should be in the Terrain module, but it isn't because
                         // the heightmap is needed _way_ before the modules are initialized...
-                        IConfig terrainConfig = m_config.Configs["Terrain"];
+                        var terrainConfig = m_config.GetSection("Terrain");
                         String m_InitialTerrain = "pinhead-island";
-                        if (terrainConfig is not null)
-                            m_InitialTerrain = terrainConfig.GetString("InitialTerrain", m_InitialTerrain);
+
+                        if (terrainConfig.Exists())
+                        {
+                            m_InitialTerrain = terrainConfig.GetValue<string>("InitialTerrain", m_InitialTerrain);
+                        }
 
                         m_log.InfoFormat("[TERRAIN]: No default terrain. Generating a new terrain {0}.", m_InitialTerrain);
                         Heightmap = new TerrainChannel(m_InitialTerrain, (int)RegionInfo.RegionSizeX, (int)RegionInfo.RegionSizeY, (int)RegionInfo.RegionSizeZ);
@@ -4977,7 +4992,7 @@ Label_GroupsDone:
 
         #region Other Methods
 
-        protected override IConfigSource GetConfig()
+        protected override IConfiguration GetConfig()
         {
             return m_config;
         }

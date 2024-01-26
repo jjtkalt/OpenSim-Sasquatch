@@ -47,7 +47,7 @@ namespace OpenSim.Region.CoreModules.Framework.ServiceThrottle
 
         #region ISharedRegionModule
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             m_processorJobEngine = new JobEngine("ServiceThrottle","ServiceThrottle", 5000, 2);
             m_processorJobEngine.Start();

@@ -25,54 +25,54 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Threading;
 using System.Reflection;
 using OpenSim.Framework;
-using OpenSim.Framework.Console;
 using OpenSim.Framework.Servers;
 using OpenSim.Framework.Servers.HttpServer;
-using log4net;
-using Nini.Config;
+using Microsoft.Extensions.Configuration;
+using OpenSim.Framework.Monitoring;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Server.Base
 {
     public class HttpServerBase : ServicesServerBase
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         private uint m_consolePort;
 
-        // Handle all the automagical stuff
-        //
-        public HttpServerBase(string prompt, string[] args) : base(prompt, args)
+        private IConfiguration m_configuration;
+        private ILogger<HttpServerBase> m_logger;
+
+        public HttpServerBase(
+            IConfiguration configuration,
+            ILogger<HttpServerBase> logger,
+            ServerStatsCollector statsCollector) 
+            : base(configuration, logger, statsCollector)
         {
+            m_configuration = configuration;
+            m_logger = logger;
         }
 
-        protected override void ReadConfig()
+        protected void ReadConfig()
         {
-            IConfig networkConfig = Config.Configs["Network"];
-
-            if (networkConfig == null)
+            var networkConfig = m_configuration.GetSection("Network");
+            if (networkConfig.Exists() is false)
             {
                 System.Console.WriteLine("ERROR: Section [Network] not found, server can't start");
                 Environment.Exit(1);
             }
 
-            uint port = (uint)networkConfig.GetInt("port", 0);
-
+            uint port = networkConfig.GetValue<uint>("port", 0);
             if (port == 0)
             {
                 System.Console.WriteLine("ERROR: No 'port' entry found in [Network].  Server can't start");
                 Environment.Exit(1);
             }
 
-            bool ssl_main = networkConfig.GetBoolean("https_main",false);
-            bool ssl_listener = networkConfig.GetBoolean("https_listener",false);
-            bool ssl_external = networkConfig.GetBoolean("https_external",false);
+            bool ssl_main = networkConfig.GetValue<bool>("https_main",false);
+            bool ssl_listener = networkConfig.GetValue<bool>("https_listener",false);
+            bool ssl_external = networkConfig.GetValue<bool>("https_external",false);
 
-            m_consolePort = (uint)networkConfig.GetInt("ConsolePort", 0);
+            m_consolePort = networkConfig.GetValue<uint>("ConsolePort", 0);
 
             BaseHttpServer httpServer = null;
 
@@ -91,15 +91,15 @@ namespace OpenSim.Server.Base
             }
             else
             {
-                string cert_path = networkConfig.GetString("cert_path", string.Empty);
-                if (cert_path.Length == 0)
+                string cert_path = networkConfig.GetValue("cert_path", string.Empty);
+                if (string.IsNullOrEmpty(cert_path))
                 {
                     System.Console.WriteLine("ERROR: Path to X509 certificate is missing, server can't start.");
                     Environment.Exit(1);
                 }
 
-                string cert_pass = networkConfig.GetString("cert_pass", string.Empty);
-                if (cert_pass.Length == 0)
+                string cert_pass = networkConfig.GetValue("cert_pass", string.Empty);
+                if (string.IsNullOrEmpty(cert_pass))
                 {
                     System.Console.WriteLine("ERROR: Password for X509 certificate is missing, server can't start.");
                     Environment.Exit(1);
@@ -114,19 +114,19 @@ namespace OpenSim.Server.Base
             // If https_listener = true, then add an ssl listener on the https_port...
             if (ssl_listener == true)
             {
-                uint https_port = (uint)networkConfig.GetInt("https_port", 0);
+                uint https_port = networkConfig.GetValue<uint>("https_port", 0);
 
-                m_log.WarnFormat("[SSL]: External flag is {0}", ssl_external);
+                m_logger.LogWarning($"External flag is {ssl_external}");
                 if (!ssl_external)
                 {
-                    string cert_path = networkConfig.GetString("cert_path", string.Empty);
-                    if ( cert_path.Length == 0 )
+                    string cert_path = networkConfig.GetValue("cert_path", string.Empty);
+                    if (string.IsNullOrEmpty(cert_path))
                     {
                         System.Console.WriteLine("Path to X509 certificate is missing, server can't start.");
                         //Thread.CurrentThread.Abort();
                     }
-                    string cert_pass = networkConfig.GetString("cert_pass", string.Empty);
-                    if ( cert_pass.Length == 0 )
+                    string cert_pass = networkConfig.GetValue("cert_pass", string.Empty);
+                    if (string.IsNullOrEmpty(cert_pass))
                     {
                         System.Console.WriteLine("Password for X509 certificate is missing, server can't start.");
                         //Thread.CurrentThread.Abort();
@@ -136,7 +136,7 @@ namespace OpenSim.Server.Base
                 }
                 else
                 {
-                    m_log.WarnFormat("[SSL]: SSL port is active but no SSL is used because external SSL was requested.");
+                    m_logger.LogWarning($"SSL port is active but no SSL is used because external SSL was requested.");
                     MainServer.AddHttpServer(new BaseHttpServer(https_port));
                 }
             }

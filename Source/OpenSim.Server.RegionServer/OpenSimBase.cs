@@ -92,7 +92,7 @@ namespace OpenSim.Server.RegionServer
         /// Constructor.
         /// </summary>
         /// <param name="configSource"></param>
-        public OpenSimBase(IConfigSource configSource) : base()
+        public OpenSimBase(IConfiguration configSource) : base()
         {
             EnableInitialPluginLoad = true;
             LoadEstateDataService = true;
@@ -107,7 +107,7 @@ namespace OpenSim.Server.RegionServer
         /// <value>
         /// The config information passed into the OpenSimulator region server.
         /// </value>
-        //public IConfigSource ConfigSource { get; private set; }
+        //public IConfiguration ConfigSource { get; private set; }
 
         /// <summary>
         /// ConfigurationSettings
@@ -732,7 +732,7 @@ namespace OpenSim.Server.RegionServer
                 += sm => { MemoryWatchdog.Enabled = sm.AllRegionsReady; Watchdog.Enabled = sm.AllRegionsReady; };
         }
 
-        protected virtual void LoadConfigSettings(IConfigSource configSource)
+        protected virtual void LoadConfigSettings(IConfiguration configSource)
         {
             m_configLoader = new ConfigurationLoader();
 
@@ -779,7 +779,7 @@ namespace OpenSim.Server.RegionServer
         /// <param name="configSource"></param>
         /// <param name="clientServer"> </param>
         /// <returns></returns>
-        protected Scene SetupScene(RegionInfo regionInfo, int proxyOffset, IConfigSource configSource)
+        protected Scene SetupScene(RegionInfo regionInfo, int proxyOffset, IConfiguration configSource)
         {
             //List<IClientNetworkServer> clientNetworkServers = null;
 

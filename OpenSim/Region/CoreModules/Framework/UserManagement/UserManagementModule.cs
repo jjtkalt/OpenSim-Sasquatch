@@ -91,7 +91,7 @@ namespace OpenSim.Region.CoreModules.Framework.UserManagement
 
         #region ISharedRegionModule
 
-        public virtual void Initialise(IConfigSource config)
+        public virtual void Initialise(IConfiguration config)
         {
             string umanmod = config.Configs["Modules"].GetString("UserManagementModule", Name);
             if (umanmod == Name)
@@ -1276,7 +1276,7 @@ namespace OpenSim.Region.CoreModules.Framework.UserManagement
 
         #endregion IUserManagement
 
-        protected virtual void Init(IConfigSource config)
+        protected virtual void Init(IConfiguration config)
         {
             AddSystemUser(UUID.Zero, "Unknown", "User");
             AddSystemUser(Constants.m_MrOpenSimID, "Mr", "Opensim");

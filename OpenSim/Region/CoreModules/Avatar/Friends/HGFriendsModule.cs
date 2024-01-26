@@ -83,7 +83,7 @@ namespace OpenSim.Region.CoreModules.Avatar.Friends
                 m_StatusNotifier = new HGStatusNotifier(this);
         }
 
-        protected override void InitModule(IConfigSource config)
+        protected override void InitModule(IConfiguration config)
         {
             base.InitModule(config);
 

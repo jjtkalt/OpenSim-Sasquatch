@@ -73,7 +73,7 @@ namespace OpenSim.Region.CoreModules.World.LightShare
         private double m_framets;
 
         #region INonSharedRegionModule
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
             IConfig config = source.Configs["ClientStack.LindenCaps"];
 

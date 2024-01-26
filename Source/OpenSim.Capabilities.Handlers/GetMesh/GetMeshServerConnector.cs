@@ -40,7 +40,7 @@ namespace OpenSim.Capabilities.Handlers
         private IAssetService m_AssetService;
         private string m_ConfigName = "CapsService";
 
-        public GetMeshServerConnector(IConfigSource config, IHttpServer server, string configName) :
+        public GetMeshServerConnector(IConfiguration config, IHttpServer server, string configName) :
                 base(config, server, configName)
         {
             if (configName != String.Empty)

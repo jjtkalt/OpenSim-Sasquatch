@@ -25,13 +25,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Reflection;
-using Nini.Config;
-using OpenSim.Framework;
+
 using OpenSim.Data;
-using OpenSim.Services.Interfaces;
 using OpenSim.Services.Base;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.UserAccountService
 {
@@ -39,7 +36,7 @@ namespace OpenSim.Services.UserAccountService
     {
         protected IGridUserData m_Database = null;
 
-        public GridUserServiceBase(IConfigSource config) : base(config)
+        public GridUserServiceBase(IConfiguration config) : base(config)
         {
             string dllName = String.Empty;
             string connString = String.Empty;
@@ -48,24 +45,24 @@ namespace OpenSim.Services.UserAccountService
             //
             // Try reading the [DatabaseService] section, if it exists
             //
-            IConfig dbConfig = config.Configs["DatabaseService"];
-            if (dbConfig != null)
+            var dbConfig = config.GetSection("DatabaseService");
+            if (dbConfig.Exists())
             {
-                if (dllName.Length == 0)
-                    dllName = dbConfig.GetString("StorageProvider", String.Empty);
-                if (connString.Length == 0)
-                    connString = dbConfig.GetString("ConnectionString", String.Empty);
+                if (string.IsNullOrEmpty(dllName))
+                    dllName = dbConfig.GetValue("StorageProvider", String.Empty);
+                if (string.IsNullOrEmpty(connString))
+                    connString = dbConfig.GetValue("ConnectionString", String.Empty);
             }
 
             //
             // [GridUsetService] section overrides [DatabaseService], if it exists
             //
-            IConfig usersConfig = config.Configs["GridUserService"];
-            if (usersConfig != null)
+            var usersConfig = config.GetSection("GridUserService");
+            if (usersConfig.Exists())
             {
-                dllName = usersConfig.GetString("StorageProvider", dllName);
-                connString = usersConfig.GetString("ConnectionString", connString);
-                realm = usersConfig.GetString("Realm", realm);
+                dllName = usersConfig.GetValue("StorageProvider", dllName);
+                connString = usersConfig.GetValue("ConnectionString", connString);
+                realm = usersConfig.GetValue("Realm", realm);
             }
 
             //
@@ -75,6 +72,7 @@ namespace OpenSim.Services.UserAccountService
                 throw new Exception("No StorageProvider configured");
 
             m_Database = LoadPlugin<IGridUserData>(dllName, new Object[] { connString, realm });
+            
             if (m_Database == null)
                 throw new Exception("Could not find a storage interface in the given module " + dllName);
         }

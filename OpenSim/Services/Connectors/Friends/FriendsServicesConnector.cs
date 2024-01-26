@@ -38,6 +38,7 @@ using OpenSim.Services.Interfaces;
 using FriendInfo = OpenSim.Services.Interfaces.FriendInfo;
 using OpenSim.Server.Base;
 using OpenMetaverse;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.Connectors.Friends
 {
@@ -58,29 +59,30 @@ namespace OpenSim.Services.Connectors.Friends
             m_ServerURI = serverURI.TrimEnd('/');
         }
 
-        public FriendsServicesConnector(IConfigSource source)
+        public FriendsServicesConnector(IConfiguration source)
         {
             Initialise(source);
         }
 
-        public virtual void Initialise(IConfigSource source)
+        public virtual void Initialise(IConfiguration source)
         {
-            IConfig gridConfig = source.Configs["FriendsService"];
-            if (gridConfig == null)
+            var gridConfig = source.GetSection("FriendsService");
+            if (gridConfig.Exists() is false)
             {
                 m_log.Error("[FRIENDS SERVICE CONNECTOR]: FriendsService missing from OpenSim.ini");
                 throw new Exception("Friends connector init error");
             }
 
-            string serviceURI = gridConfig.GetString("FriendsServerURI",
-                    String.Empty);
+            string serviceURI = gridConfig.GetValue("FriendsServerURI", String.Empty);
 
-            if (serviceURI.Length == 0)
+            if (string.IsNullOrEmpty(serviceURI))
             {
                 m_log.Error("[FRIENDS SERVICE CONNECTOR]: No Server URI named in section FriendsService");
                 throw new Exception("Friends connector init error");
             }
+
             m_ServerURI = serviceURI;
+            
             base.Initialise(source, "FriendsService");
         }
 

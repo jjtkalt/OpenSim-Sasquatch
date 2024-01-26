@@ -54,7 +54,7 @@ namespace OpenSim.Region.CoreModules.ServiceConnectorsOut.Simulation
 
         #region Region Module interface
 
-        public virtual void Initialise(IConfigSource configSource)
+        public virtual void Initialise(IConfiguration configSource)
         {
             IConfig moduleConfig = configSource.Configs["Modules"];
             if (moduleConfig != null)

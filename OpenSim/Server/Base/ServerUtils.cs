@@ -30,11 +30,11 @@ using System.Xml;
 using System.Xml.Serialization;
 using System.Text;
 using log4net;
-using Nini.Config;
 using OpenSim.Framework;
 using OpenMetaverse;
 using OpenSim.Framework.Servers.HttpServer;
-using OpenSim.Framework.Servers;
+
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Server.Base
 {
@@ -56,10 +56,14 @@ namespace OpenSim.Server.Base
             set;
         }
 
-        uint Configure(IConfigSource config);
+        uint Configure(IConfiguration config);
+
         void Initialize(IHttpServer server);
+
         void Unload();
     }
+
+    // XXX
 
     //public class PluginLoader
     //{
@@ -71,13 +75,13 @@ namespace OpenSim.Server.Base
     //        private set;
     //    }
 
-    //    public IConfigSource Config
+    //    public IConfiguration Config
     //    {
     //        get;
     //        private set;
     //    }
 
-    //    public PluginLoader(IConfigSource config, string registryPath)
+    //    public PluginLoader(IConfiguration config, string registryPath)
     //    {
     //        Config = config;
 
@@ -567,46 +571,6 @@ namespace OpenSim.Server.Base
             if (xr.ReadToFollowing("ServerResponse"))
                     return ScanXmlResponse(xr);
             return new Dictionary<string, object>();
-        }
-
-        public static IConfig GetConfig(string configFile, string configName)
-        {
-            IConfig config;
-
-            if (File.Exists(configFile))
-            {
-                IConfigSource configsource = new IniConfigSource(configFile);
-                config = configsource.Configs[configName];
-            }
-            else
-                config = null;
-
-            return config;
-        }
-
-        public static IConfigSource LoadInitialConfig(string url)
-        {
-            IConfigSource source = new XmlConfigSource();
-            m_log.InfoFormat("[SERVER UTILS]: {0} is a http:// URI, fetching ...", url);
-
-            // The ini file path is a http URI
-            // Try to read it
-            try
-            {
-                IConfigSource cs;
-                using (XmlReader r = XmlReader.Create(url))
-                {
-                    cs = new XmlConfigSource(r);
-                    source.Merge(cs);
-                }
-            }
-            catch (Exception e)
-            {
-                m_log.FatalFormat("[SERVER UTILS]: Exception reading config from URI {0}\n" + e.ToString(), url);
-                Environment.Exit(1);
-            }
-
-            return source;
         }
     }
 }

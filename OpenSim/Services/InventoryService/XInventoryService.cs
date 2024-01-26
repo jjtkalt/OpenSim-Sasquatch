@@ -25,16 +25,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
 using OpenMetaverse;
 using log4net;
-using Nini.Config;
 using System.Reflection;
 using OpenSim.Services.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Data;
 using OpenSim.Framework;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.InventoryService
 {
@@ -46,52 +44,52 @@ namespace OpenSim.Services.InventoryService
         protected bool m_AllowDelete = true;
         protected string m_ConfigName = "InventoryService";
 
-        public XInventoryService(IConfigSource config)
+        public XInventoryService(IConfiguration config)
             : this(config, "InventoryService")
         {
         }
 
-        public XInventoryService(IConfigSource config, string configName) : base(config)
+        public XInventoryService(IConfiguration config, string configName) : base(config)
         {
             if (configName != string.Empty)
                 m_ConfigName = configName;
 
             string dllName = String.Empty;
             string connString = String.Empty;
+
             //string realm = "Inventory"; // OSG version doesn't use this
 
             //
             // Try reading the [InventoryService] section first, if it exists
             //
-            IConfig authConfig = config.Configs[m_ConfigName];
-            if (authConfig != null)
+            var authConfig = config.GetSection(m_ConfigName);
+            if (authConfig.Exists())
             {
-                dllName = authConfig.GetString("StorageProvider", dllName);
-                connString = authConfig.GetString("ConnectionString", connString);
-                m_AllowDelete = authConfig.GetBoolean("AllowDelete", true);
+                dllName = authConfig.GetValue("StorageProvider", dllName);
+                connString = authConfig.GetValue("ConnectionString", connString);
+                m_AllowDelete = authConfig.GetValue<bool>("AllowDelete", true);
                 // realm = authConfig.GetString("Realm", realm);
             }
 
             //
             // Try reading the [DatabaseService] section, if it exists
             //
-            IConfig dbConfig = config.Configs["DatabaseService"];
-            if (dbConfig != null)
+            var dbConfig = config.GetSection("DatabaseService");
+            if (dbConfig.Exists())
             {
-                if (dllName.Length == 0)
-                    dllName = dbConfig.GetString("StorageProvider", String.Empty);
-                if (connString.Length == 0)
-                    connString = dbConfig.GetString("ConnectionString", String.Empty);
+                if (string.IsNullOrEmpty(dllName))
+                    dllName = dbConfig.GetValue("StorageProvider", String.Empty);
+                if (string.IsNullOrEmpty(connString))
+                    connString = dbConfig.GetValue("ConnectionString", String.Empty);
             }
 
             //
             // We tried, but this doesn't exist. We can't proceed.
             //
-            if (dllName.Length == 0)
+            if (string.IsNullOrEmpty(dllName))
                 throw new Exception("No StorageProvider configured");
 
-            m_Database = LoadPlugin<IXInventoryData>(dllName,
-                    new Object[] {connString, String.Empty});
+            m_Database = LoadPlugin<IXInventoryData>(dllName, new Object[] {connString, String.Empty});
 
             if (m_Database == null)
                 throw new Exception("Could not find a storage interface in the given module");

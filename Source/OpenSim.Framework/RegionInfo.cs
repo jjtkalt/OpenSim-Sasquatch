@@ -26,12 +26,11 @@
  */
 
 using log4net;
-using Nini.Config;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.Ini;
 using OpenMetaverse;
 using OpenMetaverse.StructuredData;
-using System;
-using System.Collections.Generic;
-using System.IO;
+
 using System.Net;
 using System.Reflection;
 using System.Xml;
@@ -127,14 +126,16 @@ namespace OpenSim.Framework
         // access the same database server. Since estate settings are lodaed
         // from there, that should be sufficient for full remote administration
 
+/*
+XXX
         // File based loading
         //
-        public RegionInfo(string description, string filename, bool skipConsoleConfig, IConfigSource configSource) : 
+        public RegionInfo(string description, string filename, bool skipConsoleConfig, IConfiguration configSource) : 
             this(description, filename, skipConsoleConfig, configSource, String.Empty)
         {
         }
 
-        public RegionInfo(string description, string filename, bool skipConsoleConfig, IConfigSource configSource, string configName)
+        public RegionInfo(string description, string filename, bool skipConsoleConfig, IConfiguration configSource, string configName)
         {
             // m_configSource = configSource;
             if (filename.ToLower().EndsWith(".ini"))
@@ -150,6 +151,10 @@ namespace OpenSim.Framework
 
                     return;
                 }
+
+                // IniConfigurationSource iniConfig = new IniConfigurationSource { Path = filename };
+                // IniConfigurationProvider iniProvider = new IniConfigurationProvider(iniConfig);
+                // iniProvider.Load();
 
                 IniConfigSource source = new IniConfigSource(filename);
 
@@ -170,7 +175,7 @@ namespace OpenSim.Framework
             {
                 // This will throw if it's not legal Nini XML format
                 //
-                IConfigSource xmlsource = new XmlConfigSource(filename);
+                IConfiguration xmlsource = new XmlConfigSource(filename);
 
                 ReadNiniConfig(xmlsource, configName);
 
@@ -185,7 +190,7 @@ namespace OpenSim.Framework
 
         // The web loader uses this
         //
-        public RegionInfo(string description, XmlNode xmlNode, bool skipConsoleConfig, IConfigSource configSource)
+        public RegionInfo(string description, XmlNode xmlNode, bool skipConsoleConfig, IConfiguration configSource)
         {
             XmlElement elem = (XmlElement)xmlNode;
             string name = elem.GetAttribute("Name");
@@ -195,7 +200,7 @@ namespace OpenSim.Framework
 
             m_serverURI = string.Empty;
         }
-
+*/
         public RegionInfo(uint legacyRegionLocX, uint legacyRegionLocY, IPEndPoint internalEndPoint, string externalUri)
         {
             RegionLocX = legacyRegionLocX;
@@ -448,7 +453,8 @@ namespace OpenSim.Framework
             m_extraSettings[keylower] = value;
         }
 
-        private void ReadNiniConfig(IConfigSource source, string name)
+/* XXX
+        private void ReadNiniConfig(IConfiguration source, string name)
         {
             bool creatingNew = false;
 
@@ -704,6 +710,7 @@ namespace OpenSim.Framework
                 SetExtraSetting(s, config.GetString(s));
             }
         }
+*/
 
         // Make sure DefaultLanding is within region borders with a buffer zone 5 meters from borders
         private void DoDefaultLandingSanityChecks()
@@ -798,7 +805,8 @@ namespace OpenSim.Framework
             }
         }
 
-        private void WriteNiniConfig(IConfigSource source)
+/* XXX
+        private void WriteNiniConfig(IConfiguration source)
         {
             IConfig config = source.Configs[RegionName];
 
@@ -894,7 +902,7 @@ namespace OpenSim.Framework
             else
                 throw new Exception("Invalid file type for region persistence.");
         }
-
+*/
 
         public void SaveLastMapUUID(UUID mapUUID)
         {

@@ -30,6 +30,7 @@ using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 using OpenSim.Framework;
@@ -42,7 +43,8 @@ namespace OpenSim.Server.RobustServer
 {
     public class RobustServer
     {
-        protected HttpServerBase m_Server = null;
+        protected IHttpServer m_Server = null;
+        private OpenSimServer m_baseServer = null;
         protected List<IServiceConnector> m_ServiceConnectors = new();
 
         private bool m_NoVerifyCertChain = false;
@@ -56,13 +58,11 @@ namespace OpenSim.Server.RobustServer
             IServiceProvider provider,
             IConfiguration configuration, 
             ILogger<RobustServer> logger
-//            HttpServerBase server
             )
         {
             m_serviceProvider = provider;
             m_configuration = configuration;
             m_logger = logger;
-//            m_Server = server;
         }
 
         private bool ValidateServerCertificate(
@@ -105,117 +105,125 @@ namespace OpenSim.Server.RobustServer
 
         public int Startup()
         {
-            //Culture.SetCurrentCulture();
-            //Culture.SetDefaultCurrentCulture();
-
-            //ServicePointManager.DefaultConnectionLimit = 64;
-            //ServicePointManager.MaxServicePointIdleTime = 30000;
-
-            //ServicePointManager.Expect100Continue = false;
-            //ServicePointManager.UseNagleAlgorithm = false;
-            //ServicePointManager.ServerCertificateValidationCallback = ValidateServerCertificate;
-
-            WebUtil.SetupHTTPClients(m_NoVerifyCertChain, m_NoVerifyCertHostname, null, 32);
-
-            //string[] args = Environment.GetCommandLineArgs();
-
-            //m_Server = new HttpServerBase(m_configuration, m_logger, "R.O.B.U.S.T.");
-
-            string registryLocation;
-
-            var serverConfig = m_configuration.GetSection("Startup");
-
-            int dnsTimeout = serverConfig.GetValue<int>("DnsTimeout", 30000);
-            try { ServicePointManager.DnsRefreshTimeout = dnsTimeout; } catch { }
-
-            m_NoVerifyCertChain = serverConfig.GetValue<bool>("NoVerifyCertChain", m_NoVerifyCertChain);
-            m_NoVerifyCertHostname = serverConfig.GetValue<bool>("NoVerifyCertHostname", m_NoVerifyCertHostname);
-
-            string connList = serverConfig.GetValue<string>("ServiceConnectors", string.Empty);
-            registryLocation = serverConfig.GetValue<string>("RegistryLocation", ".");
-
-            var servicesConfig = m_configuration.GetSection("ServiceList");
-
-            List<string> servicesList = new();
-            if (!string.IsNullOrEmpty(connList))
-                servicesList.Add(connList);
-            
-            foreach (var k in servicesConfig.AsEnumerable())
+            using (var scope = m_serviceProvider.CreateScope())
             {
-                string[] keyparts = k.Key.Split(":");
-                if ((keyparts.Length > 1) && (keyparts[0] == "ServiceList"))
+                m_baseServer = scope.ServiceProvider.GetRequiredService<OpenSimServer>();
+
+                // var httpServer = scope.ServiceProvider.GetRequiredService<IHttpServer>();
+                // MainServer.Instance = m_baseServer.HttpServer = httpServer;
+                
+                //Culture.SetCurrentCulture();
+                //Culture.SetDefaultCurrentCulture();
+
+                //ServicePointManager.DefaultConnectionLimit = 64;
+                //ServicePointManager.MaxServicePointIdleTime = 30000;
+
+                //ServicePointManager.Expect100Continue = false;
+                //ServicePointManager.UseNagleAlgorithm = false;
+                //ServicePointManager.ServerCertificateValidationCallback = ValidateServerCertificate;
+
+                WebUtil.SetupHTTPClients(m_NoVerifyCertChain, m_NoVerifyCertHostname, null, 32);
+
+                //string[] args = Environment.GetCommandLineArgs();
+
+                //m_Server = new HttpServerBase(m_configuration, m_logger, "R.O.B.U.S.T.");
+
+                string registryLocation;
+
+                var serverConfig = m_configuration.GetSection("Startup");
+
+                int dnsTimeout = serverConfig.GetValue<int>("DnsTimeout", 30000);
+                try { ServicePointManager.DnsRefreshTimeout = dnsTimeout; } catch { }
+
+                m_NoVerifyCertChain = serverConfig.GetValue<bool>("NoVerifyCertChain", m_NoVerifyCertChain);
+                m_NoVerifyCertHostname = serverConfig.GetValue<bool>("NoVerifyCertHostname", m_NoVerifyCertHostname);
+
+                string connList = serverConfig.GetValue<string>("ServiceConnectors", string.Empty);
+                registryLocation = serverConfig.GetValue<string>("RegistryLocation", ".");
+
+                var servicesConfig = m_configuration.GetSection("ServiceList");
+
+                List<string> servicesList = new();
+                if (!string.IsNullOrEmpty(connList))
+                    servicesList.Add(connList);
+                
+                foreach (var k in servicesConfig.AsEnumerable())
                 {
-                    string v = servicesConfig.GetValue<string>(keyparts[1]);
-                    if (!string.IsNullOrEmpty(v))
-                        servicesList.Add(v);
-                }
-            }
-
-            connList = string.Join(",", servicesList.ToArray());
-
-            string[] conns = connList.Split(new char[] { ',', ' ', '\n', '\r', '\t' });
-
-            foreach (string c in conns)
-            {
-                if (string.IsNullOrEmpty(c))
-                    continue;
-
-                string configName = string.Empty;
-                string conn = c;
-                uint port = 0;
-
-                string[] split1 = conn.Split(new char[] { '/' });
-                if (split1.Length > 1)
-                {
-                    conn = split1[1];
-
-                    string[] split2 = split1[0].Split(new char[] { '@' });
-                    if (split2.Length > 1)
+                    string[] keyparts = k.Key.Split(":");
+                    if ((keyparts.Length > 1) && (keyparts[0] == "ServiceList"))
                     {
-                        configName = split2[0];
-                        port = Convert.ToUInt32(split2[1]);
+                        string v = servicesConfig.GetValue<string>(keyparts[1]);
+                        if (!string.IsNullOrEmpty(v))
+                            servicesList.Add(v);
+                    }
+                }
+
+                connList = string.Join(",", servicesList.ToArray());
+
+                string[] conns = connList.Split(new char[] { ',', ' ', '\n', '\r', '\t' });
+
+                foreach (string c in conns)
+                {
+                    if (string.IsNullOrEmpty(c))
+                        continue;
+
+                    string configName = string.Empty;
+                    string conn = c;
+                    uint port = 0;
+
+                    string[] split1 = conn.Split(new char[] { '/' });
+                    if (split1.Length > 1)
+                    {
+                        conn = split1[1];
+
+                        string[] split2 = split1[0].Split(new char[] { '@' });
+                        if (split2.Length > 1)
+                        {
+                            configName = split2[0];
+                            port = Convert.ToUInt32(split2[1]);
+                        }
+                        else
+                        {
+                            port = Convert.ToUInt32(split1[0]);
+                        }
+                    }
+                    string[] parts = conn.Split(new char[] { ':' });
+                    string friendlyName = parts[0];
+                    if (parts.Length > 1)
+                        friendlyName = parts[1];
+
+                    IHttpServer server;
+
+                    if (port != 0)
+                        server = (BaseHttpServer)MainServer.GetHttpServer(port);
+                    else
+                        server = MainServer.Instance;
+
+                    if (friendlyName == "LLLoginServiceInConnector")
+                        server.AddSimpleStreamHandler(new IndexPHPHandler(server));
+
+                    m_logger.LogInformation("[SERVER]: Loading {0} on port {1}", friendlyName, server.Port);
+
+                    IServiceConnector connector = null;
+
+                    object[] modargs = new object[] { m_configuration, server, configName };
+                    connector = ServerUtils.LoadPlugin<IServiceConnector>(conn, modargs);
+
+                    if (connector == null)
+                    {
+                        modargs = new object[] { m_configuration, server };
+                        connector = ServerUtils.LoadPlugin<IServiceConnector>(conn, modargs);
+                    }
+
+                    if (connector != null)
+                    {
+                        m_ServiceConnectors.Add(connector);
+                        m_logger.LogInformation("[SERVER]: {0} loaded successfully", friendlyName);
                     }
                     else
                     {
-                        port = Convert.ToUInt32(split1[0]);
+                        m_logger.LogError($"[SERVER]: Failed to load {conn}");
                     }
-                }
-                string[] parts = conn.Split(new char[] { ':' });
-                string friendlyName = parts[0];
-                if (parts.Length > 1)
-                    friendlyName = parts[1];
-
-                BaseHttpServer server;
-
-                if (port != 0)
-                    server = (BaseHttpServer)MainServer.GetHttpServer(port);
-                else
-                    server = MainServer.Instance;
-
-                if (friendlyName == "LLLoginServiceInConnector")
-                    server.AddSimpleStreamHandler(new IndexPHPHandler(server));
-
-                m_logger.LogInformation("[SERVER]: Loading {0} on port {1}", friendlyName, server.Port);
-
-                IServiceConnector connector = null;
-
-                object[] modargs = new object[] { m_Server.Config, server, configName };
-                connector = ServerUtils.LoadPlugin<IServiceConnector>(conn, modargs);
-
-                if (connector == null)
-                {
-                    modargs = new object[] { m_Server.Config, server };
-                    connector = ServerUtils.LoadPlugin<IServiceConnector>(conn, modargs);
-                }
-
-                if (connector != null)
-                {
-                    m_ServiceConnectors.Add(connector);
-                    m_logger.LogInformation("[SERVER]: {0} loaded successfully", friendlyName);
-                }
-                else
-                {
-                    m_logger.LogError($"[SERVER]: Failed to load {conn}");
                 }
             }
 

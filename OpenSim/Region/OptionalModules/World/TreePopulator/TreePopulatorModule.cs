@@ -171,7 +171,7 @@ namespace OpenSim.Region.OptionalModules.World.TreePopulator
 
         #region Region Module interface
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             IConfig moduleConfig = config.Configs["Trees"];
             if (moduleConfig != null)

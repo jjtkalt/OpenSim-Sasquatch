@@ -38,7 +38,7 @@ namespace OpenSim.ApplicationPlugins.LoadRegions
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
-        private IConfigSource m_configSource;
+        private IConfiguration m_configSource;
 
         private IOpenSimBase m_application;
 
@@ -47,7 +47,7 @@ namespace OpenSim.ApplicationPlugins.LoadRegions
             m_application = openSim;
         }
 
-        public void SetIniConfigSource(IConfigSource configSource)
+        public void SetIniConfigSource(IConfiguration configSource)
         {
             m_configSource = configSource;
         }
@@ -92,7 +92,7 @@ namespace OpenSim.ApplicationPlugins.LoadRegions
             {
                 m_log.InfoFormat("[ESTATE LOADER FILE SYSTEM]: Loading config file {0}", file);
 
-                IConfigSource source = null;
+                IConfiguration source = null;
                 try
                 {
                     source = new IniConfigSource(file);

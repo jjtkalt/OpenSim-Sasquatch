@@ -82,11 +82,11 @@ namespace OpenSim.Services.HypergridService
         private static readonly Dictionary<int, List<string>> m_TripsAllowedExceptions = new();
         private static readonly Dictionary<int, List<string>> m_TripsDisallowedExceptions = new();
 
-        public UserAgentService(IConfigSource config) : this(config, null)
+        public UserAgentService(IConfiguration config) : this(config, null)
         {
         }
 
-        public UserAgentService(IConfigSource config, IFriendsSimConnector friendsConnector)
+        public UserAgentService(IConfiguration config, IFriendsSimConnector friendsConnector)
             : base(config)
         {
             // Let's set this always, because we don't know the sequence

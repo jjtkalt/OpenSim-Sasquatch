@@ -25,17 +25,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Text;
 using System.Reflection;
-using Nini.Config;
 using log4net;
-using OpenSim.Framework;
-using OpenSim.Data;
 using OpenSim.Services.Interfaces;
-using OpenMetaverse;
 using OpenMetaverse.StructuredData;
 using System.Collections;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.FreeswitchService
 {
@@ -43,7 +38,7 @@ namespace OpenSim.Services.FreeswitchService
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
-        public FreeswitchService(IConfigSource config) : base(config)
+        public FreeswitchService(IConfiguration config) : base(config)
         {
             // Perform initilialization here
         }

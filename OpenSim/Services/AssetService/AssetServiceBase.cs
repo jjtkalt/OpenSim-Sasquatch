@@ -25,13 +25,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Reflection;
-using Nini.Config;
 using OpenSim.Framework;
 using OpenSim.Data;
-using OpenSim.Services.Interfaces;
 using OpenSim.Services.Base;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.AssetService
 {
@@ -41,12 +38,12 @@ namespace OpenSim.Services.AssetService
         protected IAssetLoader m_AssetLoader = null;
         protected string m_ConfigName = "AssetService";
 
-        public AssetServiceBase(IConfigSource config)
+        public AssetServiceBase(IConfiguration config)
             : this(config, "AssetService")
         {
         }
 
-        public AssetServiceBase(IConfigSource config, string configName) : base(config)
+        public AssetServiceBase(IConfiguration config, string configName) : base(config)
         {
             if (configName != string.Empty)
                 m_ConfigName = configName;
@@ -57,23 +54,23 @@ namespace OpenSim.Services.AssetService
             //
             // Try reading the [AssetService] section, if it exists
             //
-            IConfig assetConfig = config.Configs[m_ConfigName];
-            if (assetConfig != null)
+            var assetConfig = config.GetSection(m_ConfigName);
+            if (assetConfig.Exists())
             {
-                dllName = assetConfig.GetString("StorageProvider", dllName);
-                connString = assetConfig.GetString("ConnectionString", connString);
+                dllName = assetConfig.GetValue("StorageProvider", dllName);
+                connString = assetConfig.GetValue("ConnectionString", connString);
             }
 
             //
             // Try reading the [DatabaseService] section, if it exists
             //
-            IConfig dbConfig = config.Configs["DatabaseService"];
-            if (dbConfig != null)
+            var dbConfig = config.GetSection("DatabaseService");
+            if (dbConfig.Exists())
             {
-                if (dllName.Length == 0)
-                    dllName = dbConfig.GetString("StorageProvider", String.Empty);
+                if (string.IsNullOrEmpty(dllName))
+                    dllName = dbConfig.GetValue("StorageProvider", String.Empty);
                 if (connString.Length == 0)
-                    connString = dbConfig.GetString("ConnectionString", String.Empty);
+                    connString = dbConfig.GetValue("ConnectionString", String.Empty);
             }
 
             //
@@ -84,19 +81,21 @@ namespace OpenSim.Services.AssetService
 
             m_Database = LoadPlugin<IAssetDataPlugin>(dllName);
             if (m_Database == null)
-                throw new Exception(string.Format("Could not find a storage interface in the module {0}", dllName));
+            {
+                throw new Exception($"Could not find a storage interface in the module {dllName}");
+            }
 
             m_Database.Initialise(connString);
 
-            string loaderName = assetConfig.GetString("DefaultAssetLoader",
-                    String.Empty);
-
-            if (loaderName != String.Empty)
+            string loaderName = assetConfig.GetValue("DefaultAssetLoader", String.Empty);
+            if (!string.IsNullOrEmpty(loaderName))
             {
                 m_AssetLoader = LoadPlugin<IAssetLoader>(loaderName);
 
                 if (m_AssetLoader == null)
-                    throw new Exception(string.Format("Asset loader could not be loaded from {0}", loaderName));
+                {
+                    throw new Exception($"Asset loader could not be loaded from {loaderName}");
+                }
             }
         }
     }

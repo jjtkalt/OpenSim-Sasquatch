@@ -44,6 +44,7 @@ using OpenSim.Services.Interfaces;
 using OpenSim.Services.Connectors.Hypergrid;
 using GridRegion = OpenSim.Services.Interfaces.GridRegion;
 using OpenMetaverse;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.GridService
 {
@@ -66,33 +67,33 @@ namespace OpenSim.Services.GridService
 
         protected GridInfo m_ThisGridInfo;
 
-        public HypergridLinker(IConfigSource config, GridService gridService, IRegionData db)
+        public HypergridLinker(IConfiguration config, GridService gridService, IRegionData db)
         {
-            IConfig gridConfig = config.Configs["GridService"];
-            if (gridConfig == null)
+            var gridConfig = config.GetSection("GridService");
+            if (gridConfig.Exists() is false)
                 return;
 
-            if (!gridConfig.GetBoolean("HypergridLinker", false))
+            if (!gridConfig.GetValue<bool>("HypergridLinker", false))
                 return;
 
             m_Database = db;
             m_GridService = gridService;
             m_log.DebugFormat("[HYPERGRID LINKER]: Starting with db {0}", db.GetType());
 
-            string assetService = gridConfig.GetString("AssetService", string.Empty);
+            string assetService = gridConfig.GetValue("AssetService", string.Empty);
 
             object[] args = new object[] { config };
 
             if (assetService != string.Empty)
                 m_AssetService = ServerUtils.LoadPlugin<IAssetService>(assetService, args);
 
-            string scope = gridConfig.GetString("ScopeID", string.Empty);
+            string scope = gridConfig.GetValue("ScopeID", string.Empty);
             if (scope != string.Empty)
                 UUID.TryParse(scope, out m_ScopeID);
 
             //m_Check4096 = gridConfig.GetBoolean("Check4096", true);
 
-            m_MapTileDirectory = gridConfig.GetString("MapTileDirectory", "maptiles");
+            m_MapTileDirectory = gridConfig.GetValue("MapTileDirectory", "maptiles");
 
             m_ThisGridInfo = new GridInfo(config);
             if(!m_ThisGridInfo.HasHGConfig)

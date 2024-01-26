@@ -66,7 +66,7 @@ namespace OpenSim.Services.HypergridService
 
         private static string m_ConfigName = "HGFriendsService";
 
-        public HGFriendsService(IConfigSource config, String configName, IFriendsSimConnector localSimConn)
+        public HGFriendsService(IConfiguration config, String configName, IFriendsSimConnector localSimConn)
         {
             if (m_FriendsLocalSimConnector == null)
                 m_FriendsLocalSimConnector = localSimConn;

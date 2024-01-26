@@ -140,7 +140,7 @@ namespace OpenSim.Region.CoreModules.World.Permissions
 
         #region INonSharedRegionModule Members
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             string permissionModules = Util.GetConfigVarFromSections<string>(config, "permissionmodules",
                 new string[] { "Startup", "Permissions" }, "DefaultPermissionsModule");
@@ -580,7 +580,7 @@ namespace OpenSim.Region.CoreModules.World.Permissions
         /// <param name="settingName"></param>
         /// <param name="defaultValue">The default value for this attribute</param>
         /// <returns>The parsed value</returns>
-        private static UserSet ParseUserSetConfigSetting(IConfigSource config, string settingName, UserSet defaultValue)
+        private static UserSet ParseUserSetConfigSetting(IConfiguration config, string settingName, UserSet defaultValue)
         {
             UserSet userSet = defaultValue;
 

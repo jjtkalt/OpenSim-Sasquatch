@@ -25,20 +25,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
 using System.Reflection;
-using Nini.Config;
-using OpenSim.Framework;
-using OpenSim.Services.Interfaces;
 using OpenSim.Services.Base;
-using log4net;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.FreeswitchService
 {
     public class FreeswitchServiceBase : ServiceBase
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         protected string m_freeSwitchRealm;
         protected string m_freeSwitchSIPProxy;
         protected bool m_freeSwitchAttemptUseSTUN = false;
@@ -53,30 +47,32 @@ namespace OpenSim.Services.FreeswitchService
 
         protected bool m_Enabled = false;
 
-        public FreeswitchServiceBase(IConfigSource config) : base(config)
+        protected string m_ConfigName = "FreeswitchService";
+
+        public FreeswitchServiceBase(IConfiguration config) : base(config)
         {
             //
             // Try reading the [FreeswitchService] section first, if it exists
             //
-            IConfig freeswitchConfig = config.Configs["FreeswitchService"];
-            if (freeswitchConfig != null)
+            var freeswitchConfig = config.GetSection(m_ConfigName);
+            if (freeswitchConfig.Exists())
             {
-                m_freeSwitchDefaultWellKnownIP = freeswitchConfig.GetString("ServerAddress", String.Empty);
-                if (m_freeSwitchDefaultWellKnownIP.Length == 0)
+                m_freeSwitchDefaultWellKnownIP = freeswitchConfig.GetValue("ServerAddress", String.Empty);
+
+                if (string.IsNullOrEmpty(m_freeSwitchDefaultWellKnownIP))
                 {
-                    m_log.Error("[FREESWITCH]: No ServerAddress given, cannot start service.");
-                    return;
+                    throw new Exception($"No ServerAddress given, cannot start {m_ConfigName}");
                 }
 
-                m_freeSwitchRealm = freeswitchConfig.GetString("Realm", m_freeSwitchDefaultWellKnownIP);
-                m_freeSwitchSIPProxy = freeswitchConfig.GetString("SIPProxy", m_freeSwitchDefaultWellKnownIP + ":5060");
-                m_freeSwitchEchoServer = freeswitchConfig.GetString("EchoServer", m_freeSwitchDefaultWellKnownIP);
-                m_freeSwitchEchoPort = freeswitchConfig.GetInt("EchoPort", m_freeSwitchEchoPort);
-                m_freeSwitchAttemptUseSTUN = freeswitchConfig.GetBoolean("AttemptSTUN", false); // This may not work
-                m_freeSwitchDefaultTimeout = freeswitchConfig.GetInt("DefaultTimeout", m_freeSwitchDefaultTimeout);
-                m_freeSwitchContext = freeswitchConfig.GetString("Context", m_freeSwitchContext);
-                m_freeSwitchServerUser = freeswitchConfig.GetString("UserName", m_freeSwitchServerUser);
-                m_freeSwitchServerPass = freeswitchConfig.GetString("Password", m_freeSwitchServerPass);
+                m_freeSwitchRealm = freeswitchConfig.GetValue("Realm", m_freeSwitchDefaultWellKnownIP);
+                m_freeSwitchSIPProxy = freeswitchConfig.GetValue("SIPProxy", m_freeSwitchDefaultWellKnownIP + ":5060");
+                m_freeSwitchEchoServer = freeswitchConfig.GetValue("EchoServer", m_freeSwitchDefaultWellKnownIP);
+                m_freeSwitchEchoPort = freeswitchConfig.GetValue<int>("EchoPort", m_freeSwitchEchoPort);
+                m_freeSwitchAttemptUseSTUN = freeswitchConfig.GetValue<bool>("AttemptSTUN", false); // This may not work
+                m_freeSwitchDefaultTimeout = freeswitchConfig.GetValue<int>("DefaultTimeout", m_freeSwitchDefaultTimeout);
+                m_freeSwitchContext = freeswitchConfig.GetValue("Context", m_freeSwitchContext);
+                m_freeSwitchServerUser = freeswitchConfig.GetValue("UserName", m_freeSwitchServerUser);
+                m_freeSwitchServerPass = freeswitchConfig.GetValue("Password", m_freeSwitchServerPass);
 
                 m_Enabled = true;
             }

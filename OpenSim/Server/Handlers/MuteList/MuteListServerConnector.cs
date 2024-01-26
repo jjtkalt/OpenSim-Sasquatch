@@ -25,37 +25,39 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using Nini.Config;
 using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework.ServiceAuth;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Server.Handlers.GridUser
 {
     public class MuteListServiceConnector : ServiceConnector
     {
         private IMuteListService m_MuteListService;
-        private string m_ConfigName = "MuteListService";
+        private static string _ConfigName = "MuteListService";
+        
+        public MuteListServiceConnector(IConfiguration config, IHttpServer server) :
+                base(config, server, _ConfigName)
+        { }
 
-        public MuteListServiceConnector(IConfigSource config, IHttpServer server, string configName) :
+        public MuteListServiceConnector(IConfiguration config, IHttpServer server, string configName) :
                 base(config, server, configName)
         {
-            IConfig serverConfig = config.Configs[m_ConfigName];
-            if (serverConfig == null)
-                throw new Exception(String.Format("No section {0} in config file", m_ConfigName));
+            var serverConfig = config.GetSection(configName);
+            if (serverConfig.Exists() is false)
+                throw new Exception($"No section {configName} in config file");
 
-            string service = serverConfig.GetString("LocalServiceModule", String.Empty);
-
-            if (service.Length == 0)
+            string service = serverConfig.GetValue("LocalServiceModule", String.Empty);
+            if (string.IsNullOrEmpty(service))
                 throw new Exception("LocalServiceModule not present in MuteListService config file MuteListService section");
 
             Object[] args = new Object[] { config };
             m_MuteListService = ServerUtils.LoadPlugin<IMuteListService>(service, args);
 
-            IServiceAuth auth = ServiceAuth.Create(config, m_ConfigName);
+            IServiceAuth auth = ServiceAuth.Create(config, configName);
 
             server.AddStreamHandler(new MuteListServerPostHandler(m_MuteListService, auth));
         }

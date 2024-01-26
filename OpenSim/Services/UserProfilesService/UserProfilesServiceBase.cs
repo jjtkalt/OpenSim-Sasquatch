@@ -47,7 +47,7 @@ namespace OpenSim.Services.ProfilesService
             get; private set;
         }
 
-        public UserProfilesServiceBase(IConfigSource config, string configName):
+        public UserProfilesServiceBase(IConfiguration config, string configName):
             base(config)
         {
             if(string.IsNullOrEmpty(configName))

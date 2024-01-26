@@ -28,24 +28,22 @@
 // Revision 2011/12/13 by Ubit Umarov
 
 
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Threading;
-using log4net;
-using Nini.Config;
+
 using OpenSim.Framework;
 using OpenSim.Region.Framework.Scenes;
 using OpenSim.Region.PhysicsModules.SharedBase;
 using OpenMetaverse;
 
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
+
 namespace OpenSim.Region.PhysicsModule.ubOde
 {
-     // colision flags of things others can colide with
+    // colision flags of things others can colide with
     // rays, sensors, probes removed since can't  be colided with
     // The top space where things are placed provided further selection
     // ie physical are in active space nonphysical in static
@@ -165,12 +163,9 @@ namespace OpenSim.Region.PhysicsModule.ubOde
 
     public partial class ODEScene : PhysicsScene
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         public Scene m_frameWorkScene = null;
 
         //private int threadid = 0;
-
         const UBOdeNative.ContactFlags commomContactFlags = UBOdeNative.ContactFlags.Bounce | UBOdeNative.ContactFlags.Approx1;
         const float commomContactERP = 0.75f;
         const float commonContactCFM = 0.0001f;
@@ -285,8 +280,6 @@ namespace OpenSim.Region.PhysicsModule.ubOde
         public static readonly object SimulationLock = new();
         public IMesher mesher;
 
-        public IConfigSource m_config;
-
         public Vector2 WorldExtents = new((int)Constants.RegionSize, (int)Constants.RegionSize);
 
         private ODERayCastRequestManager m_rayCastManager;
@@ -305,17 +298,26 @@ namespace OpenSim.Region.PhysicsModule.ubOde
         }
         */
 
-        IConfig physicsconfig = null;
-
-        public ODEScene(Scene pscene, IConfigSource psourceconfig, string pname, string pversion)
+        private readonly IServiceProvider m_serviceProvider;
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<ODEScene> m_logger;
+        
+        public ODEScene(
+            IServiceProvider provider,
+            IConfiguration configuration, 
+            ILogger<ODEScene> logger,
+            Scene pscene, 
+            string pname, 
+            string pversion)
         {
+            m_serviceProvider = provider;
+            m_configuration = configuration;
+            m_logger = logger;
+
             EngineType = pname;
             PhysicsSceneName = EngineType + "/" + pscene.RegionInfo.RegionName;
             EngineName = pname + " " + pversion;
-            m_config = psourceconfig;
-
             m_frameWorkScene = pscene;
-
             m_frameWorkScene.RegisterModuleInterface<PhysicsScene>(this);
 
             Initialization();
@@ -324,15 +326,24 @@ namespace OpenSim.Region.PhysicsModule.ubOde
         public void RegionLoaded()
         {
             mesher = m_frameWorkScene.RequestModuleInterface<IMesher>();
+
             if (mesher == null)
             {
-                m_log.ErrorFormat("[ubOde] No mesher. module disabled");
+                m_logger.LogError("[ubOde] No mesher. module disabled");
                 return;
             }
+            
+            using (var scope = m_serviceProvider.CreateScope())
+            {
+                m_logger.LogInformation($"[REGIONMODULES]: Initializing ISharedRegionModules");
 
-            m_meshWorker = new ODEMeshWorker(this, m_log, mesher, physicsconfig);
-            m_frameWorkScene.PhysicsEnabled = true;
+                m_meshWorker = scope.ServiceProvider.GetService<ODEMeshWorker>();
+                m_meshWorker.Initialize(this, mesher);
+
+                m_frameWorkScene.PhysicsEnabled = true;
+            }
         }
+
         /// <summary>
         /// Initiailizes the scene
         /// Sets many properties that ODE requires to be stable
@@ -362,13 +373,17 @@ namespace OpenSim.Region.PhysicsModule.ubOde
                     float sx = m_regionWidth + 16;
                     float sy = m_regionHeight + 16;
                     UBOdeNative.Vector3 px = new(sx * 0.5f, sy  * 0.5f, 0);
+
                     if (sx < sy)
                         sx = sy;
+
                     int dp = Util.intLog2((uint)sx);
                     if(dp > 8)
                         dp = 8;
+
                     else if(dp < 4)
-                        dp = 4;                  
+                        dp = 4;  
+
                     StaticSpace = UBOdeNative.QuadTreeSpaceCreate(TopSpace, ref px, ref px, dp);
                 }
                 catch
@@ -415,32 +430,30 @@ namespace OpenSim.Region.PhysicsModule.ubOde
 
             int contactsPerCollision = 80;
 
-            physicsconfig = null;
-
-            if (m_config != null)
+            if (m_configuration != null)
             {
-                physicsconfig = m_config.Configs["ODEPhysicsSettings"];
-                if (physicsconfig != null)
+                var physicsconfig = m_configuration.GetSection("ODEPhysicsSettings");
+                if (physicsconfig.Exists())
                 {
-                    gravityx = physicsconfig.GetFloat("world_gravityx", gravityx);
-                    gravityy = physicsconfig.GetFloat("world_gravityy", gravityy);
-                    gravityz = physicsconfig.GetFloat("world_gravityz", gravityz);
+                    gravityx = physicsconfig.GetValue<float>("world_gravityx", gravityx);
+                    gravityy = physicsconfig.GetValue<float>("world_gravityy", gravityy);
+                    gravityz = physicsconfig.GetValue<float>("world_gravityz", gravityz);
 
-                    //contactsurfacelayer = physicsconfig.GetFloat("world_contact_surface_layer", contactsurfacelayer);
+                    //contactsurfacelayer = physicsconfig.GetValue<float>("world_contact_surface_layer", contactsurfacelayer);
 
-                    ODE_STEPSIZE = physicsconfig.GetFloat("world_stepsize", ODE_STEPSIZE);
+                    ODE_STEPSIZE = physicsconfig.GetValue<float>("world_stepsize", ODE_STEPSIZE);
 
-                    avDensity = physicsconfig.GetFloat("av_density", avDensity);
-                    avMovementDivisorWalk = physicsconfig.GetFloat("av_movement_divisor_walk", avMovementDivisorWalk);
-                    avMovementDivisorRun = physicsconfig.GetFloat("av_movement_divisor_run", avMovementDivisorRun);
+                    avDensity = physicsconfig.GetValue<float>("av_density", avDensity);
+                    avMovementDivisorWalk = physicsconfig.GetValue<float>("av_movement_divisor_walk", avMovementDivisorWalk);
+                    avMovementDivisorRun = physicsconfig.GetValue<float>("av_movement_divisor_run", avMovementDivisorRun);
 
-                    contactsPerCollision = physicsconfig.GetInt("contacts_per_collision", contactsPerCollision);
+                    contactsPerCollision = physicsconfig.GetValue<int>("contacts_per_collision", contactsPerCollision);
 
-                    geomDefaultDensity = physicsconfig.GetFloat("geometry_default_density", geomDefaultDensity);
+                    geomDefaultDensity = physicsconfig.GetValue<float>("geometry_default_density", geomDefaultDensity);
 //                    bodyFramesAutoDisable = physicsconfig.GetInt("body_frames_auto_disable", bodyFramesAutoDisable);
 
-                    minimumGroundFlightOffset = physicsconfig.GetFloat("minimum_ground_flight_offset", minimumGroundFlightOffset);
-                    maximumMassObject = physicsconfig.GetFloat("maximum_mass_object", maximumMassObject);
+                    minimumGroundFlightOffset = physicsconfig.GetValue<float>("minimum_ground_flight_offset", minimumGroundFlightOffset);
+                    maximumMassObject = physicsconfig.GetValue<float>("maximum_mass_object", maximumMassObject);
 
                     avDensity *= 3f / 80f;  // scale other engines density option to this
                 }
@@ -591,7 +604,7 @@ namespace OpenSim.Region.PhysicsModule.ubOde
                 }
                 catch (AccessViolationException)
                 {
-                    m_log.Warn("[PHYSICS]: Unable to collide test a space");
+                    m_logger.LogWarning("Unable to collide test a space");
                 }
                 return;
             }
@@ -612,15 +625,15 @@ namespace OpenSim.Region.PhysicsModule.ubOde
                 else
                     count = UBOdeNative.CollidePtr(g1, g2, contactsPerCollision, ContactgeomsArray, UBOdeNative.SizeOfContactGeom);
             }
-            catch (SEHException)
+            catch (SEHException seh)
             {
-                m_log.Error("[PHYSICS]: The Operating system shut down ODE because of corrupt memory.  This could be a result of really irregular terrain.  If this repeats continuously, restart using Basic Physics and terrain fill your terrain.  Restarting the sim.");
+                m_logger.LogError(seh, "The Operating system shut down ODE because of corrupt memory.  This could be a result of really irregular terrain.  If this repeats continuously, restart using Basic Physics and terrain fill your terrain.  Restarting the sim.");
                 //ode.drelease(world);
                 base.TriggerPhysicsBasedRestart();
             }
             catch (Exception e)
             {
-                m_log.WarnFormat("[PHYSICS]: Unable to collide test an object: {0}", e.Message);
+                m_logger.LogWarning(e, "Unable to collide test an object");
                 return;
             }
 
@@ -631,13 +644,13 @@ namespace OpenSim.Region.PhysicsModule.ubOde
             // try get physical actors
             if (!actor_name_map.TryGetValue(g1, out PhysicsActor p1))
             {
-                m_log.WarnFormat("[PHYSICS]: failed actor mapping for geom 1");
+                m_logger.LogWarning("Failed actor mapping for geom 1");
                 return;
             }
 
             if (!actor_name_map.TryGetValue(g2, out PhysicsActor p2))
             {
-                m_log.WarnFormat("[PHYSICS]: failed actor mapping for geom 2");
+                m_logger.LogWarning("Failed actor mapping for geom 2");
                 return;
             }
 
@@ -881,7 +894,7 @@ namespace OpenSim.Region.PhysicsModule.ubOde
                 }
                 catch (AccessViolationException)
                 {
-                    m_log.Warn("[PHYSICS]: Unable to collide test a space");
+                    m_logger.LogWarning("Unable to collide test a space");
                 }
                 return;
             }
@@ -900,13 +913,13 @@ namespace OpenSim.Region.PhysicsModule.ubOde
             }
             catch (SEHException)
             {
-                m_log.Error("[PHYSICS]: The Operating system shut down ODE because of corrupt memory.  This could be a result of really irregular terrain.  If this repeats continuously, restart using Basic Physics and terrain fill your terrain.  Restarting the sim.");
+                m_logger.LogError("The Operating system shut down ODE because of corrupt memory.  This could be a result of really irregular terrain.  If this repeats continuously, restart using Basic Physics and terrain fill your terrain.  Restarting the sim.");
                 //ode.drelease(world);
                 base.TriggerPhysicsBasedRestart();
             }
             catch (Exception e)
             {
-                m_log.WarnFormat("[PHYSICS]: Unable to collide test an object: {0}", e.Message);
+                m_logger.LogWarning(e, "Unable to collide test an object");
                 return;
             }
 
@@ -917,13 +930,13 @@ namespace OpenSim.Region.PhysicsModule.ubOde
             // try get physical actors
             if (!actor_name_map.TryGetValue(g1, out PhysicsActor p1))
             {
-                m_log.WarnFormat("[PHYSICS]: failed actor mapping for geom 1");
+                m_logger.LogWarning("Failed actor mapping for geom 1");
                 return;
             }
 
             if (!actor_name_map.TryGetValue(g2, out PhysicsActor p2))
             {
-                m_log.WarnFormat("[PHYSICS]: failed actor mapping for geom 2");
+                m_logger.LogWarning("Failed actor mapping for geom 2");
                 return;
             }
 
@@ -1162,7 +1175,7 @@ namespace OpenSim.Region.PhysicsModule.ubOde
                     }
                     catch (AccessViolationException)
                     {
-                        m_log.Warn("[PHYSICS]: Unable to collide Character to static space");
+                        m_logger.LogWarning("Unable to collide Character to static space");
                     }
                 }
             }
@@ -1196,7 +1209,7 @@ namespace OpenSim.Region.PhysicsModule.ubOde
                     }
                     catch (Exception e)
                     {
-                        m_log.Warn("[PHYSICS]: Unable to collide Active to Static: " + e.Message);
+                        m_logger.LogWarning(e, "Unable to collide Active to Static");
                     }
                 }
                 // colide active amoung them
@@ -1206,7 +1219,7 @@ namespace OpenSim.Region.PhysicsModule.ubOde
                 }
                 catch (Exception e)
                 {
-                        m_log.Warn("[PHYSICS]: Unable to collide in Active: " + e.Message);
+                    m_logger.LogWarning(e,"Unable to collide in Active");
                 }
             }
             /*
@@ -1217,7 +1230,7 @@ namespace OpenSim.Region.PhysicsModule.ubOde
             }
             catch (Exception e)
             {
-                    m_log.Warn("[PHYSICS]: Unable to collide Active to Character: " + e.Message);
+                    m_logger.Warn("[PHYSICS]: Unable to collide Active to Character: " + e.Message);
             }
             */
         }
@@ -1280,7 +1293,7 @@ namespace OpenSim.Region.PhysicsModule.ubOde
                 else
                     chr._charsListIndex = -1;
                 if (chr.bad)
-                    m_log.DebugFormat("[PHYSICS] Added BAD actor {0} to characters list", chr.m_baseLocalID);
+                    m_logger.LogDebug($"Added BAD actor {chr.m_baseLocalID} to characters list");
             }
         }
 
@@ -1315,7 +1328,7 @@ namespace OpenSim.Region.PhysicsModule.ubOde
 
         public override void RemoveAvatar(PhysicsActor actor)
         {
-            //m_log.Debug("[PHYSICS]:ODELOCK");
+            //m_logger.Debug("[PHYSICS]:ODELOCK");
             if (world == IntPtr.Zero)
                 return;
             ((OdeCharacter) actor).Destroy();
@@ -1497,8 +1510,7 @@ namespace OpenSim.Region.PhysicsModule.ubOde
                 }
                 else
                 {
-                    m_log.Info("[Physics]: Invalid or empty Space passed to 'MoveGeomToStaticSpace':" + currentspace +
-                                   " Geom:" + geom);
+                    m_logger.LogInformation($"Invalid or empty Space passed to 'MoveGeomToStaticSpace': {currentspace} Geom: {geom}");
                 }
             }
             else
@@ -1522,7 +1534,7 @@ namespace OpenSim.Region.PhysicsModule.ubOde
             // put the geom in the newspace
             //waitForSpaceUnlock(StaticSpace);
             if(UBOdeNative.SpaceQuery(StaticSpace, geom))
-                m_log.Info("[Physics]: 'MoveGeomToStaticSpace' geom already in static space:" + geom);
+                m_logger.LogInformation($"'MoveGeomToStaticSpace' geom already in static space: {geom}");
             else
                 UBOdeNative.SpaceAdd(StaticSpace, geom);
 
@@ -1560,7 +1572,7 @@ namespace OpenSim.Region.PhysicsModule.ubOde
                 int donechanges = 0;
                 if (!ChangesQueue.IsEmpty)
                 {
-                    m_log.InfoFormat("[ubOde] start processing pending actor operations");
+                    m_logger.LogInformation("Start processing pending actor operations");
                     int tstart = Util.EnvironmentTickCount();
 
                     UBOdeNative.AllocateODEDataForThread(~0U);
@@ -1581,17 +1593,19 @@ namespace OpenSim.Region.PhysicsModule.ubOde
                             }
                             catch
                             {
-                                m_log.WarnFormat("[PHYSICS]: Operation failed for a actor {0} {1}",
-                                    item.actor.Name, item.what.ToString());
+                                m_logger.LogWarning($"Operation failed for a actor {item.actor.Name} {item.what}");
                             }
                         }
                         donechanges++;
                     }
+
                     int time = Util.EnvironmentTickCountSubtract(tstart);
-                    m_log.InfoFormat("[ubOde] finished {0} operations in {1}ms", donechanges, time);
+                    m_logger.LogInformation($"Finished {donechanges} operations in {time}ms");
                 }
-                m_log.InfoFormat("[ubOde] {0} prim actors loaded",_prims.Count);
+
+                m_logger.LogInformation($"{_prims.Count} prim actors loaded");
             }
+
             m_lastframe = Util.GetTimeStamp() + 0.5;
             step_time = -0.5f;
         }
@@ -1665,9 +1679,9 @@ namespace OpenSim.Region.PhysicsModule.ubOde
                     }
                     catch
                     {
-                        m_log.WarnFormat("[PHYSICS]: doChange failed for a actor {0} {1}",
-                            item.actor.Name, item.what.ToString());
+                        m_logger.LogWarning($"DoChange failed for a actor {item.actor.Name} {item.what}");
                     }
+                    
                     if (maxChangestime < Util.GetTimeStampMS())
                         break;
                 }
@@ -1773,7 +1787,7 @@ namespace OpenSim.Region.PhysicsModule.ubOde
                                 if (actor != null)
                                 {
                                     if (actor.bad)
-                                        m_log.WarnFormat("[PHYSICS]: BAD Actor {0} in _characters list was not removed?", actor.m_uuid);
+                                        m_logger.WarnFormat("[PHYSICS]: BAD Actor {0} in _characters list was not removed?", actor.m_uuid);
 
                                     actor.UpdatePositionAndVelocity();
                                 }
@@ -1798,7 +1812,7 @@ namespace OpenSim.Region.PhysicsModule.ubOde
                     }
                     catch (Exception e)
                     {
-                        m_log.ErrorFormat("[PHYSICS]: {0}, {1}, {2}", e.Message, e.TargetSite, e);
+                        m_logger.LogError(e, $"{e.Message}, {e.TargetSite}");
                         //ode.dunlock(world);
                     }
 

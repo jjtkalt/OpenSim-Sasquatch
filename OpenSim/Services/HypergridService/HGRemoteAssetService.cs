@@ -61,7 +61,7 @@ namespace OpenSim.Services.HypergridService
 
         private AssetPermissions m_AssetPerms;
 
-        public HGRemoteAssetService(IConfigSource config, string configName)
+        public HGRemoteAssetService(IConfiguration config, string configName)
         {
             m_log.Debug("[HGRemoteAsset Service]: Starting");
             IConfig assetConfig = config.Configs[configName];

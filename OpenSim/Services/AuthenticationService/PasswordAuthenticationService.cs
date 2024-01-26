@@ -25,16 +25,13 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
 using OpenMetaverse;
 using OpenSim.Services.Interfaces;
 using log4net;
-using Nini.Config;
 using System.Reflection;
 using OpenSim.Data;
 using OpenSim.Framework;
-using OpenSim.Framework.Console;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.AuthenticationService
 {
@@ -51,13 +48,13 @@ namespace OpenSim.Services.AuthenticationService
                 LogManager.GetLogger(
                 MethodBase.GetCurrentMethod().DeclaringType);
 
-        public PasswordAuthenticationService(IConfigSource config, IUserAccountService userService) :
+        public PasswordAuthenticationService(IConfiguration config, IUserAccountService userService) :
                 base(config, userService)
         {
             m_log.Debug("[AUTH SERVICE]: Started with User Account access");
         }
 
-        public PasswordAuthenticationService(IConfigSource config) :
+        public PasswordAuthenticationService(IConfiguration config) :
                 base(config)
         {
         }

@@ -48,7 +48,7 @@ namespace OpenSim.Region.CoreModules.World.Objects.Commands
 
         public Type ReplaceableInterface { get { return null; } }
 
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
 //            m_log.DebugFormat("[REGION COMMANDS MODULE]: INITIALIZED MODULE");
         }

@@ -25,11 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Reflection;
-using Nini.Config;
+using Microsoft.Extensions.Configuration;
 using OpenSim.Data;
-using OpenSim.Services.Interfaces;
 using OpenSim.Services.Base;
 
 namespace OpenSim.Services.UserAccountService
@@ -38,31 +35,30 @@ namespace OpenSim.Services.UserAccountService
     {
         protected IUserAccountData m_Database = null;
 
-        public UserAccountServiceBase(IConfigSource config) : base(config)
+        public UserAccountServiceBase(IConfiguration config) : base(config)
         {
             string dllName = String.Empty;
             string connString = String.Empty;
             string realm = "UserAccounts";
 
-            IConfig dbConfig = config.Configs["DatabaseService"];
-            if (dbConfig != null)
+            var dbConfig = config.GetSection("DatabaseService");
+            if (dbConfig.Exists())
             {
-                dllName = dbConfig.GetString("StorageProvider", String.Empty);
-                connString = dbConfig.GetString("ConnectionString", String.Empty);
+                dllName = dbConfig.GetValue("StorageProvider", String.Empty);
+                connString = dbConfig.GetValue("ConnectionString", String.Empty);
             }
 
-            IConfig userConfig = config.Configs["UserAccountService"];
-            if (userConfig == null)
+            var userConfig = config.GetSection("UserAccountService");
+            if (userConfig.Exists() is false)
                 throw new Exception("No UserAccountService configuration");
 
-            dllName = userConfig.GetString("StorageProvider", dllName);
+            dllName = userConfig.GetValue("StorageProvider", dllName);
 
-            if (dllName.Length == 0)
+            if (string.IsNullOrEmpty(dllName))
                 throw new Exception("No StorageProvider configured");
 
-            connString = userConfig.GetString("ConnectionString", connString);
-
-            realm = userConfig.GetString("Realm", realm);
+            connString = userConfig.GetValue("ConnectionString", connString);
+            realm = userConfig.GetValue("Realm", realm);
 
             m_Database = LoadPlugin<IUserAccountData>(dllName, new Object[] {connString, realm});
 

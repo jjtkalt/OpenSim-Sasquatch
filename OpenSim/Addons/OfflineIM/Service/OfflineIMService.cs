@@ -52,7 +52,7 @@ namespace OpenSim.OfflineIM
         private XmlSerializer m_serializer;
         private static bool m_Initialized = false;
 
-        public OfflineIMService(IConfigSource config)
+        public OfflineIMService(IConfiguration config)
             : base(config)
         {
             m_serializer = new XmlSerializer(typeof(GridInstantMessage));

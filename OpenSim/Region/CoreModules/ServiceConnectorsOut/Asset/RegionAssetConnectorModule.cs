@@ -77,12 +77,12 @@ namespace OpenSim.Region.CoreModules.ServiceConnectorsOut.Asset
 
         public RegionAssetConnector() {}
 
-        public RegionAssetConnector(IConfigSource config)
+        public RegionAssetConnector(IConfiguration config)
         {
             Initialise(config);
         }
 
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
             IConfig moduleConfig = source.Configs["Modules"];
             if (moduleConfig != null)

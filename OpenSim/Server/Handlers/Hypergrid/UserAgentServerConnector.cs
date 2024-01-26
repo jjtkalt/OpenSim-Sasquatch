@@ -42,10 +42,11 @@ using GridRegion = OpenSim.Services.Interfaces.GridRegion;
 using log4net;
 using Nwc.XmlRpc;
 using OpenMetaverse;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Server.Handlers.Hypergrid
 {
-    public class UserAgentServerConnector : ServiceConnector
+    public class UserAgentServerConnector : ServiceConnector, IServiceConnector
     {
 //        private static readonly ILog m_log =
 //                LogManager.GetLogger(
@@ -61,35 +62,32 @@ namespace OpenSim.Server.Handlers.Hypergrid
 
         private bool m_VerifyCallers = false;
 
-        public UserAgentServerConnector(IConfigSource config, IHttpServer server) :
-            this(config, server, (IFriendsSimConnector)null)
+        public UserAgentServerConnector(IConfiguration config, IHttpServer server) :
+            this(config, server, null)
         {
         }
 
-        public UserAgentServerConnector(IConfigSource config, IHttpServer server, string configName) :
-            this(config, server)
+        public UserAgentServerConnector(IConfiguration config, IHttpServer server, IFriendsSimConnector friendsConnector) :
+                base(config, server, "UserAgentService")
         {
-        }
-
-        public UserAgentServerConnector(IConfigSource config, IHttpServer server, IFriendsSimConnector friendsConnector) :
-                base(config, server, String.Empty)
-        {
-            IConfig gridConfig = config.Configs["UserAgentService"];
-            if (gridConfig != null)
+            var gridConfig = config.GetSection("UserAgentService");
+            if (gridConfig.Exists())
             {
-                string serviceDll = gridConfig.GetString("LocalServiceModule", string.Empty);
+                string serviceDll = gridConfig.GetValue("LocalServiceModule", string.Empty);
 
                 Object[] args = new Object[] { config, friendsConnector };
                 m_HomeUsersService = ServerUtils.LoadPlugin<IUserAgentService>(serviceDll, args);
             }
+
             if (m_HomeUsersService == null)
                 throw new Exception("UserAgent server connector cannot proceed because of missing service");
 
-            string loginServerIP = gridConfig.GetString("LoginServerIP", "127.0.0.1");
-            bool proxy = gridConfig.GetBoolean("HasProxy", false);
+            string loginServerIP = gridConfig.GetValue("LoginServerIP", "127.0.0.1");
+            bool proxy = gridConfig.GetValue<bool>("HasProxy", false);
 
-            m_VerifyCallers = gridConfig.GetBoolean("VerifyCallers", false);
-            string csv = gridConfig.GetString("AuthorizedCallers", "127.0.0.1");
+            m_VerifyCallers = gridConfig.GetValue<bool>("VerifyCallers", false);
+            string csv = gridConfig.GetValue("AuthorizedCallers", "127.0.0.1");
+
             csv = csv.Replace(" ", "");
             m_AuthorizedCallers = csv.Split(',');
 
@@ -98,11 +96,8 @@ namespace OpenSim.Server.Handlers.Hypergrid
             server.AddXmlRPCHandler("verify_agent", VerifyAgent, false);
             server.AddXmlRPCHandler("verify_client", VerifyClient, false);
             server.AddXmlRPCHandler("logout_agent", LogoutAgent, false);
-
-#pragma warning disable 0612
             server.AddXmlRPCHandler("status_notification", StatusNotification, false);
             server.AddXmlRPCHandler("get_online_friends", GetOnlineFriends, false);
-#pragma warning restore 0612
             server.AddXmlRPCHandler("get_user_info", GetUserInfo, false);
             server.AddXmlRPCHandler("get_server_urls", GetServerURLs, false);
 

@@ -25,15 +25,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
 using System.Reflection;
 using log4net;
-using Nini.Config;
 using OpenSim.Framework;
 using OpenSim.Data;
 using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Services.Base;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.AssetService
 {
@@ -45,9 +44,9 @@ namespace OpenSim.Services.AssetService
         protected IAssetLoader m_AssetLoader;
         protected IAssetService m_ChainedAssetService;
 
-        protected bool HasChainedAssetService { get { return m_ChainedAssetService != null; } }
+        public bool HasChainedAssetService { get => m_ChainedAssetService == null; }
 
-        public XAssetServiceBase(IConfigSource config, string configName) : base(config)
+        public XAssetServiceBase(IConfiguration config, string configName) : base(config)
         {
             string dllName = String.Empty;
             string connString = String.Empty;
@@ -55,23 +54,23 @@ namespace OpenSim.Services.AssetService
             //
             // Try reading the [AssetService] section first, if it exists
             //
-            IConfig assetConfig = config.Configs[configName];
-            if (assetConfig != null)
+            var assetConfig = config.GetSection(configName);
+            if (assetConfig.Exists())
             {
-                dllName = assetConfig.GetString("StorageProvider", dllName);
-                connString = assetConfig.GetString("ConnectionString", connString);
+                dllName = assetConfig.GetValue("StorageProvider", dllName);
+                connString = assetConfig.GetValue("ConnectionString", connString);
             }
 
             //
             // Try reading the [DatabaseService] section, if it exists
             //
-            IConfig dbConfig = config.Configs["DatabaseService"];
-            if (dbConfig != null)
+            var dbConfig = config.GetSection("DatabaseService");
+            if (dbConfig.Exists())
             {
                 if (dllName.Length == 0)
-                    dllName = dbConfig.GetString("StorageProvider", String.Empty);
+                    dllName = dbConfig.GetValue("StorageProvider", String.Empty);
                 if (connString.Length == 0)
-                    connString = dbConfig.GetString("ConnectionString", String.Empty);
+                    connString = dbConfig.GetValue("ConnectionString", String.Empty);
             }
 
             //
@@ -84,9 +83,9 @@ namespace OpenSim.Services.AssetService
             if (m_Database == null)
                 throw new Exception("Could not find a storage interface in the given module");
 
-            string chainedAssetServiceDesignator = assetConfig.GetString("ChainedServiceModule", null);
+            string chainedAssetServiceDesignator = assetConfig.GetValue("ChainedServiceModule", string.Empty);
 
-            if (chainedAssetServiceDesignator != null)
+            if (!string.IsNullOrEmpty(chainedAssetServiceDesignator))
             {
                 m_log.InfoFormat(
                     "[XASSET SERVICE BASE]: Loading chained asset service from {0}", chainedAssetServiceDesignator);
@@ -94,19 +93,18 @@ namespace OpenSim.Services.AssetService
                 Object[] args = new Object[] { config, configName };
                 m_ChainedAssetService = ServerUtils.LoadPlugin<IAssetService>(chainedAssetServiceDesignator, args);
 
-                if (!HasChainedAssetService)
-                    throw new Exception(
-                        String.Format("Failed to load ChainedAssetService from {0}", chainedAssetServiceDesignator));
+                if (m_ChainedAssetService == null)
+                {
+                    throw new Exception($"Failed to load ChainedAssetService from {chainedAssetServiceDesignator}");
+                }
             }
 
             m_Database.Initialise(connString);
 
-            if (HasChainedAssetService)
+            if (m_ChainedAssetService != null)
             {
-                string loaderName = assetConfig.GetString("DefaultAssetLoader",
-                        String.Empty);
-
-                if (loaderName != String.Empty)
+                string loaderName = assetConfig.GetValue("DefaultAssetLoader", String.Empty);
+                if (!string.IsNullOrEmpty(loaderName))
                 {
                     m_AssetLoader = LoadPlugin<IAssetLoader>(loaderName);
 

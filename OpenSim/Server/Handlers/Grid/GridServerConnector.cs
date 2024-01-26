@@ -32,31 +32,34 @@ using OpenSim.Services.Interfaces;
 using OpenSim.Framework.ServiceAuth;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Server.Handlers.Grid
 {
-    public class GridServiceConnector : ServiceConnector
+    public class GridServiceConnector : ServiceConnector, IServiceConnector
     {
         private IGridService m_GridService;
-        private string m_ConfigName = "GridService";
 
-        public GridServiceConnector(IConfigSource config, IHttpServer server, string configName) :
+        public GridServiceConnector(IConfiguration config, IHttpServer server) :
+                this(config, server, "GridService")
+        {
+        }
+
+        public GridServiceConnector(IConfiguration config, IHttpServer server, string configName) :
                 base(config, server, configName)
         {
-            IConfig serverConfig = config.Configs[m_ConfigName];
-            if (serverConfig == null)
-                throw new Exception(String.Format("No section {0} in config file", m_ConfigName));
+            var serverConfig = config.GetSection(configName);
+            if (serverConfig.Exists() is false)
+                throw new Exception($"No section {configName} in config file");
 
-            string gridService = serverConfig.GetString("LocalServiceModule",
-                    String.Empty);
-
-            if (gridService.Length == 0)
+            string gridService = serverConfig.GetValue("LocalServiceModule", String.Empty);
+            if (string.IsNullOrEmpty(gridService))
                 throw new Exception("No LocalServiceModule in config file");
 
             Object[] args = new Object[] { config };
             m_GridService = ServerUtils.LoadPlugin<IGridService>(gridService, args);
 
-            IServiceAuth auth = ServiceAuth.Create(config, m_ConfigName);
+            IServiceAuth auth = ServiceAuth.Create(config, configName);
 
             server.AddStreamHandler(new GridServerPostHandler(m_GridService, auth));
         }

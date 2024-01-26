@@ -25,15 +25,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
 using System.Reflection;
-using Nini.Config;
 using log4net;
-using OpenSim.Framework;
-using OpenSim.Framework.Console;
-using OpenSim.Data;
 using OpenSim.Services.Interfaces;
-using OpenMetaverse;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.AuthorizationService
 {
@@ -43,7 +38,7 @@ namespace OpenSim.Services.AuthorizationService
                 LogManager.GetLogger(
                 MethodBase.GetCurrentMethod().DeclaringType);
 
-        public AuthorizationService(IConfigSource config) : base(config)
+        public AuthorizationService(IConfiguration config) : base(config)
         {
                 m_log.Info("[AUTHORIZATION CONNECTOR]: Local Authorization service enabled");
         }

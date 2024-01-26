@@ -63,7 +63,7 @@ namespace OpenSim.Region.CoreModules.World.LegacyMap
             LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         private Scene m_scene;
-        private IConfigSource m_config;
+        private IConfiguration m_config;
         private IMapTileTerrainRenderer terrainRenderer;
         private bool m_Enabled = false;
 
@@ -164,7 +164,7 @@ namespace OpenSim.Region.CoreModules.World.LegacyMap
 
         #region Region Module interface
 
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
             m_config = source;
 

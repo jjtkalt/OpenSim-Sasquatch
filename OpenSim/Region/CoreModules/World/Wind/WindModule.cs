@@ -68,7 +68,7 @@ namespace OpenSim.Region.CoreModules.World.Wind
 
         #region INonSharedRegionModule Methods
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             m_windConfig = config.Configs["Wind"];
 //            string desiredWindPlugin = m_dWindPluginName;

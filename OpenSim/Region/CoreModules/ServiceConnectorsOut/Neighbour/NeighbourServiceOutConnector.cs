@@ -57,7 +57,7 @@ namespace OpenSim.Region.CoreModules.ServiceConnectorsOut.Neighbour
             get { return "NeighbourServicesOutConnector"; }
         }
 
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
             IConfig moduleConfig = source.Configs["Modules"];
             if (moduleConfig != null)

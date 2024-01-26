@@ -25,21 +25,17 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Runtime;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using log4net;
 using log4net.Appender;
 using log4net.Core;
 using log4net.Repository;
-using Nini.Config;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using OpenSim.Framework.Console;
 using OpenSim.Framework.Monitoring;
 
@@ -47,10 +43,6 @@ namespace OpenSim.Framework.Servers
 {
     public class ServerBase
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
-        public IConfigSource Config { get; protected set; }
-
         /// <summary>
         /// Server version information.  Usually VersionInfo + information about git commit, operating system, etc.
         /// </summary>
@@ -74,55 +66,24 @@ namespace OpenSim.Framework.Servers
 
         protected ServerStatsCollector m_serverStatsCollector;
 
-        public ServerBase()
+        protected IConfiguration Config;
+        protected ILogger<ServerBase> Logger;
+        
+        public ServerBase(
+            IConfiguration configuration,
+            ILogger<ServerBase> logger,
+            ServerStatsCollector statsCollector
+            )
         {
+            Config = configuration;
+            Logger = logger;
+
+            m_serverStatsCollector = statsCollector;
+
             m_startuptime = DateTime.Now;
             Version = VersionInfo.Version;
+
             EnhanceVersionInformation();
-        }
-
-        protected void CreatePIDFile(string path)
-        {
-            if (File.Exists(path))
-                m_log.ErrorFormat(
-                    "[SERVER BASE]: Previous pid file {0} still exists on startup.  Possibly previously unclean shutdown.",
-                    path);
-
-            try
-            {
-                string pidstring = System.Diagnostics.Process.GetCurrentProcess().Id.ToString();
-
-                using (FileStream fs = File.Create(path))
-                {
-                    Byte[] buf = Encoding.ASCII.GetBytes(pidstring);
-                    fs.Write(buf, 0, buf.Length);
-                }
-
-                m_pidFile = path;
-
-                m_log.InfoFormat("[SERVER BASE]: Created pid file {0}", m_pidFile);
-            }
-            catch (Exception e)
-            {
-                m_log.Warn(string.Format("[SERVER BASE]: Could not create PID file at {0} ", path), e);
-            }
-        }
-
-        protected void RemovePIDFile()
-        {
-            if (m_pidFile != String.Empty)
-            {
-                try
-                {
-                    File.Delete(m_pidFile);
-                }
-                catch (Exception e)
-                {
-                    m_log.Error(string.Format("[SERVER BASE]: Error whilst removing {0} ", m_pidFile), e);
-                }
-
-                m_pidFile = String.Empty;
-            }
         }
 
         /// <summary>
@@ -131,80 +92,10 @@ namespace OpenSim.Framework.Servers
         /// </summary>
         public void LogEnvironmentInformation()
         {
-            // FIXME: This should be done down in ServerBase but we need to sort out and refactor the log4net
-            // XmlConfigurator calls first accross servers.
-            m_log.InfoFormat("[SERVER BASE]: Starting in {0}", m_startupDirectory);
-
-            m_log.InfoFormat("[SERVER BASE]: OpenSimulator version: {0}", Version);
-
-            // clr version potentially is more confusing than helpful, since it doesn't tell us if we're running under Mono/MS .NET and
-            // the clr version number doesn't match the project version number under Mono.
-            //m_log.Info("[STARTUP]: Virtual machine runtime version: " + Environment.Version + Environment.NewLine);
-            m_log.InfoFormat(
-                "[SERVER BASE]: Operating system version: {0}, .NET platform {1}, {2}-bit",
-                Environment.OSVersion, Util.RuntimePlatformStr, Environment.Is64BitProcess ? "64" : "32");
-        }
-
-        public void RegisterCommonAppenders(IConfig startupConfig)
-        {
-            ILoggerRepository repository = LogManager.GetRepository();
-            IAppender[] appenders = repository.GetAppenders();
-
-            foreach (IAppender appender in appenders)
-            {
-                if (appender.Name == "Console")
-                {
-                    m_consoleAppender = (OpenSimAppender)appender;
-                }
-                else if (appender.Name == "LogFileAppender")
-                {
-                    m_logFileAppender = (FileAppender)appender;
-                }
-                else if (appender.Name == "StatsLogFileAppender")
-                {
-                    m_statsLogFileAppender = (FileAppender)appender;
-                }
-            }
-
-            if (null == m_consoleAppender)
-            {
-                Notice("No appender named Console found (see the log4net config file for this executable)!");
-            }
-            else
-            {
-                // FIXME: This should be done through an interface rather than casting.
-                m_consoleAppender.Console = (ConsoleBase)m_console;
-
-                // If there is no threshold set then the threshold is effectively everything.
-                if (m_consoleAppender.Threshold is null)
-                    m_consoleAppender.Threshold = Level.All;
-
-                //Notice($"Console log level is {m_consoleAppender.Threshold}");
-            }
-
-            if (m_logFileAppender != null && startupConfig != null)
-            {
-                string cfgFileName = startupConfig.GetString("logfile", null);
-                if (cfgFileName != null)
-                {
-                    m_logFileAppender.File = cfgFileName;
-                    m_logFileAppender.ActivateOptions();
-                }
-
-                m_log.InfoFormat("[SERVER BASE]: Logging started to file {0}", m_logFileAppender.File);
-            }
-
-            if (m_statsLogFileAppender != null && startupConfig != null)
-            {
-                string cfgStatsFileName = startupConfig.GetString("StatsLogFile", null);
-                if (cfgStatsFileName != null)
-                {
-                    m_statsLogFileAppender.File = cfgStatsFileName;
-                    m_statsLogFileAppender.ActivateOptions();
-                }
-
-                m_log.InfoFormat("[SERVER BASE]: Stats Logging started to file {0}", m_statsLogFileAppender.File);
-            }
+            Logger.LogInformation($"[SERVER BASE]: Starting in {m_startupDirectory}");
+            Logger.LogInformation($"[SERVER BASE]: OpenSimulator version: {Version}");
+            Logger.LogInformation($"Operating system version: {Environment.OSVersion}");
+            Logger.LogInformation($"NET platform {Util.RuntimePlatformStr}, {(Environment.Is64BitProcess ? "64" : "32")}-bit");
         }
 
         /// <summary>
@@ -233,11 +124,6 @@ namespace OpenSim.Framework.Servers
                 "Set the console logging level for this session.", HandleSetLogLevel);
 
             m_console.Commands.AddCommand(
-                "General", false, "config set",
-                "config set <section> <key> <value>",
-                "Set a config option.  In most cases this is not useful since changed parameters are not dynamically reloaded.  Neither do changed parameters persist - you will have to change a config file manually and restart.", HandleConfig);
-
-            m_console.Commands.AddCommand(
                 "General", false, "config get",
                 "config get [<section>] [<key>]",
                 "Synonym for config show",
@@ -250,11 +136,6 @@ namespace OpenSim.Framework.Servers
                 "If neither section nor field are specified, then the whole current configuration is printed." + Environment.NewLine
                 + "If a section is given but not a field, then all fields in that section are printed.",
                 HandleConfig);
-
-            m_console.Commands.AddCommand(
-                "General", false, "config save",
-                "config save <path>",
-                "Save current configuration to a file at the given path", HandleConfig);
 
             m_console.Commands.AddCommand(
                 "General", false, "command-script",
@@ -334,13 +215,13 @@ namespace OpenSim.Framework.Servers
             StatsManager.RegisterConsoleCommands(m_console);
         }
 
-        public void RegisterCommonComponents(IConfigSource configSource)
+        public void RegisterCommonComponents(IConfiguration configSource)
         {
-//            IConfig networkConfig = configSource.Configs["Network"];
-
-            m_serverStatsCollector = new ServerStatsCollector();
-            m_serverStatsCollector.Initialise(configSource);
-            m_serverStatsCollector.Start();
+            if (m_serverStatsCollector != null)
+            {
+                m_serverStatsCollector.Initialise();
+                m_serverStatsCollector.Start();
+            }
         }
 
         private void HandleShowThreadpoolCallsActive(string module, string[] args)
@@ -546,7 +427,7 @@ namespace OpenSim.Framework.Servers
         }
 
         /// <summary>
-        /// Change and load configuration file data.
+        /// Print Configuration data.
         /// </summary>
         /// <param name="module"></param>
         /// <param name="cmd"></param>
@@ -558,91 +439,44 @@ namespace OpenSim.Framework.Servers
 
                 switch (firstParam)
                 {
-                    case "set":
-                        if (cmd.Length < 5)
-                        {
-                            Notice("Syntax: config set <section> <key> <value>");
-                            Notice("Example: config set ScriptEngine.DotNetEngine NumberOfScriptThreads 5");
-                        }
-                        else
-                        {
-                            IConfig c;
-                            IConfigSource source = new IniConfigSource();
-                            c = source.AddConfig(cmd[2]);
-                            if (c != null)
-                            {
-                                string _value = String.Join(" ", cmd, 4, cmd.Length - 4);
-                                c.Set(cmd[3], _value);
-                                Config.Merge(source);
-
-                                Notice("In section [{0}], set {1} = {2}", c.Name, cmd[3], _value);
-                            }
-                        }
-                        break;
-
                     case "get":
                     case "show":
                         if (cmd.Length == 2)
                         {
-                            foreach (IConfig config in Config.Configs)
+                            // Show them all
+                            foreach (var kvp in Config.AsEnumerable())
                             {
-                                Notice("[{0}]", config.Name);
-                                string[] keys = config.GetKeys();
-                                foreach (string key in keys)
-                                    Notice("  {0} = {1}", key, config.GetString(key));
+                                Notice($"  {kvp.Key} = {kvp.Value}");
                             }
                         }
                         else if (cmd.Length == 3 || cmd.Length == 4)
                         {
-                            IConfig config = Config.Configs[cmd[2]];
-                            if (config == null)
+                            var section = cmd[2];
+                            var config = Config.GetSection(section);
+                            if (config.Exists() is false)
                             {
-                                Notice("Section \"{0}\" does not exist.",cmd[2]);
+                                Notice($"Section \"{section}\" does not exist.");
                                 break;
                             }
                             else
                             {
                                 if (cmd.Length == 3)
                                 {
-                                    Notice("[{0}]", config.Name);
-                                    foreach (string key in config.GetKeys())
-                                        Notice("  {0} = {1}", key, config.GetString(key));
+                                    foreach (var kvp in config.AsEnumerable())
+                                        Notice($"  {kvp.Key} = {kvp.Value}");
                                 }
                                 else
                                 {
                                     Notice(
                                         "config get {0} {1} : {2}",
-                                        cmd[2], cmd[3], config.GetString(cmd[3]));
+                                        cmd[2], cmd[3], config.GetValue<string>(cmd[3]));
                                 }
                             }
                         }
                         else
                         {
-                            Notice("Syntax: config {0} [<section>] [<key>]", firstParam);
-                            Notice("Example: config {0} ScriptEngine.DotNetEngine NumberOfScriptThreads", firstParam);
-                        }
-
-                        break;
-
-                    case "save":
-                        if (cmd.Length < 3)
-                        {
-                            Notice("Syntax: config save <path>");
-                            return;
-                        }
-
-                        string path = cmd[2];
-                        Notice("Saving configuration file: {0}", path);
-
-                        if (Config is IniConfigSource)
-                        {
-                            IniConfigSource iniCon = (IniConfigSource)Config;
-                            iniCon.Save(path);
-                        }
-                        else if (Config is XmlConfigSource)
-                        {
-                            XmlConfigSource xmlCon = (XmlConfigSource)Config;
-                            xmlCon.Save(path);
+                            Notice($"Syntax: config {firstParam} [<section>] [<key>]");
+                            Notice($"Example: config {firstParam} ScriptEngine.DotNetEngine NumberOfScriptThreads");
                         }
 
                         break;
@@ -711,7 +545,7 @@ namespace OpenSim.Framework.Servers
 
             if (File.Exists(fileName))
             {
-                m_log.Info("[SERVER BASE]: Running " + fileName);
+                Logger.LogInformation($"Running {fileName}");
 
                 using (StreamReader readFile = File.OpenText(fileName))
                 {
@@ -724,7 +558,7 @@ namespace OpenSim.Framework.Servers
                             || currentCommand.StartsWith("//")
                             || currentCommand.StartsWith("#")))
                         {
-                            m_log.Info("[SERVER BASE]: Running '" + currentCommand + "'");
+                            Logger.LogInformation($"Running '{currentCommand}'");
                             m_console.RunCommand(currentCommand);
                         }
                     }

@@ -44,7 +44,7 @@ namespace OpenSim.Capabilities.Handlers
         private ILibraryService m_LibraryService;
         private string m_ConfigName = "CapsService";
 
-        public FetchInvDescServerConnector(IConfigSource config, IHttpServer server, string configName) :
+        public FetchInvDescServerConnector(IConfiguration config, IHttpServer server, string configName) :
                 base(config, server, configName)
         {
             if (configName != String.Empty)

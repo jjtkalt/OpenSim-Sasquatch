@@ -76,7 +76,7 @@ namespace OpenSim.Region.CoreModules.ServiceConnectorsOut.Inventory
             get { return "LocalInventoryServicesConnector"; }
         }
 
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
             IConfig moduleConfig = source.Configs["Modules"];
             if (moduleConfig != null)

@@ -56,6 +56,7 @@ using OpenMetaverse.StructuredData;
 using Amib.Threading;
 using System.Collections.Concurrent;
 using System.Net.Http;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Framework
 {
@@ -1821,9 +1822,10 @@ namespace OpenSim.Framework
             return FileName;
         }
 
+/* XXX
         #region Nini (config) related Methods
 
-        public static IConfigSource ConvertDataRowToXMLConfig(DataRow row, string fileName)
+        public static IConfiguration ConvertDataRowToXMLConfig(DataRow row, string fileName)
         {
             if (!File.Exists(fileName))
             {
@@ -1836,7 +1838,7 @@ namespace OpenSim.Framework
             return config;
         }
 
-        public static void AddDataRowToConfig(IConfigSource config, DataRow row)
+        public static void AddDataRowToConfig(IConfiguration config, DataRow row)
         {
             config.Configs.Add((string)row[0]);
             for (int i = 0; i < row.Table.Columns.Count; i++)
@@ -1844,21 +1846,23 @@ namespace OpenSim.Framework
                 config.Configs[(string)row[0]].Set(row.Table.Columns[i].ColumnName, row[i]);
             }
         }
+*/
 
-        public static string GetConfigVarWithDefaultSection(IConfigSource config, string varname, string section)
+        public static string GetConfigVarWithDefaultSection(IConfiguration config, string varname, string section)
         {
             // First, check the Startup section, the default section
-            IConfig cnf = config.Configs["Startup"];
-            if (cnf == null)
+            IConfigurationSection cnf = config.GetSection("Startup");
+            if (cnf.Exists() is false)
                 return string.Empty;
-            string val = cnf.GetString(varname, string.Empty);
+
+            string val = cnf.GetValue(varname, string.Empty);
 
             // Then check for an overwrite of the default in the given section
             if (!string.IsNullOrEmpty(section))
             {
-                cnf = config.Configs[section];
-                if (cnf != null)
-                    val = cnf.GetString(varname, val);
+                cnf = config.GetSection(section);
+                if (cnf.Exists())
+                    val = cnf.GetValue(varname, val);
             }
 
             return val;
@@ -1874,7 +1878,7 @@ namespace OpenSim.Framework
         /// <param name="varname">The configuration variable</param>
         /// <param name="sections">Ordered sequence of sections to look at</param>
         /// <returns></returns>
-        public static T GetConfigVarFromSections<T>(IConfigSource config, string varname, string[] sections)
+        public static T GetConfigVarFromSections<T>(IConfiguration config, string varname, string[] sections)
         {
             return GetConfigVarFromSections<T>(config, varname, sections, default(T));
         }
@@ -1893,28 +1897,32 @@ namespace OpenSim.Framework
         /// <param name="sections">Ordered sequence of sections to look at</param>
         /// <param name="val">Default value</param>
         /// <returns></returns>
-        public static T GetConfigVarFromSections<T>(IConfigSource config, string varname, string[] sections, object val)
+        public static T GetConfigVarFromSections<T>(IConfiguration config, string varname, string[] sections, object val)
         {
             foreach (string section in sections.AsSpan())
             {
-                IConfig cnf = config.Configs[section];
-                if (cnf == null)
+                var cnf = config.GetSection(section);
+                if (cnf.Exists() is false)
                     continue;
 
                 if (typeof(T) == typeof(String))
-                    val = cnf.GetString(varname, (string)val);
+                    val = cnf.GetValue<string>(varname, (string)val);
                 else if (typeof(T) == typeof(Boolean))
-                    val = cnf.GetBoolean(varname, (bool)val);
+                    val = cnf.GetValue<bool>(varname, (bool)val);
                 else if (typeof(T) == typeof(Int32))
-                    val = cnf.GetInt(varname, (int)val);
+                    val = cnf.GetValue<int>(varname, (int)val);
                 else if (typeof(T) == typeof(float))
-                    val = cnf.GetFloat(varname, (float)val);
+                    val = cnf.GetValue<float>(varname, (float)val);
+                else if (typeof(T) == typeof(double))
+                    val = cnf.GetValue<double>(varname, (double)val);
                 else
-                    m_log.ErrorFormat("[UTIL]: Unhandled type {0}", typeof(T));
+                    m_log.ErrorFormat($"[UTIL]: Unhandled type {typeof(T)}");
             }
+
             return (T)val;
         }
 
+/* XXX
         public static T ReadSettingsFromIniFile<T>(IConfig config, T settingsClass)
         {
             Type settingsType = settingsClass.GetType();
@@ -1989,7 +1997,7 @@ namespace OpenSim.Framework
         /// <param name="configFilePath">Full path ConfigDirectory/configFileName</param>
         /// <param name="created">True if the file was created in ConfigDirectory, false if it existed</param>
         /// <returns>True if success</returns>
-        public static bool MergeConfigurationFile(IConfigSource config, string configFileName, string exampleConfigFile, out string configFilePath, out bool created)
+        public static bool MergeConfigurationFile(IConfiguration config, string configFileName, string exampleConfigFile, out string configFilePath, out bool created)
         {
             created = false;
             configFilePath = string.Empty;
@@ -2036,6 +2044,7 @@ namespace OpenSim.Framework
         }
 
         #endregion
+*/
 
         /// <summary>
         /// Convert an UUID to a raw uuid string.  Right now this is a string without hyphens.

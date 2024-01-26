@@ -25,56 +25,47 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
 using OpenMetaverse;
-using log4net;
-using Nini.Config;
-using System.Reflection;
 using OpenSim.Services.Base;
-using OpenSim.Services.Interfaces;
-using OpenSim.Data;
 using OpenSim.Framework;
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.SimulationService
 {
     public class SimulationDataService : ServiceBase, ISimulationDataService
     {
-//        private static readonly ILog m_log =
-//                LogManager.GetLogger(
-//                MethodBase.GetCurrentMethod().DeclaringType);
-
         protected ISimulationDataStore m_database;
 
-        public SimulationDataService(IConfigSource config)
+        public SimulationDataService(IConfiguration config)
             : base(config)
         {
             string dllName = String.Empty;
             string connString = String.Empty;
 
             // Try reading the [DatabaseService] section, if it exists
-            IConfig dbConfig = config.Configs["DatabaseService"];
-            if (dbConfig != null)
+            var dbConfig = config.GetSection("DatabaseService");
+            if (dbConfig.Exists())
             {
-                dllName = dbConfig.GetString("StorageProvider", String.Empty);
-                connString = dbConfig.GetString("ConnectionString", String.Empty);
+                dllName = dbConfig.GetValue("StorageProvider", String.Empty);
+                connString = dbConfig.GetValue("ConnectionString", String.Empty);
             }
 
             // Try reading the [SimulationDataStore] section
-            IConfig simConfig = config.Configs["SimulationDataStore"];
-            if (simConfig != null)
+            var simConfig = config.GetSection("SimulationDataStore");
+            if (simConfig.Exists())
             {
-                dllName = simConfig.GetString("StorageProvider", dllName);
-                connString = simConfig.GetString("ConnectionString", connString);
+                dllName = simConfig.GetValue("StorageProvider", dllName);
+                connString = simConfig.GetValue("ConnectionString", connString);
             }
 
             // We tried, but this doesn't exist. We can't proceed
-            if (dllName.Length == 0)
+            if (string.IsNullOrEmpty(dllName))
                 throw new Exception("No StorageProvider configured");
 
             m_database = LoadPlugin<ISimulationDataStore>(dllName, new Object[] { connString });
+
             if (m_database == null)
                 throw new Exception("Could not find a storage interface in the given module");
         }

@@ -57,7 +57,7 @@ namespace OpenSim.Services.HypergridService
 
         private AssetPermissions m_AssetPerms;
 
-        public HGFSAssetService(IConfigSource config, string configName) : base(config, "AssetService")
+        public HGFSAssetService(IConfiguration config, string configName) : base(config, "AssetService")
         {
             m_log.Debug("[HGAsset Service]: Starting in FSAsset mode");
             IConfig assetConfig = config.Configs[configName];

@@ -2547,7 +2547,7 @@ namespace OpenSim.Region.ScriptEngine.Shared.Api
 
         private string GridUserInfo(InfoType type, string key)
         {
-            IConfigSource config = m_ScriptEngine.ConfigSource;
+            IConfiguration config = m_ScriptEngine.ConfigSource;
             string url = null;
 
             IConfig gridInfoConfig = config.Configs["GridInfo"];
@@ -2610,7 +2610,7 @@ namespace OpenSim.Region.ScriptEngine.Shared.Api
             CheckThreatLevel(ThreatLevel.Moderate, "osGetGridLoginURI");
 
             string loginURI = string.Empty;
-            IConfigSource config = m_ScriptEngine.ConfigSource;
+            IConfiguration config = m_ScriptEngine.ConfigSource;
 
             if (config.Configs[GridInfoServiceConfigSectionName] != null)
                 loginURI = config.Configs[GridInfoServiceConfigSectionName].GetString("login", loginURI);
@@ -2640,7 +2640,7 @@ namespace OpenSim.Region.ScriptEngine.Shared.Api
             CheckThreatLevel(ThreatLevel.Moderate, "osGetGridCustom");
 
             string retval = string.Empty;
-            IConfigSource config = m_ScriptEngine.ConfigSource;
+            IConfiguration config = m_ScriptEngine.ConfigSource;
 
             if (config.Configs[GridInfoServiceConfigSectionName] != null)
                 retval = config.Configs[GridInfoServiceConfigSectionName].GetString(key, retval);

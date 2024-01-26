@@ -25,17 +25,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
-using System.Threading;
-using log4net;
-using Nini.Config;
 using OpenMetaverse.Packets;
 using OpenSim.Framework;
 using OpenSim.Framework.Monitoring;
@@ -43,7 +37,8 @@ using OpenSim.Region.Framework.Scenes;
 using OpenSim.Region.Framework.Interfaces;
 using OpenMetaverse;
 
-using TokenBucket = OpenSim.Region.ClientStack.LindenUDP.TokenBucket;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 
 namespace OpenSim.Region.ClientStack.LindenUDP
@@ -53,8 +48,16 @@ namespace OpenSim.Region.ClientStack.LindenUDP
     /// </summary>
     public class LLUDPServerShim : INonSharedRegionModule
     {
-        protected IConfigSource m_Config;
+        protected IConfiguration m_Config;
+        protected readonly ILogger<LLUDPServerShim> m_Logger;
+
         protected LLUDPServer m_udpServer;
+
+        public LLUDPServerShim(IConfiguration configuration, ILogger<LLUDPServerShim> logger)
+        {
+            m_Config = configuration;
+            m_Logger = logger;
+        }
 
         #region INonSharedRegionModule
         public virtual string Name
@@ -67,9 +70,8 @@ namespace OpenSim.Region.ClientStack.LindenUDP
             get { return null; }
         }
 
-        public virtual void Initialise(IConfigSource source)
+        public virtual void Initialise()
         {
-            m_Config = source;
         }
 
         public virtual void Close()
@@ -365,7 +367,7 @@ namespace OpenSim.Region.ClientStack.LindenUDP
 
         public LLUDPServer(
             IPAddress listenIP, uint port, int proxyPortOffsetParm,
-            IConfigSource configSource, AgentCircuitManager circuitManager)
+            IConfiguration configSource, AgentCircuitManager circuitManager)
             : base(listenIP, (int)port)
         {
             #region Environment.TickCount Measurement
@@ -380,6 +382,7 @@ namespace OpenSim.Region.ClientStack.LindenUDP
                     now = Environment.TickCount;
                 TickCountResolution += (float)(now - start);
             }
+
             m_log.Info($"[LLUDPSERVER]: Average Environment.TickCount resolution: {TickCountResolution * 0.1f}ms");
 
             TickCountResolution = 0f;
@@ -401,32 +404,31 @@ namespace OpenSim.Region.ClientStack.LindenUDP
             int sceneThrottleBps = 0;
             // bool usePools = false;
 
-            IConfig config = configSource.Configs["ClientStack.LindenUDP"];
-            if (config != null)
+            var config = configSource.GetSection("ClientStack.LindenUDP");
+            if (config.Exists())
             {
-                m_recvBufferSize = config.GetInt("client_socket_rcvbuf_size", 0);
-                sceneThrottleBps = config.GetInt("scene_throttle_max_bps", 6250000);
+                m_recvBufferSize = config.GetValue<int>("client_socket_rcvbuf_size", 0);
+                sceneThrottleBps = config.GetValue<int>("scene_throttle_max_bps", 6250000);
+                TextureSendLimit = config.GetValue<int>("TextureSendLimit", 20);
+                m_defaultRTO = config.GetValue<int>("DefaultRTO", 0);
+                m_maxRTO = config.GetValue<int>("MaxRTO", 0);
+                m_ackTimeout = config.GetValue<int>("AckTimeout", 60) * 1000;
+                m_pausedAckTimeout = config.GetValue<int>("PausedAckTimeout", 300) * 1000;
 
-                TextureSendLimit = config.GetInt("TextureSendLimit", 20);
-
-                m_defaultRTO = config.GetInt("DefaultRTO", 0);
-                m_maxRTO = config.GetInt("MaxRTO", 0);
-                m_disableFacelights = config.GetBoolean("DisableFacelights", false);
-                m_ackTimeout = 1000 * config.GetInt("AckTimeout", 60);
-                m_pausedAckTimeout = 1000 * config.GetInt("PausedAckTimeout", 300);
-                SupportViewerObjectsCache = config.GetBoolean("SupportViewerObjectsCache", SupportViewerObjectsCache);
+                m_disableFacelights = config.GetValue<bool>("DisableFacelights", false);
+                SupportViewerObjectsCache = config.GetValue<bool>("SupportViewerObjectsCache", SupportViewerObjectsCache);
             }
             else
             {
                 TextureSendLimit = 20;
-                m_ackTimeout = 1000 * 60; // 1 minute
-                m_pausedAckTimeout = 1000 * 300; // 5 minutes
+                m_ackTimeout = 60 * 1000; // 1 minute
+                m_pausedAckTimeout = 300 * 1000; // 5 minutes
             }
 
             // FIXME: This actually only needs to be done once since the PacketPool is shared across all servers.
             // However, there is no harm in temporarily doing it multiple times.
-            IConfig packetConfig = configSource.Configs["PacketPool"];
-            if (packetConfig != null)
+            var packetConfig = configSource.GetSection("PacketPool");
+            if (packetConfig.Exists())
             {
                 //PacketPool.Instance.RecyclePackets = packetConfig.GetBoolean("RecyclePackets", true);
                 //PacketPool.Instance.RecycleDataBlocks = packetConfig.GetBoolean("RecycleDataBlocks", true);
@@ -434,15 +436,18 @@ namespace OpenSim.Region.ClientStack.LindenUDP
             }
 
             #region BinaryStats
-            config = configSource.Configs["Statistics.Binary"];
+
             m_shouldCollectStats = false;
-            if (config != null)
+
+            config = configSource.GetSection("Statistics.Binary");
+            if (config.Exists())
             {
-                m_shouldCollectStats = config.GetBoolean("Enabled", false);
-                binStatsMaxFilesize = TimeSpan.FromSeconds(config.GetInt("packet_headers_period_seconds", 300));
-                binStatsDir = config.GetString("stats_dir", ".");
-                m_aggregatedBWStats = config.GetBoolean("aggregatedBWStats", false);
+                m_shouldCollectStats = config.GetValue<bool>("Enabled", m_shouldCollectStats);
+                binStatsMaxFilesize = TimeSpan.FromSeconds(config.GetValue<int>("packet_headers_period_seconds", 300));
+                binStatsDir = config.GetValue("stats_dir", ".");
+                m_aggregatedBWStats = config.GetValue<bool>("aggregatedBWStats", false);
             }
+            
             #endregion BinaryStats
 
             Throttle = new TokenBucket(null, sceneThrottleBps, sceneThrottleBps * 10e-3f);

@@ -38,6 +38,7 @@ using GridRegion = OpenSim.Services.Interfaces.GridRegion;
 using IAvatarService = OpenSim.Services.Interfaces.IAvatarService;
 using OpenSim.Server.Base;
 using OpenMetaverse;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.Connectors
 {
@@ -56,28 +57,29 @@ namespace OpenSim.Services.Connectors
             m_ServerURI = serverURI.TrimEnd('/');
         }
 
-        public AgentPreferencesServicesConnector(IConfigSource source)
+        public AgentPreferencesServicesConnector(IConfiguration source)
             : base(source, "AgentPreferencesService")
         {
             Initialise(source);
         }
 
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
-            IConfig gridConfig = source.Configs["AgentPreferencesService"];
-            if (gridConfig == null)
+            var gridConfig = source.GetSection("AgentPreferencesService");
+            if (!gridConfig.Exists())
             {
                 m_log.Error("[AGENT PREFERENCES CONNECTOR]: AgentPreferencesService missing from OpenSim.ini");
                 throw new Exception("Agent Preferences connector init error");
             }
 
-            string serviceURI = gridConfig.GetString("AgentPreferencesServerURI", string.Empty);
+            string serviceURI = gridConfig.GetValue<string>("AgentPreferencesServerURI", string.Empty);
 
             if (string.IsNullOrEmpty(serviceURI))
             {
                 m_log.Error("[AGENT PREFERENCES CONNECTOR]: No Server URI named in section AgentPreferences");
                 throw new Exception("Agent Preferences connector init error");
             }
+            
             m_ServerURI = serviceURI;
 
             base.Initialise(source, "AgentPreferencesService");

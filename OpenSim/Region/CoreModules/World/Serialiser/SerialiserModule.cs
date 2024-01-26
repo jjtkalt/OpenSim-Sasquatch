@@ -54,7 +54,7 @@ namespace OpenSim.Region.CoreModules.World.Serialiser
             get { return null; }
         }
 
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
             IConfig config = source.Configs["Serialiser"];
             if (config != null)

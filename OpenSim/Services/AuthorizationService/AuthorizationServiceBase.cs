@@ -25,12 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Reflection;
-using Nini.Config;
-using OpenSim.Framework;
+using Microsoft.Extensions.Configuration;
 using OpenSim.Data;
-using OpenSim.Services.Interfaces;
 using OpenSim.Services.Base;
 
 namespace OpenSim.Services.AuthorizationService
@@ -38,8 +34,9 @@ namespace OpenSim.Services.AuthorizationService
     public class AuthorizationServiceBase : ServiceBase
     {
         protected IAssetDataPlugin m_Database = null;
+        protected string m_ConfigName = "AuthorizationService";
 
-        public AuthorizationServiceBase(IConfigSource config) : base(config)
+        public AuthorizationServiceBase(IConfiguration config) : base(config)
         {
             string dllName = String.Empty;
             string connString = String.Empty;
@@ -47,23 +44,23 @@ namespace OpenSim.Services.AuthorizationService
             //
             // Try reading the [AuthorizationService] section first, if it exists
             //
-            IConfig assetConfig = config.Configs["AuthorizationService"];
-            if (assetConfig != null)
+            var assetConfig = config.GetSection(m_ConfigName);
+            if (assetConfig.Exists())
             {
-                dllName = assetConfig.GetString("StorageProvider", dllName);
-                connString = assetConfig.GetString("ConnectionString", connString);
+                dllName = assetConfig.GetValue("StorageProvider", dllName);
+                connString = assetConfig.GetValue("ConnectionString", connString);
             }
 
             //
             // Try reading the [DatabaseService] section, if it exists
             //
-            IConfig dbConfig = config.Configs["DatabaseService"];
-            if (dbConfig != null)
+            var dbConfig = config.GetSection("DatabaseService");
+            if (dbConfig.Exists())
             {
-                if (dllName.Length == 0)
-                    dllName = dbConfig.GetString("StorageProvider", String.Empty);
-                if (connString.Length == 0)
-                    connString = dbConfig.GetString("ConnectionString", String.Empty);
+                if (string.IsNullOrEmpty(dllName))
+                    dllName = dbConfig.GetValue("StorageProvider", String.Empty);
+                if (string.IsNullOrEmpty(connString))
+                    connString = dbConfig.GetValue("ConnectionString", String.Empty);
             }
 
             //
@@ -74,7 +71,7 @@ namespace OpenSim.Services.AuthorizationService
 
             m_Database = LoadPlugin<IAssetDataPlugin>(dllName);
             if (m_Database == null)
-                throw new Exception("Could not find a storage interface in the given module");
+                throw new Exception($"Could not find a storage interface in the {m_ConfigName} module");
 
             m_Database.Initialise(connString);
 

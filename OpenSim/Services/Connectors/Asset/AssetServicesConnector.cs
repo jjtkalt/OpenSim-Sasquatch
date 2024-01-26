@@ -39,6 +39,7 @@ using OpenSim.Framework.Monitoring;
 using OpenSim.Framework.ServiceAuth;
 using OpenSim.Services.Interfaces;
 using OpenMetaverse;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.Connectors
 {
@@ -69,28 +70,29 @@ namespace OpenSim.Services.Connectors
             m_ServerURI = tmp.IsResolvedHost ? tmp.URI : null;
         }
 
-        public AssetServicesConnector(IConfigSource source) 
+        public AssetServicesConnector(IConfiguration source) 
         {
             Initialise(source);
         }
 
-        public virtual void Initialise(IConfigSource source)
+        public virtual void Initialise(IConfiguration source)
         {
-            IConfig netconfig = source.Configs["Network"];
+            var netconfig = source.GetSection("Network");
 
-            IConfig assetConfig = source.Configs["AssetService"];
-            if (assetConfig == null)
+            var assetConfig = source.GetSection("AssetService");
+            if (!assetConfig.Exists())
             {
                 m_log.Error("[ASSET CONNECTOR]: AssetService missing from OpenSim.ini");
                 throw new Exception("Asset connector init error");
             }
 
-            m_ServerURI = assetConfig.GetString("AssetServerURI", string.Empty);
+            m_ServerURI = assetConfig.GetValue<string>("AssetServerURI", string.Empty);
             if (string.IsNullOrEmpty(m_ServerURI))
             {
-                if(netconfig != null)
-                    m_ServerURI = netconfig.GetString("asset_server_url", string.Empty);
+                if (netconfig.Exists())
+                    m_ServerURI = netconfig.GetValue<string>("asset_server_url", string.Empty);
             }
+            
             if (string.IsNullOrEmpty(m_ServerURI))
             {
                 m_log.Error("[ASSET CONNECTOR]: AssetServerURI not defined in section AssetService");

@@ -50,13 +50,13 @@ namespace OpenSim.Groups
         private string m_ConfigName = "Groups";
 
         // Called by Robust shell
-        public HGGroupsServiceRobustConnector(IConfigSource config, IHttpServer server, string configName) :
+        public HGGroupsServiceRobustConnector(IConfiguration config, IHttpServer server, string configName) :
             this(config, server, configName, null, null)
         {
         }
 
         // Called by the sim-bound module
-        public HGGroupsServiceRobustConnector(IConfigSource config, IHttpServer server, string configName, IOfflineIMService im, IUserAccountService users) :
+        public HGGroupsServiceRobustConnector(IConfiguration config, IHttpServer server, string configName, IOfflineIMService im, IUserAccountService users) :
             base(config, server, configName)
         {
             if (configName != String.Empty)

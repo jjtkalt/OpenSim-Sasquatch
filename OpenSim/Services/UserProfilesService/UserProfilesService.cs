@@ -46,7 +46,7 @@ namespace OpenSim.Services.ProfilesService
 
         IUserAccountService userAccounts;
 
-        public UserProfilesService(IConfigSource config, string configName):
+        public UserProfilesService(IConfiguration config, string configName):
             base(config, configName)
         {
             IConfig Config = config.Configs[configName];

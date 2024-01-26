@@ -109,7 +109,7 @@ namespace OpenSim.Region.CoreModules.Scripting.EmailModules
         #region ISharedRegionModule
 
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             IConfig startupConfig = config.Configs["Startup"];
             if(startupConfig == null)

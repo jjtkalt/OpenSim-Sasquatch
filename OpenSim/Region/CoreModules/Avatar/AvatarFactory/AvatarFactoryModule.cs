@@ -68,7 +68,7 @@ namespace OpenSim.Region.CoreModules.Avatar.AvatarFactory
 
         #region Region Module interface
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
 
             IConfig appearanceConfig = config.Configs["Appearance"];

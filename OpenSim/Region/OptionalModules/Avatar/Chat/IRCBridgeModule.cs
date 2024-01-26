@@ -62,7 +62,7 @@ namespace OpenSim.Region.OptionalModules.Avatar.Chat
             get { return "IRCBridgeModule"; }
         }
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             m_config = config.Configs["IRC"];
             if (m_config == null)

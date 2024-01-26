@@ -25,17 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using Nini.Config;
 using log4net;
-using System;
 using System.Reflection;
-using System.IO;
-using System.Net;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Xml;
-using System.Xml.Serialization;
-using System.Collections.Generic;
 using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Services.UserAccountService;
@@ -43,6 +34,7 @@ using OpenSim.Framework;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Framework.ServiceAuth;
 using OpenMetaverse;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Server.Handlers.UserAccounts
 {
@@ -57,15 +49,15 @@ namespace OpenSim.Server.Handlers.UserAccounts
         public UserAccountServerPostHandler(IUserAccountService service)
             : this(service, null, null) {}
 
-        public UserAccountServerPostHandler(IUserAccountService service, IConfig config, IServiceAuth auth) :
+        public UserAccountServerPostHandler(IUserAccountService service, IConfigurationSection config, IServiceAuth auth) :
                 base("POST", "/accounts", auth)
         {
             m_UserAccountService = service;
 
-            if (config != null)
+            if (config.Exists())
             {
-                m_AllowCreateUser = config.GetBoolean("AllowCreateUser", m_AllowCreateUser);
-                m_AllowSetAccount = config.GetBoolean("AllowSetAccount", m_AllowSetAccount);
+                m_AllowCreateUser = config.GetValue<bool>("AllowCreateUser", m_AllowCreateUser);
+                m_AllowSetAccount = config.GetValue<bool>("AllowSetAccount", m_AllowSetAccount);
             }
         }
 

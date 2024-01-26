@@ -25,9 +25,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.IO;
-using Nini.Config;
 using OpenMetaverse;
 using OpenSim.Framework;
 using OpenSim.Framework.ServiceAuth;
@@ -36,39 +33,39 @@ using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Server.Handlers.Asset
 {
-    public class AssetServiceConnector : ServiceConnector
+    public class AssetServiceConnector : ServiceConnector, IServiceConnector
     {
         private IAssetService m_AssetService;
-        private string m_ConfigName = "AssetService";
+        
+        public AssetServiceConnector(IConfiguration config, IHttpServer server) 
+            : this(config, server, "AssetService")
+        {}
 
-        public AssetServiceConnector(IConfigSource config, IHttpServer server, string configName) :
-                base(config, server, configName)
+        public AssetServiceConnector(IConfiguration config, IHttpServer server, string configName) 
+            : base(config, server, configName)
         {
-            if (configName != String.Empty)
-                m_ConfigName = configName;
+            var serverConfig = config.GetSection(configName);
+            if (serverConfig.Exists() is false)
+                throw new Exception($"No section {configName} in config file");
 
-            IConfig serverConfig = config.Configs[m_ConfigName];
-            if (serverConfig == null)
-                throw new Exception(String.Format("No section '{0}' in config file", m_ConfigName));
-
-            string assetService = serverConfig.GetString("LocalServiceModule", string.Empty);
-
+            string assetService = serverConfig.GetValue<string>("LocalServiceModule", String.Empty);
             if (string.IsNullOrEmpty(assetService))
                 throw new Exception("No LocalServiceModule in config file");
 
-            object[] args = new object[] { config, m_ConfigName };
+            object[] args = new object[] { config, ConfigName };
             m_AssetService = ServerUtils.LoadPlugin<IAssetService>(assetService, args);
 
             if (m_AssetService == null)
-                throw new Exception(string.Format("Failed to load AssetService from {0}; config is {1}", assetService, m_ConfigName));
+                throw new Exception(string.Format("Failed to load AssetService from {0}; config is {1}", assetService, ConfigName));
 
-            bool allowDelete = serverConfig.GetBoolean("AllowRemoteDelete", false);
-            bool allowDeleteAllTypes = serverConfig.GetBoolean("AllowRemoteDeleteAllTypes", false);
+            bool allowDelete = serverConfig.GetValue<bool>("AllowRemoteDelete", false);
+            bool allowDeleteAllTypes = serverConfig.GetValue<bool>("AllowRemoteDeleteAllTypes", false);
 
-            string redirectURL = serverConfig.GetString("RedirectURL", string.Empty);
+            string redirectURL = serverConfig.GetValue<string>("RedirectURL", string.Empty);
 
             AllowedRemoteDeleteTypes allowedRemoteDeleteTypes;
 
@@ -84,7 +81,7 @@ namespace OpenSim.Server.Handlers.Asset
                     allowedRemoteDeleteTypes = AllowedRemoteDeleteTypes.MapTile;
             }
 
-            IServiceAuth auth = ServiceAuth.Create(config, m_ConfigName);
+            IServiceAuth auth = ServiceAuth.Create(config, ConfigName);
 
             server.AddStreamHandler(new AssetServerGetHandler(m_AssetService, auth, redirectURL));
             server.AddStreamHandler(new AssetServerPostHandler(m_AssetService, auth));

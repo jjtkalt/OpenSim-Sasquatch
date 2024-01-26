@@ -49,7 +49,7 @@ namespace OpenSim.Region.CoreModules.Avatar.Inventory.Transfer
 
         #region Region Module interface
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             if (config.Configs["Messaging"] != null)
             {

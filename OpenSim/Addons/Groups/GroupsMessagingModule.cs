@@ -81,7 +81,7 @@ namespace OpenSim.Groups
 
         #region Region Module interfaceBase Members
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             IConfig groupsConfig = config.Configs["Groups"];
 

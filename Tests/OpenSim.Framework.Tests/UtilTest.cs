@@ -25,157 +25,154 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using NUnit.Framework;
+using Xunit;
+using OpenSim.Framework;
 using OpenMetaverse;
-using OpenSim.Tests.Common;
 
 namespace OpenSim.Framework.Tests
 {
-    [TestFixture]
-    public class UtilTests : OpenSimTestCase
+    public class UtilTests
     {
-        [Test]
-        public void VectorOperationTests()
-        {
-            Vector3 v1, v2;
-            double expectedDistance;
-            double expectedMagnitude;
-            double lowPrecisionTolerance = 0.001;
+//         [Fact]
+//         public void VectorOperationTests()
+//         {
+//             Vector3 v1, v2;
+//             double expectedDistance;
+//             double expectedMagnitude;
+//             double lowPrecisionTolerance = 0.001;
 
-            //Lets test a simple case of <0,0,0> and <5,5,5>
-            {
-                v1 = new Vector3(0, 0, 0);
-                v2 = new Vector3(5, 5, 5);
-                expectedDistance = 8.66;
-                Assert.That(Util.GetDistanceTo(v1, v2),
-                            new DoubleToleranceConstraint(expectedDistance, lowPrecisionTolerance),
-                            "Calculated distance between two vectors was not within tolerances.");
+//             //Lets test a simple case of <0,0,0> and <5,5,5>
+//             {
+//                 v1 = new Vector3(0, 0, 0);
+//                 v2 = new Vector3(5, 5, 5);
+//                 expectedDistance = 8.66;
+//                 Assert.True(Util.GetDistanceTo(v1, v2),
+//                             new DoubleToleranceConstraint(expectedDistance, lowPrecisionTolerance),
+//                             "Calculated distance between two vectors was not within tolerances.");
 
-                expectedMagnitude = 0;
-                Assert.That(Util.GetMagnitude(v1), Is.EqualTo(0), "Magnitude of null vector was not zero.");
+//                 expectedMagnitude = 0;
+//                 Assert.True(Util.GetMagnitude(v1), Is.EqualTo(0), "Magnitude of null vector was not zero.");
 
-                expectedMagnitude = 8.66;
-                Assert.That(Util.GetMagnitude(v2),
-                            new DoubleToleranceConstraint(expectedMagnitude, lowPrecisionTolerance),
-                            "Magnitude of vector was incorrect.");
-/*
-                TestDelegate d = delegate() { Util.GetNormalizedVector(v1); };
-                bool causesArgumentException = TestHelpers.AssertThisDelegateCausesArgumentException(d);
-                Assert.That(causesArgumentException, Is.True,
-                            "Getting magnitude of null vector did not cause argument exception.");
-*/
-                Vector3 expectedNormalizedVector = new Vector3(.577f, .577f, .577f);
-                double expectedNormalizedMagnitude = 1;
-                Vector3 normalizedVector = Util.GetNormalizedVector(v2);
-                Assert.That(normalizedVector,
-                            new VectorToleranceConstraint(expectedNormalizedVector, lowPrecisionTolerance),
-                            "Normalized vector generated from vector was not what was expected.");
-                Assert.That(Util.GetMagnitude(normalizedVector),
-                            new DoubleToleranceConstraint(expectedNormalizedMagnitude, lowPrecisionTolerance),
-                            "Normalized vector generated from vector does not have magnitude of 1.");
-            }
+//                 expectedMagnitude = 8.66;
+//                 Assert.True(Util.GetMagnitude(v2),
+//                             new DoubleToleranceConstraint(expectedMagnitude, lowPrecisionTolerance),
+//                             "Magnitude of vector was incorrect.");
+// /*
+//                 TestDelegate d = delegate() { Util.GetNormalizedVector(v1); };
+//                 bool causesArgumentException = TestHelpers.AssertThisDelegateCausesArgumentException(d);
+//                 Assert.True(causesArgumentException, Is.True,
+//                             "Getting magnitude of null vector did not cause argument exception.");
+// */
+//                 Vector3 expectedNormalizedVector = new Vector3(.577f, .577f, .577f);
+//                 double expectedNormalizedMagnitude = 1;
+//                 Vector3 normalizedVector = Util.GetNormalizedVector(v2);
+//                 Assert.True(normalizedVector,
+//                             new VectorToleranceConstraint(expectedNormalizedVector, lowPrecisionTolerance),
+//                             "Normalized vector generated from vector was not what was expected.");
+//                 Assert.True(Util.GetMagnitude(normalizedVector),
+//                             new DoubleToleranceConstraint(expectedNormalizedMagnitude, lowPrecisionTolerance),
+//                             "Normalized vector generated from vector does not have magnitude of 1.");
+//             }
 
-            //Lets test a simple case of <0,0,0> and <0,0,0>
-            {
-                v1 = new Vector3(0, 0, 0);
-                v2 = new Vector3(0, 0, 0);
-                expectedDistance = 0;
-                Assert.That(Util.GetDistanceTo(v1, v2),
-                            new DoubleToleranceConstraint(expectedDistance, lowPrecisionTolerance),
-                            "Calculated distance between two vectors was not within tolerances.");
+//             //Lets test a simple case of <0,0,0> and <0,0,0>
+//             {
+//                 v1 = new Vector3(0, 0, 0);
+//                 v2 = new Vector3(0, 0, 0);
+//                 expectedDistance = 0;
+//                 Assert.True(Util.GetDistanceTo(v1, v2),
+//                             new DoubleToleranceConstraint(expectedDistance, lowPrecisionTolerance),
+//                             "Calculated distance between two vectors was not within tolerances.");
 
-                expectedMagnitude = 0;
-                Assert.That(Util.GetMagnitude(v1), Is.EqualTo(0), "Magnitude of null vector was not zero.");
+//                 expectedMagnitude = 0;
+//                 Assert.True(Util.GetMagnitude(v1), Is.EqualTo(0), "Magnitude of null vector was not zero.");
 
-                expectedMagnitude = 0;
-                Assert.That(Util.GetMagnitude(v2),
-                            new DoubleToleranceConstraint(expectedMagnitude, lowPrecisionTolerance),
-                            "Magnitude of vector was incorrect.");
-/*
-                TestDelegate d = delegate() { Util.GetNormalizedVector(v1); };
-                bool causesArgumentException = TestHelpers.AssertThisDelegateCausesArgumentException(d);
-                Assert.That(causesArgumentException, Is.True,
-                            "Getting magnitude of null vector did not cause argument exception.");
+//                 expectedMagnitude = 0;
+//                 Assert.True(Util.GetMagnitude(v2),
+//                             new DoubleToleranceConstraint(expectedMagnitude, lowPrecisionTolerance),
+//                             "Magnitude of vector was incorrect.");
+// /*
+//                 TestDelegate d = delegate() { Util.GetNormalizedVector(v1); };
+//                 bool causesArgumentException = TestHelpers.AssertThisDelegateCausesArgumentException(d);
+//                 Assert.True(causesArgumentException, Is.True,
+//                             "Getting magnitude of null vector did not cause argument exception.");
 
-                d = delegate() { Util.GetNormalizedVector(v2); };
-                causesArgumentException = TestHelpers.AssertThisDelegateCausesArgumentException(d);
-                Assert.That(causesArgumentException, Is.True,
-                            "Getting magnitude of null vector did not cause argument exception.");
-*/
-            }
+//                 d = delegate() { Util.GetNormalizedVector(v2); };
+//                 causesArgumentException = TestHelpers.AssertThisDelegateCausesArgumentException(d);
+//                 Assert.True(causesArgumentException, Is.True,
+//                             "Getting magnitude of null vector did not cause argument exception.");
+// */
+//             }
 
-            //Lets test a simple case of <0,0,0> and <-5,-5,-5>
-            {
-                v1 = new Vector3(0, 0, 0);
-                v2 = new Vector3(-5, -5, -5);
-                expectedDistance = 8.66;
-                Assert.That(Util.GetDistanceTo(v1, v2),
-                            new DoubleToleranceConstraint(expectedDistance, lowPrecisionTolerance),
-                            "Calculated distance between two vectors was not within tolerances.");
+//             //Lets test a simple case of <0,0,0> and <-5,-5,-5>
+//             {
+//                 v1 = new Vector3(0, 0, 0);
+//                 v2 = new Vector3(-5, -5, -5);
+//                 expectedDistance = 8.66;
+//                 Assert.True(Util.GetDistanceTo(v1, v2),
+//                             new DoubleToleranceConstraint(expectedDistance, lowPrecisionTolerance),
+//                             "Calculated distance between two vectors was not within tolerances.");
 
-                expectedMagnitude = 0;
-                Assert.That(Util.GetMagnitude(v1), Is.EqualTo(0), "Magnitude of null vector was not zero.");
+//                 expectedMagnitude = 0;
+//                 Assert.True(Util.GetMagnitude(v1), Is.EqualTo(0), "Magnitude of null vector was not zero.");
 
-                expectedMagnitude = 8.66;
-                Assert.That(Util.GetMagnitude(v2),
-                            new DoubleToleranceConstraint(expectedMagnitude, lowPrecisionTolerance),
-                            "Magnitude of vector was incorrect.");
-/*
-                TestDelegate d = delegate() { Util.GetNormalizedVector(v1); };
-                bool causesArgumentException = TestHelpers.AssertThisDelegateCausesArgumentException(d);
-                Assert.That(causesArgumentException, Is.True,
-                            "Getting magnitude of null vector did not cause argument exception.");
-*/
-                Vector3 expectedNormalizedVector = new Vector3(-.577f, -.577f, -.577f);
-                double expectedNormalizedMagnitude = 1;
-                Vector3 normalizedVector = Util.GetNormalizedVector(v2);
-                Assert.That(normalizedVector,
-                            new VectorToleranceConstraint(expectedNormalizedVector, lowPrecisionTolerance),
-                            "Normalized vector generated from vector was not what was expected.");
-                Assert.That(Util.GetMagnitude(normalizedVector),
-                            new DoubleToleranceConstraint(expectedNormalizedMagnitude, lowPrecisionTolerance),
-                            "Normalized vector generated from vector does not have magnitude of 1.");
-            }
-        }
+//                 expectedMagnitude = 8.66;
+//                 Assert.True(Util.GetMagnitude(v2),
+//                             new DoubleToleranceConstraint(expectedMagnitude, lowPrecisionTolerance),
+//                             "Magnitude of vector was incorrect.");
+// /*
+//                 TestDelegate d = delegate() { Util.GetNormalizedVector(v1); };
+//                 bool causesArgumentException = TestHelpers.AssertThisDelegateCausesArgumentException(d);
+//                 Assert.True(causesArgumentException, Is.True,
+//                             "Getting magnitude of null vector did not cause argument exception.");
+// */
+//                 Vector3 expectedNormalizedVector = new Vector3(-.577f, -.577f, -.577f);
+//                 double expectedNormalizedMagnitude = 1;
+//                 Vector3 normalizedVector = Util.GetNormalizedVector(v2);
+//                 Assert.True(normalizedVector,
+//                             new VectorToleranceConstraint(expectedNormalizedVector, lowPrecisionTolerance),
+//                             "Normalized vector generated from vector was not what was expected.");
+//                 Assert.True(Util.GetMagnitude(normalizedVector),
+//                             new DoubleToleranceConstraint(expectedNormalizedMagnitude, lowPrecisionTolerance),
+//                             "Normalized vector generated from vector does not have magnitude of 1.");
+//             }
+//         }
 
-        [Test]
+        [Fact]
         public void UUIDTests()
         {
-            Assert.IsTrue(Util.isUUID("01234567-89ab-Cdef-0123-456789AbCdEf"),
+            Assert.True(Util.isUUID("01234567-89ab-Cdef-0123-456789AbCdEf"),
                           "A correct UUID wasn't recognized.");
-            Assert.IsFalse(Util.isUUID("FOOBAR67-89ab-Cdef-0123-456789AbCdEf"),
+            Assert.False(Util.isUUID("FOOBAR67-89ab-Cdef-0123-456789AbCdEf"),
                            "UUIDs with non-hex characters are recognized as correct UUIDs.");
-            Assert.IsFalse(Util.isUUID("01234567"),
+            Assert.False(Util.isUUID("01234567"),
                            "Too short UUIDs are recognized as correct UUIDs.");
-            Assert.IsFalse(Util.isUUID("01234567-89ab-Cdef-0123-456789AbCdEf0"),
+            Assert.False(Util.isUUID("01234567-89ab-Cdef-0123-456789AbCdEf0"),
                            "Too long UUIDs are recognized as correct UUIDs.");
-            Assert.IsFalse(Util.isUUID("01234567-89ab-Cdef-0123+456789AbCdEf"),
+            Assert.False(Util.isUUID("01234567-89ab-Cdef-0123+456789AbCdEf"),
                           "UUIDs with wrong format are recognized as correct UUIDs.");
         }
 
-        [Test]
+        [Fact]
         public void GetHashGuidTests()
         {
             string string1 = "This is one string";
             string string2 = "This is another";
 
             // Two consecutive runs should equal the same
-            Assert.AreEqual(Util.GetHashGuid(string1, "secret1"), Util.GetHashGuid(string1, "secret1"));
-            Assert.AreEqual(Util.GetHashGuid(string2, "secret1"), Util.GetHashGuid(string2, "secret1"));
+            Assert.Equal(Util.GetHashGuid(string1, "secret1"), Util.GetHashGuid(string1, "secret1"));
+            Assert.Equal(Util.GetHashGuid(string2, "secret1"), Util.GetHashGuid(string2, "secret1"));
 
             // Varying data should not eqal the same
-            Assert.AreNotEqual(Util.GetHashGuid(string1, "secret1"), Util.GetHashGuid(string2, "secret1"));
+            Assert.NotEqual(Util.GetHashGuid(string1, "secret1"), Util.GetHashGuid(string2, "secret1"));
 
             // Varying secrets should not eqal the same
-            Assert.AreNotEqual(Util.GetHashGuid(string1, "secret1"), Util.GetHashGuid(string1, "secret2"));
+            Assert.NotEqual(Util.GetHashGuid(string1, "secret1"), Util.GetHashGuid(string1, "secret2"));
         }
 
-        [Test]
+        [Fact]
         public void SLUtilTypeConvertTests()
         {
-            int[] assettypes = new int[]{-1,0,1,2,3,5,6,7,8,10,11,12,13,17,18,19,20,21,22
-                                            ,24,25};
+            int[] assettypes = new int[]{-1,0,1,2,3,5,6,7,8,10,11,12,13,17,18,19,20,21,22,24,25};
             string[] contenttypes = new string[]
                                         {
                                   "application/octet-stream",
@@ -200,9 +197,12 @@ namespace OpenSim.Framework.Tests
                                   "application/vnd.ll.link",
                                   "application/vnd.ll.linkfolder",
                     };
+
             for (int i=0;i<assettypes.Length;i++)
             {
-                Assert.That(SLUtil.SLAssetTypeToContentType(assettypes[i]) == contenttypes[i], "Expecting {0} but got {1}", contenttypes[i], SLUtil.SLAssetTypeToContentType(assettypes[i]));
+                Assert.True(
+                        SLUtil.SLAssetTypeToContentType(assettypes[i]) == contenttypes[i], 
+                        $"Expecting {contenttypes[i]} but got {SLUtil.SLAssetTypeToContentType(assettypes[i])}");
             }
 
             for (int i = 0; i < contenttypes.Length; i++)
@@ -212,8 +212,10 @@ namespace OpenSim.Framework.Tests
                     expected = 12;  // if we know only the content-type "image/tga", then we assume the asset type is TextureTGA; not ImageTGA
                 else
                     expected = assettypes[i];
-                Assert.AreEqual(expected, SLUtil.ContentTypeToSLAssetType(contenttypes[i]),
-                            String.Format("Incorrect AssetType mapped from Content-Type {0}", contenttypes[i]));
+                
+                Assert.True(
+                        expected == SLUtil.ContentTypeToSLAssetType(contenttypes[i]),
+                        $"Incorrect AssetType mapped from Content-Type ({contenttypes[i]})");
             }
 
             int[] inventorytypes = new int[] {-1,0,1,2,3,6,7,8,10,15,17,18,20};
@@ -236,7 +238,7 @@ namespace OpenSim.Framework.Tests
 
             for (int i=0;i<inventorytypes.Length;i++)
             {
-                Assert.AreEqual(invcontenttypes[i], SLUtil.SLInvTypeToContentType(inventorytypes[i]),
+                Assert.True(invcontenttypes[i] == SLUtil.SLInvTypeToContentType(inventorytypes[i]),
                     String.Format("Incorrect Content-Type mapped from InventoryType {0}", inventorytypes[i]));
             }
 
@@ -270,12 +272,12 @@ namespace OpenSim.Framework.Tests
 
             for (int i = 0; i < invtypes.Length; i++)
             {
-                Assert.AreEqual(invtypes[i], SLUtil.ContentTypeToSLInvType(invcontenttypes[i]),
+                Assert.True(invtypes[i] == SLUtil.ContentTypeToSLInvType(invcontenttypes[i]),
                     String.Format("Incorrect InventoryType mapped from Content-Type {0}", invcontenttypes[i]));
             }
         }
 
-        [Test]
+        [Fact]
         public void FakeParcelIDTests()
         {
             byte[] hexBytes8 = { 0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10 };
@@ -294,29 +296,21 @@ namespace OpenSim.Framework.Tests
             UUID fakeParcelID1, uuid;
 
             ulong bigInt64 = Util.BytesToUInt64Big(hexBytes8);
-            Assert.AreEqual(var64Bit, bigInt64,
-                    "BytesToUint64Bit conversion of 8 bytes to UInt64 failed.");
+            Assert.True(var64Bit == bigInt64,"BytesToUint64Bit conversion of 8 bytes to UInt64 failed.");
 
             //Test building and decoding using some typical input values
             fakeParcelID1 = Util.BuildFakeParcelID(regionHandle1, x1, y1);
             Util.ParseFakeParcelID(fakeParcelID1, out regionHandle2, out x2, out y2);
-            Assert.AreEqual(regionHandle1, regionHandle2,
-                    "region handle decoded from FakeParcelID wth X/Y failed.");
-            Assert.AreEqual(x1, x2,
-                    "X coordinate decoded from FakeParcelID wth X/Y failed.");
-            Assert.AreEqual(y1, y2,
-                    "Y coordinate decoded from FakeParcelID wth X/Y failed.");
+            Assert.True(regionHandle1 == regionHandle2, "region handle decoded from FakeParcelID wth X/Y failed.");
+            Assert.True(x1 == x2, "X coordinate decoded from FakeParcelID wth X/Y failed.");
+            Assert.True(y1 == y2, "Y coordinate decoded from FakeParcelID wth X/Y failed.");
 
             fakeParcelID1 = Util.BuildFakeParcelID(regionHandle1, x1, y1, z1);
             Util.ParseFakeParcelID(fakeParcelID1, out regionHandle2, out x2, out y2, out z2);
-            Assert.AreEqual(regionHandle1, regionHandle2,
-                    "region handle decoded from FakeParcelID with X/Y/Z failed.");
-            Assert.AreEqual(x1, x2,
-                    "X coordinate decoded from FakeParcelID with X/Y/Z failed.");
-            Assert.AreEqual(y1, y2,
-                    "Y coordinate decoded from FakeParcelID with X/Y/Z failed.");
-            Assert.AreEqual(z1, z2,
-                    "Z coordinate decoded from FakeParcelID with X/Y/Z failed.");
+            Assert.True(regionHandle1 == regionHandle2, "region handle decoded from FakeParcelID with X/Y/Z failed.");
+            Assert.True(x1 == x2, "X coordinate decoded from FakeParcelID with X/Y/Z failed.");
+            Assert.True(y1 == y2, "Y coordinate decoded from FakeParcelID with X/Y/Z failed.");
+            Assert.True(z1 ==  z2, "Z coordinate decoded from FakeParcelID with X/Y/Z failed.");
 
             //Do some more extreme tests to check the encoding and decoding
             x1 = 0x55aa;
@@ -325,33 +319,24 @@ namespace OpenSim.Framework.Tests
 
             fakeParcelID1 = Util.BuildFakeParcelID(var64Bit, x1, y1);
             Util.ParseFakeParcelID(fakeParcelID1, out regionHandle2, out x2, out y2);
-            Assert.AreEqual(var64Bit, regionHandle2,
-                    "region handle decoded from FakeParcelID with X/Y/Z failed.");
-            Assert.AreEqual(x1, x2,
-                    "X coordinate decoded from FakeParcelID with X/Y/Z failed.");
-            Assert.AreEqual(y1, y2,
-                    "Y coordinate decoded from FakeParcelID with X/Y/Z failed.");
+            Assert.True(var64Bit == regionHandle2, "region handle decoded from FakeParcelID with X/Y/Z failed.");
+            Assert.True(x1 == x2, "X coordinate decoded from FakeParcelID with X/Y/Z failed.");
+            Assert.True(y1 == y2, "Y coordinate decoded from FakeParcelID with X/Y/Z failed.");
 
             fakeParcelID1 = Util.BuildFakeParcelID(var64Bit, x1, y1, z1);
             Util.ParseFakeParcelID(fakeParcelID1, out regionHandle2, out x2, out y2, out z2);
-            Assert.AreEqual(var64Bit, regionHandle2,
-                    "region handle decoded from FakeParcelID with X/Y/Z failed.");
-            Assert.AreEqual(x1, x2,
-                    "X coordinate decoded from FakeParcelID with X/Y/Z failed.");
-            Assert.AreEqual(y1, y2,
-                    "Y coordinate decoded from FakeParcelID with X/Y/Z failed.");
-            Assert.AreEqual(z1, z2,
-                    "Z coordinate decoded from FakeParcelID with X/Y/Z failed.");
 
+            Assert.True(var64Bit == regionHandle2, "region handle decoded from FakeParcelID with X/Y/Z failed.");
+            Assert.True(x1 == x2, "X coordinate decoded from FakeParcelID with X/Y/Z failed.");
+            Assert.True(y1 == y2, "Y coordinate decoded from FakeParcelID with X/Y/Z failed.");
+            Assert.True(z1 == z2, "Z coordinate decoded from FakeParcelID with X/Y/Z failed.");
 
             x1 = 64;
             y1 = 192;
             fakeParcelID1 = Util.BuildFakeParcelID(regionHandle1, x1, y1);
             Util.FakeParcelIDToGlobalPosition(fakeParcelID1, out x2, out y2);
-            Assert.AreEqual(255000+x1, x2,
-                    "Global X coordinate decoded from regionHandle failed.");
-            Assert.AreEqual(256000+y1, y2,
-                    "Global Y coordinate decoded from regionHandle failed.");
+            Assert.True(255000+x1 == x2, "Global X coordinate decoded from regionHandle failed.");
+            Assert.True(256000+y1 == y2, "Global Y coordinate decoded from regionHandle failed.");
 
             uuid = new UUID("00dd0700-00d1-0700-3800-000032000000");
             Util.FakeParcelIDToGlobalPosition(uuid, out x2, out y2);

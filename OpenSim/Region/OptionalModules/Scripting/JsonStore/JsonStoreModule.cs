@@ -68,7 +68,7 @@ namespace OpenSim.Region.OptionalModules.Scripting.JsonStore
         /// <param name="scene">this region is getting initialised</param>
         /// <param name="source">nini config, we are not using this</param>
         // -----------------------------------------------------------------
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             try
             {

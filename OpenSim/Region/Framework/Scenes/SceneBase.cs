@@ -37,6 +37,7 @@ using OpenSim.Framework.Console;
 
 using OpenSim.Region.Framework.Interfaces;
 using GridRegion = OpenSim.Services.Interfaces.GridRegion;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Region.Framework.Scenes
 {
@@ -58,12 +59,12 @@ namespace OpenSim.Region.Framework.Scenes
 
         public string Name { get { return RegionInfo.RegionName; } }
 
-        public IConfigSource Config
+        public IConfiguration Config
         {
             get { return GetConfig(); }
         }
 
-        protected virtual IConfigSource GetConfig()
+        protected virtual IConfiguration GetConfig()
         {
             return null;
         }

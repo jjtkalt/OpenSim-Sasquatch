@@ -40,6 +40,8 @@ namespace OpenSim.Framework.Servers.HttpServer
 
         uint Port { get; }
         bool UseSSL { get; }
+       
+        bool HTTPDRunning {get;}
 
 //        // Note that the agent string is provided simply to differentiate
 //        // the handlers - it is NOT required to be an actual agent header

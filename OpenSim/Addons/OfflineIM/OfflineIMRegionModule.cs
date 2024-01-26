@@ -46,7 +46,7 @@ namespace OpenSim.OfflineIM
 
         private IOfflineIMService m_OfflineIMService;
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             IConfig cnf = config.Configs["Messaging"];
             if (cnf == null)

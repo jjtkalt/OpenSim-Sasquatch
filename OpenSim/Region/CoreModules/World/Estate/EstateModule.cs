@@ -59,7 +59,7 @@ namespace OpenSim.Region.CoreModules.World.Estate
 
         protected EstateConnector m_EstateConnector;
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             uint port = MainServer.Instance.Port;
 

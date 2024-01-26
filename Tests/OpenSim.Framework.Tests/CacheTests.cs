@@ -25,20 +25,19 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using NUnit.Framework;
+using Xunit;
+using OpenSim.Framework;
 using OpenMetaverse;
-using OpenSim.Tests.Common;
+
 
 namespace OpenSim.Framework.Tests
 {
-    [TestFixture]
-    public class CacheTests : OpenSimTestCase
+    public class CacheTests : IDisposable
     {
         private Cache cache;
         private UUID cacheItemUUID;
-        [SetUp]
-        public void Build()
+
+        public CacheTests()
         {
             cache = new Cache();
             cache = new Cache(CacheMedium.Memory,CacheStrategy.Aggressive,CacheFlags.AllowUpdate);
@@ -49,16 +48,22 @@ namespace OpenSim.Framework.Tests
             cachedItem.Store(foo);
             cache.Store(cacheItemUUID.ToString(), cachedItem);
         }
-        [Test]
+
+        public void Dispose()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Fact]
         public void TestRetreive()
         {
             CacheItemBase citem = (CacheItemBase)cache.Get(cacheItemUUID.ToString());
             byte[] data = (byte[]) citem.Retrieve();
-            Assert.That(data.Length == 1, "Cached Item should have one byte element");
-            Assert.That(data[0] == 255, "Cached Item element should be 255");
+            Assert.True(data.Length == 1, "Cached Item should have one byte element");
+            Assert.True(data[0] == 255, "Cached Item element should be 255");
         }
 
-        [Test]
+        [Fact]
         public void TestNotInCache()
         {
             UUID randomNotIn = UUID.Random();
@@ -67,11 +72,11 @@ namespace OpenSim.Framework.Tests
                 randomNotIn = UUID.Random();
             }
             object citem = cache.Get(randomNotIn.ToString());
-            Assert.That(citem == null, "Item should not be in Cache");
+            Assert.True(citem == null, "Item should not be in Cache");
         }
 
 
-        [Test]
+        [Fact]
         public void ExpireItemManually()
         {
             UUID ImmediateExpiryUUID = UUID.Random();
@@ -83,10 +88,10 @@ namespace OpenSim.Framework.Tests
             cache.Invalidate(cacheItemUUID.ToString());
             cache.Get(cacheItemUUID.ToString());
             object citem = cache.Get(cacheItemUUID.ToString());
-            Assert.That(citem == null, "Item should not be in Cache because we manually invalidated it");
+            Assert.True(citem == null, "Item should not be in Cache because we manually invalidated it");
         }
 
-        [Test]
+        [Fact]
         public void ClearCacheTest()
         {
             UUID ImmediateExpiryUUID = UUID.Random();
@@ -98,10 +103,10 @@ namespace OpenSim.Framework.Tests
             cache.Clear();
 
             object citem = cache.Get(cacheItemUUID.ToString());
-            Assert.That(citem == null, "Item should not be in Cache because we manually invalidated it");
+            Assert.True(citem == null, "Item should not be in Cache because we manually invalidated it");
         }
 
-        [Test]
+        [Fact]
         public void CacheItemMundane()
         {
             UUID Random1 = UUID.Random();
@@ -113,13 +118,10 @@ namespace OpenSim.Framework.Tests
 
             cb1.Store(data);
 
-            Assert.That(cb1.Equals(cb3), "cb1 should equal cb3, their uuids are the same");
-            Assert.That(!cb2.Equals(cb1), "cb2 should not equal cb1, their uuids are NOT the same");
-            Assert.That(cb1.IsLocked() == false, "CacheItemBase default is false");
-            Assert.That(cb1.Retrieve() == null, "Virtual Retrieve method should return null");
-
-
+            Assert.True(cb1.Equals(cb3), "cb1 should equal cb3, their uuids are the same");
+            Assert.True(!cb2.Equals(cb1), "cb2 should not equal cb1, their uuids are NOT the same");
+            Assert.True(cb1.IsLocked() == false, "CacheItemBase default is false");
+            Assert.True(cb1.Retrieve() == null, "Virtual Retrieve method should return null");
         }
-
     }
 }

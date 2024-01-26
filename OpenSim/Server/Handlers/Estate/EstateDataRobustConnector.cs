@@ -40,41 +40,39 @@ using OpenSim.Framework;
 using OpenSim.Framework.ServiceAuth;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Server.Handlers
 {
-    public class EstateDataRobustConnector : ServiceConnector
+    public class EstateDataRobustConnector : ServiceConnector, IServiceConnector
     {
-        private string m_ConfigName = "EstateService";
+        public EstateDataRobustConnector(IConfiguration config, IHttpServer server) :
+            this(config, server, "EstateService")
+        { }
 
-        public EstateDataRobustConnector(IConfigSource config, IHttpServer server, string configName) :
+        public EstateDataRobustConnector(IConfiguration config, IHttpServer server, string configName) :
             base(config, server, configName)
         {
-            IConfig serverConfig = config.Configs[m_ConfigName];
-            if (serverConfig == null)
-                throw new Exception(String.Format("No section {0} in config file", m_ConfigName));
+            var serverConfig = config.GetSection(configName);
+            if (serverConfig.Exists() is false)
+                throw new Exception($"No section {configName} in config file");
 
-            string service = serverConfig.GetString("LocalServiceModule",
-                    String.Empty);
-
-            if (service.Length == 0)
+            string service = serverConfig.GetValue<string>("LocalServiceModule", String.Empty);
+            if (String.IsNullOrWhiteSpace(service))
                 throw new Exception("No LocalServiceModule in config file");
 
             Object[] args = new Object[] { config };
             IEstateDataService e_service = ServerUtils.LoadPlugin<IEstateDataService>(service, args);
 
-            IServiceAuth auth = ServiceAuth.Create(config, m_ConfigName);
+            IServiceAuth auth = ServiceAuth.Create(config, ConfigName);
 
             server.AddStreamHandler(new EstateServerGetHandler(e_service, auth));
             server.AddStreamHandler(new EstateServerPostHandler(e_service, auth));
         }
     }
 
-
     public class EstateServerGetHandler : BaseStreamHandler
     {
-//        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         IEstateDataService m_EstateService;
 
         // Possibilities

@@ -45,7 +45,7 @@ namespace OpenSim.Region.ClientStack.Linden
         private Scene m_scene;
 
         #region INonSharedRegionModule Members
-        public void Initialise(IConfigSource pSource)
+        public void Initialise(IConfiguration pSource)
         {
         }
 

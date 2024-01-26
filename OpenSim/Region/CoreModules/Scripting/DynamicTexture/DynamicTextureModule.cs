@@ -328,7 +328,7 @@ namespace OpenSim.Region.CoreModules.Scripting.DynamicTexture
 
         #region ISharedRegionModule Members
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             IConfig texturesConfig = config.Configs["Textures"];
             if (texturesConfig != null)

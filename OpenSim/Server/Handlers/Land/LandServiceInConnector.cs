@@ -35,17 +35,18 @@ using OpenSim.Services.Interfaces;
 using OpenSim.Framework;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Server.Handlers.Land
 {
-    public class LandServiceInConnector : ServiceConnector
+    public class LandServiceInConnector : ServiceConnector, IServiceConnector
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         private ILandService m_LandService;
         // TODO : private IAuthenticationService m_AuthenticationService;
 
-        public LandServiceInConnector(IConfigSource source, IHttpServer server, ILandService service, IScene scene) :
+        public LandServiceInConnector(IConfiguration source, IHttpServer server, ILandService service, IScene scene) :
                 base(source, server, String.Empty)
         {
             m_LandService = service;

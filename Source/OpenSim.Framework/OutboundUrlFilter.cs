@@ -25,14 +25,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Reflection;
 using log4net;
-using LukeSkywalker.IPNetwork;
-using Nini.Config;
+using Microsoft.Extensions.Configuration;
+
 using IPNetwork = LukeSkywalker.IPNetwork.IPNetwork;
 
 
@@ -68,7 +65,7 @@ namespace OpenSim.Framework
         /// </summary>
         /// <param name="name">Name of the filter for logging purposes.</param>
         /// <param name="config">Filter configuration</param>
-        public OutboundUrlFilter(string name, IConfigSource config)
+        public OutboundUrlFilter(string name, IConfiguration config)
         {
             Name = name;
 
@@ -76,13 +73,11 @@ namespace OpenSim.Framework
                 = "0.0.0.0/8|10.0.0.0/8|100.64.0.0/10|127.0.0.0/8|169.254.0.0/16|172.16.0.0/12|192.0.0.0/24|192.0.2.0/24|192.88.99.0/24|192.168.0.0/16|198.18.0.0/15|198.51.100.0/24|203.0.113.0/24|224.0.0.0/4|240.0.0.0/4|255.255.255.255/32";
             string configBlacklistExceptions = "";
 
-            IConfig networkConfig = config.Configs["Network"];
-
-            if (networkConfig != null)
+            var networkConfig = config.GetSection("Network");
+            if (networkConfig.Exists())
             {
-                configBlacklist = networkConfig.GetString("OutboundDisallowForUserScripts", configBlacklist);
-                configBlacklistExceptions
-                    = networkConfig.GetString("OutboundDisallowForUserScriptsExcept", configBlacklistExceptions);
+                configBlacklist = networkConfig.GetValue("OutboundDisallowForUserScripts", configBlacklist);
+                configBlacklistExceptions = networkConfig.GetValue("OutboundDisallowForUserScriptsExcept", configBlacklistExceptions);
             }
 
             m_log.DebugFormat(

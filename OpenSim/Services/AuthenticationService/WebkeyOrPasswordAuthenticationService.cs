@@ -25,17 +25,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
 using OpenMetaverse;
 using OpenSim.Services.Interfaces;
 using log4net;
-using Nini.Config;
 using System.Reflection;
 using OpenSim.Data;
-using OpenSim.Framework;
-using OpenSim.Framework.Console;
-using OpenSim.Server.Base;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.AuthenticationService
 {
@@ -46,7 +41,7 @@ namespace OpenSim.Services.AuthenticationService
         private Dictionary<string, IAuthenticationService> m_svcChecks
             = new Dictionary<string, IAuthenticationService>();
 
-        public WebkeyOrPasswordAuthenticationService(IConfigSource config)
+        public WebkeyOrPasswordAuthenticationService(IConfiguration config)
             : base(config)
         {
             m_svcChecks["web_login_key"] = new WebkeyAuthenticationService(config);

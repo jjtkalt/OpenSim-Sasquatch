@@ -29,8 +29,6 @@ using System.Net.Security;
 using System.Timers;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Framework;
-using OpenSim.Framework.Console;
-using OpenSim.Framework.Servers;
 
 using NSL.Certificate.Tools;
 
@@ -39,7 +37,6 @@ using Timer = System.Timers.Timer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
-using OpenSim.Region.Framework.Scenes;
 using OpenSim.Server.Base;
 
 /// <summary>
@@ -96,6 +93,42 @@ namespace OpenSim.Server.MoneyServer
         }
 
         /// <summary>
+        /// Startup Specific
+        /// </summary>
+        public void Startup()
+        {
+            m_logger.LogInformation($"MoneyServer Startup");
+
+            using (var scope = m_serviceProvider.CreateScope())
+            {
+                m_baseServer = scope.ServiceProvider.GetRequiredService<OpenSimServer>();
+                m_moneyXmlRpcModule = scope.ServiceProvider.GetRequiredService<MoneyXmlRpcModule>();
+                m_moneyDBService = scope.ServiceProvider.GetService<MoneyDBService>();
+
+                // var httpServer = scope.ServiceProvider.GetRequiredService<IHttpServer>();
+                // MainServer.Instance = m_baseServer.HttpServer = httpServer;
+
+                m_logger.LogInformation($"Configuring MoneyServer And Starting Http(s) support");
+
+                try
+                {
+                    m_baseServer.Startup();
+
+                    GetDatabaseConfiguration();
+
+                    GetMoneyServerConfiguration();
+
+                    SetupMoneyServices();
+                }
+                catch (Exception)
+                {
+                    m_logger.LogError($"Error occured during MoneyServer setup. Please check MoneyServer.ini. Exiting");
+                    Environment.Exit(1);
+                }
+            }
+        }
+
+        /// <summary>
         /// Work
         /// </summary>
         public void Work()
@@ -126,38 +159,6 @@ namespace OpenSim.Server.MoneyServer
             m_moneyDBService.SetTransExpired(deadTime);
         }
 
-        /// <summary>
-        /// Startup Specific
-        /// </summary>
-        public void Startup()
-        {
-            m_logger.LogInformation($"MoneyServer Startup");
-
-            using (var scope = m_serviceProvider.CreateScope())
-            {
-                m_baseServer = scope.ServiceProvider.GetRequiredService<OpenSimServer>();
-                m_moneyXmlRpcModule = scope.ServiceProvider.GetRequiredService<MoneyXmlRpcModule>();
-                m_moneyDBService = scope.ServiceProvider.GetService<MoneyDBService>();
-
-                m_logger.LogInformation($"Configuring MoneyServer And Starting Http(s) support");
-
-                try
-                {
-                    m_baseServer.Startup();
-
-                    GetDatabaseConfiguration();
-
-                    GetMoneyServerConfiguration();
-
-                    SetupMoneyServices();
-                }
-                catch (Exception)
-                {
-                    m_logger.LogError($"Error occured during MoneyServer setup. Please check MoneyServer.ini. Exiting");
-                    Environment.Exit(1);
-                }
-            }
-        }
 
         private void GetMoneyServerConfiguration()
         {

@@ -25,57 +25,51 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
 using OpenMetaverse;
-using log4net;
-using Nini.Config;
-using System.Reflection;
+
 using OpenSim.Services.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Data;
 using OpenSim.Framework;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.EstateService
 {
     public class EstateDataService : ServiceBase, IEstateDataService
     {
-//        private static readonly ILog m_log =
-//                LogManager.GetLogger(
-//                MethodBase.GetCurrentMethod().DeclaringType);
-
         protected IEstateDataStore m_database;
+        protected string m_ConfigName = "EstateDataStore";
 
-        public EstateDataService(IConfigSource config)
+        public EstateDataService(IConfiguration config)
             : base(config)
         {
             string dllName = String.Empty;
             string connString = String.Empty;
 
             // Try reading the [DatabaseService] section, if it exists
-            IConfig dbConfig = config.Configs["DatabaseService"];
+            var dbConfig = config.GetSection("DatabaseService");
             if (dbConfig != null)
             {
-                dllName = dbConfig.GetString("StorageProvider", String.Empty);
-                connString = dbConfig.GetString("ConnectionString", String.Empty);
-                connString = dbConfig.GetString("EstateConnectionString", connString);
+                dllName = dbConfig.GetValue("StorageProvider", String.Empty);
+                connString = dbConfig.GetValue("ConnectionString", String.Empty);
+                connString = dbConfig.GetValue("EstateConnectionString", connString);
             }
 
             // Try reading the [EstateDataStore] section, if it exists
-            IConfig estConfig = config.Configs["EstateDataStore"];
-            if (estConfig != null)
+            var estConfig = config.GetSection(m_ConfigName);
+            if (estConfig.Exists())
             {
-                dllName = estConfig.GetString("StorageProvider", dllName);
-                connString = estConfig.GetString("ConnectionString", connString);
+                dllName = estConfig.GetValue("StorageProvider", dllName);
+                connString = estConfig.GetValue("ConnectionString", connString);
             }
 
             // We tried, but this doesn't exist. We can't proceed
-            if (dllName.Length == 0)
-                throw new Exception("No StorageProvider configured");
+            if (string.IsNullOrEmpty(dllName))
+                throw new Exception($"No StorageProvider configured for {m_ConfigName}");
 
             m_database = LoadPlugin<IEstateDataStore>(dllName, new Object[] { connString });
             if (m_database == null)
-                throw new Exception("Could not find a storage interface in the given module");
+                throw new Exception($"Could not find a storage interface {dllName} in the given module {m_ConfigName}");
         }
 
         public EstateSettings LoadEstateSettings(UUID regionID, bool create)

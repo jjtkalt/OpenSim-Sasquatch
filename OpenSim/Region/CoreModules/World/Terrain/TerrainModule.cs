@@ -224,7 +224,7 @@ namespace OpenSim.Region.CoreModules.World.Terrain
         /// </summary>
         /// <param name="scene">Region initialising</param>
         /// <param name="config">Config for the region</param>
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             IConfig terrainConfig = config.Configs["Terrain"];
             if (terrainConfig != null)

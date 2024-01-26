@@ -42,6 +42,8 @@ using OpenSim.Framework.Servers.HttpServer;
 using Timer=System.Timers.Timer;
 using Nini.Config;
 using System.Runtime.InteropServices;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Framework.Servers
 {
@@ -50,8 +52,6 @@ namespace OpenSim.Framework.Servers
     /// </summary>
     public class BaseOpenSimServer : ServerBase
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         /// <summary>
         /// Used by tests to suppress Environment.Exit(0) so that post-run operations are possible.
         /// </summary>
@@ -77,7 +77,11 @@ namespace OpenSim.Framework.Servers
             set { m_httpServer = value; }
         }
 
-        public BaseOpenSimServer() : base()
+        public BaseOpenSimServer(
+            IConfiguration configuration,
+            ILogger<BaseOpenSimServer> logger,
+            ServerStatsCollector statsCollector            
+        ) : base(configuration, logger, statsCollector)
         {
             // Random uuid for private data
             m_osSecret = UUID.Random().ToString();
@@ -113,17 +117,23 @@ namespace OpenSim.Framework.Servers
             RegisterCommonCommands();
             RegisterCommonComponents(Config);
 
-            IConfig startupConfig = Config.Configs["Startup"];
+            var startupConfig = Config.GetSection("Startup");
+            if (startupConfig.Exists() is false)
+            {
+                throw new Exception($"Unable to find 'Startup' section in configuration");
+            }
 
-            m_NoVerifyCertChain = startupConfig.GetBoolean("NoVerifyCertChain", m_NoVerifyCertChain);
-            m_NoVerifyCertHostname = startupConfig.GetBoolean("NoVerifyCertHostname", m_NoVerifyCertHostname);
+            m_NoVerifyCertChain = startupConfig.GetValue<bool>("NoVerifyCertChain", m_NoVerifyCertChain);
+            m_NoVerifyCertHostname = startupConfig.GetValue<bool>("NoVerifyCertHostname", m_NoVerifyCertHostname);
+
             ServicePointManager.ServerCertificateValidationCallback = ValidateServerCertificate;
 
             WebUtil.SetupHTTPClients(m_NoVerifyCertChain, m_NoVerifyCertHostname, null, 32 );
 
-            int logShowStatsSeconds = startupConfig.GetInt("LogShowStatsSeconds", m_periodDiagnosticTimerMS / 1000);
+            int logShowStatsSeconds = startupConfig.GetValue<int>("LogShowStatsSeconds", m_periodDiagnosticTimerMS / 1000);
             m_periodDiagnosticTimerMS = logShowStatsSeconds * 1000;
             m_periodicDiagnosticsTimer.Elapsed += new ElapsedEventHandler(LogDiagnostics);
+
             if (m_periodDiagnosticTimerMS != 0)
             {
                 m_periodicDiagnosticsTimer.Interval = m_periodDiagnosticTimerMS;
@@ -142,9 +152,7 @@ namespace OpenSim.Framework.Servers
             Util.StopThreadPool();
             WorkManager.Stop();
 
-            RemovePIDFile();
-
-            m_log.Info("[SHUTDOWN]: Shutdown processing on main thread complete.  Exiting...");
+            Logger.LogInformation("Shutdown processing on main thread complete.  Exiting...");
 
            if (!SuppressExit)
                 Environment.Exit(0);
@@ -171,7 +179,7 @@ namespace OpenSim.Framework.Servers
             sb.Append(Environment.NewLine);
             sb.Append(GetThreadsReport());
 
-            m_log.Debug(sb);
+            Logger.LogDebug(sb.ToString());
         }
 
         /// <summary>
@@ -179,21 +187,21 @@ namespace OpenSim.Framework.Servers
         /// </summary>
         public virtual void Startup()
         {
-            m_log.Info("[STARTUP]: Beginning startup processing");
+            Logger.LogInformation("Beginning startup processing");
 
-            m_log.Info("[STARTUP]: version: " + Version);
-            m_log.InfoFormat("[STARTUP]: Operating system version: {0}, .NET platform {1}, Runtime {2}",
-                    Environment.OSVersion, Util.RuntimePlatformStr, Environment.Version.ToString());
-            m_log.InfoFormat("[STARTUP]: Processor Architecture: {0}({1} {2}bit)",
-                    RuntimeInformation.ProcessArchitecture.ToString(),
-                    BitConverter.IsLittleEndian ?"le":"be", Environment.Is64BitProcess ? "64" : "32");
+            Logger.LogInformation("Version: " + Version);
+            Logger.LogInformation($"Operating system version: {Environment.OSVersion}");
+            Logger.LogInformation($"DotNet platform {Util.RuntimePlatformStr}, Runtime {Environment.Version}");
+            Logger.LogInformation($"Processor Architecture: {RuntimeInformation.ProcessArchitecture}"+
+                $"({(BitConverter.IsLittleEndian ?"le":"be")} {(Environment.Is64BitProcess ? "64" : "32")}bit)");
+
             try
             {
                 StartupSpecific();
             }
             catch(Exception e)
             {
-                m_log.Fatal("Fatal error: " + e.ToString());
+                Logger.LogCritical(e, "Fatal error");
                 Environment.Exit(1);
             }
         }

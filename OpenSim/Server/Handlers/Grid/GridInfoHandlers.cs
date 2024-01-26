@@ -38,16 +38,18 @@ using OpenSim.Framework;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenMetaverse;
 using OpenMetaverse.StructuredData;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Server.Handlers.Grid
 {
     public class GridInfoHandlers
     {
         private static readonly ILog _log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-        private IConfigSource m_Config;
+        private IConfiguration m_Config;
         private Dictionary<string, string> _info = new Dictionary<string, string>();
         private byte[] cachedJsonAnswer = null;
         private byte[] cachedRestAnswer = null;
+        
         /// <summary>
         /// Instantiate a GridInfoService object.
         /// </summary>
@@ -59,35 +61,46 @@ namespace OpenSim.Server.Handlers.Grid
         /// anything else requires a general redesign of the config
         /// system.
         /// </remarks>
-        public GridInfoHandlers(IConfigSource configSource)
+        public GridInfoHandlers(IConfiguration configSource)
         {
             m_Config = configSource;
             loadGridInfo(configSource);
         }
 
-        private void loadGridInfo(IConfigSource configSource)
+        private void loadGridInfo(IConfiguration configSource)
         {
             _info["platform"] = "OpenSim";
+
             try
             {
-                IConfig gridCfg = configSource.Configs["GridInfoService"];
-                if (gridCfg != null)
+                var gridCfg = configSource.GetSection("GridInfoService");
+
+                if (gridCfg.Exists())
                 {
-                    foreach (string k in gridCfg.GetKeys())
-                        _info[k] = gridCfg.GetString(k);
+                    foreach (var k in gridCfg.AsEnumerable())
+                    {
+                        string[] keyparts = k.Key.Split(":");
+                        if ((keyparts.Length > 1) && (keyparts[0] == "GridInfoService"))
+                        {
+                            string v = gridCfg.GetValue<string>(keyparts[1]);
+                            if (!string.IsNullOrEmpty(v))
+                                _info[keyparts[1]] = v;
+                        }
+                    }
                 }
                 else 
                 {
-                    IConfig netCfg = configSource.Configs["Network"];
-                    if (netCfg != null)
+                    var netCfg = configSource.GetSection("Network");
+                    if (netCfg.Exists())
                     {
                         _info["login"] = string.Format("http://127.0.0.1:{0}/",
-                            netCfg.GetString("http_listener_port", ConfigSettings.DefaultRegionHttpPort.ToString()));
+                            netCfg.GetValue<string>("http_listener_port", ConfigSettings.DefaultRegionHttpPort.ToString()));
                     }
                     else
                     {
                         _info["login"] = "http://127.0.0.1:9000/";
                     }
+
                     IssueWarning();
                 }
 
@@ -98,26 +111,30 @@ namespace OpenSim.Server.Handlers.Grid
 
                 if (string.IsNullOrEmpty(tmp))
                 {
-                    IConfig logincfg = m_Config.Configs["LoginService"];
-                    if (logincfg != null)
-                        tmp = logincfg.GetString("SRV_HomeURI", tmp);
+                    var logincfg = m_Config.GetSection("LoginService");
+                    if (logincfg.Exists())
+                        tmp = logincfg.GetValue<string>("SRV_HomeURI", tmp);
                 }
+
                 if (!string.IsNullOrEmpty(tmp))
                     _info["home"] = OSD.FromString(tmp);
 
                 tmp = Util.GetConfigVarFromSections<string>(m_Config, "HomeURIAlias",
                     new string[] { "Startup", "Hypergrid" }, string.Empty);
+                
                 if (!string.IsNullOrEmpty(tmp))
                     _info["homealias"] = OSD.FromString(tmp);
 
                 _info.TryGetValue("gatekeeper", out tmp);
                 tmp = Util.GetConfigVarFromSections<string>(m_Config, "GatekeeperURI",
                     new string[] { "Startup", "Hypergrid" }, tmp);
+                
                 if (!string.IsNullOrEmpty(tmp))
                     _info["gatekeeper"] = OSD.FromString(tmp);
 
                 tmp = Util.GetConfigVarFromSections<string>(m_Config, "GatekeeperURIAlias",
                     new string[] { "Startup", "Hypergrid" }, string.Empty);
+                
                 if (!string.IsNullOrEmpty(tmp))
                     _info["gatekeeperalias"] = OSD.FromString(tmp);
 

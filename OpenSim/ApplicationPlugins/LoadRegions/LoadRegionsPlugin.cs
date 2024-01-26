@@ -43,7 +43,7 @@ namespace OpenSim.ApplicationPlugins.LoadRegions
         private string m_name = "LoadRegionsPlugin";
         private string m_version = "0.0";
 
-        private IConfigSource _configuration;
+        private IConfiguration _configuration;
         private ILogger<LoadRegionsPlugin> _logger;
 
         public string Version
@@ -59,7 +59,7 @@ namespace OpenSim.ApplicationPlugins.LoadRegions
         protected IOpenSimBase m_openSim;
 
         public LoadRegionsPlugin(
-            IConfigSource configuration,
+            IConfiguration configuration,
             ILogger<LoadRegionsPlugin> logger)
         {
             _configuration = configuration;

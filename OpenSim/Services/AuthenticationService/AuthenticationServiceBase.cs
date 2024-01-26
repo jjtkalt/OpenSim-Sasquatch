@@ -25,16 +25,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
 using OpenMetaverse;
 using log4net;
-using Nini.Config;
 using System.Reflection;
-using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Data;
 using OpenSim.Framework;
 using OpenSim.Services.Base;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.AuthenticationService
 {
@@ -53,12 +51,12 @@ namespace OpenSim.Services.AuthenticationService
         protected IAuthenticationData m_Database;
         protected IUserAccountService m_UserAccountService = null;
 
-        public AuthenticationServiceBase(IConfigSource config, IUserAccountService acct) : this(config)
+        public AuthenticationServiceBase(IConfiguration config, IUserAccountService acct) : this(config)
         {
             m_UserAccountService = acct;
         }
 
-        public AuthenticationServiceBase(IConfigSource config) : base(config)
+        public AuthenticationServiceBase(IConfiguration config) : base(config)
         {
             string dllName = String.Empty;
             string connString = String.Empty;
@@ -67,36 +65,38 @@ namespace OpenSim.Services.AuthenticationService
             //
             // Try reading the [AuthenticationService] section first, if it exists
             //
-            IConfig authConfig = config.Configs["AuthenticationService"];
-            if (authConfig != null)
+            var authConfig = config.GetSection("AuthenticationService");
+            if (authConfig.Exists())
             {
-                dllName = authConfig.GetString("StorageProvider", dllName);
-                connString = authConfig.GetString("ConnectionString", connString);
-                realm = authConfig.GetString("Realm", realm);
+                dllName = authConfig.GetValue("StorageProvider", dllName);
+                connString = authConfig.GetValue("ConnectionString", connString);
+                realm = authConfig.GetValue("Realm", realm);
             }
 
             //
             // Try reading the [DatabaseService] section, if it exists
             //
-            IConfig dbConfig = config.Configs["DatabaseService"];
-            if (dbConfig != null)
+            var dbConfig = config.GetSection("DatabaseService");
+            if (dbConfig.Exists())
             {
-                if (dllName.Length == 0)
-                    dllName = dbConfig.GetString("StorageProvider", String.Empty);
-                if (connString.Length == 0)
-                    connString = dbConfig.GetString("ConnectionString", String.Empty);
+                if (string.IsNullOrEmpty(dllName))
+                    dllName = dbConfig.GetValue("StorageProvider", String.Empty);
+
+                if (string.IsNullOrEmpty(connString))
+                    connString = dbConfig.GetValue("ConnectionString", String.Empty);
             }
 
             //
             // We tried, but this doesn't exist. We can't proceed.
             //
-            if (dllName.Length == 0 || realm.Length == 0)
+            if (string.IsNullOrEmpty(dllName) || string.IsNullOrEmpty(realm))
                 throw new Exception("No StorageProvider configured");
 
-            m_Database = LoadPlugin<IAuthenticationData>(dllName,
-                    new Object[] {connString, realm});
+            m_Database = LoadPlugin<IAuthenticationData>(dllName, new Object[] {connString, realm});
             if (m_Database == null)
-                throw new Exception(string.Format("Could not find a storage interface in module {0}", dllName));
+            {
+                throw new Exception($"Could not find a storage interface in module {dllName}");
+            }
         }
 
         public bool Verify(UUID principalID, string token, int lifetime)

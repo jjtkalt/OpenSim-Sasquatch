@@ -62,11 +62,11 @@ namespace OpenSim.Services.HypergridService
         private static bool m_InGatekeeper;
         private string m_messageKey;
 
-        public HGInstantMessageService(IConfigSource config) : this(config, null)
+        public HGInstantMessageService(IConfiguration config) : this(config, null)
         {
         }
 
-        public HGInstantMessageService(IConfigSource config, IInstantMessageSimConnector imConnector)
+        public HGInstantMessageService(IConfiguration config, IInstantMessageSimConnector imConnector)
         {
             if (imConnector != null)
                 m_IMSimConnector = imConnector;

@@ -93,7 +93,7 @@ namespace OpenSim.Region.ClientStack.Linden
             ProcessQueuedRequestsAsync = processQueuedResultsAsync;
         }
 
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
             IConfig config = source.Configs["ClientStack.LindenCaps"];
             if (config == null)

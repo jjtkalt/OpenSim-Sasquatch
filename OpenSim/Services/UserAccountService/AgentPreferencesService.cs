@@ -25,14 +25,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
 using System.Reflection;
 using log4net;
-using Nini.Config;
+using Microsoft.Extensions.Configuration;
 using OpenMetaverse;
 using OpenSim.Data;
-using OpenSim.Framework;
 using OpenSim.Services.Interfaces;
 
 namespace OpenSim.Services.UserAccountService
@@ -41,7 +38,7 @@ namespace OpenSim.Services.UserAccountService
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
-        public AgentPreferencesService(IConfigSource config) : base(config)
+        public AgentPreferencesService(IConfiguration config) : base(config)
         {
             m_log.Debug("[AGENT PREFERENCES SERVICE]: Starting agent preferences service");
         }

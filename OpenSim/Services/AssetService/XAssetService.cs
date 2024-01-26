@@ -35,6 +35,7 @@ using OpenSim.Framework;
 using OpenSim.Data;
 using OpenSim.Services.Interfaces;
 using OpenMetaverse;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.AssetService
 {
@@ -48,9 +49,9 @@ namespace OpenSim.Services.AssetService
 
         protected static XAssetService m_RootInstance;
 
-        public XAssetService(IConfigSource config) : this(config, "AssetService") {}
+        public XAssetService(IConfiguration config) : this(config, "AssetService") {}
 
-        public XAssetService(IConfigSource config, string configName) : base(config, configName)
+        public XAssetService(IConfiguration config, string configName) : base(config, configName)
         {
             if (m_RootInstance == null)
             {
@@ -58,13 +59,13 @@ namespace OpenSim.Services.AssetService
 
                 if (m_AssetLoader != null)
                 {
-                    IConfig assetConfig = config.Configs[configName];
-                    if (assetConfig == null)
+                    var assetConfig = config.GetSection(configName);
+                    if (assetConfig.Exists() is false)
                         throw new Exception("No AssetService configuration");
 
-                    string loaderArgs = assetConfig.GetString("AssetLoaderArgs", String.Empty);
+                    string loaderArgs = assetConfig.GetValue("AssetLoaderArgs", String.Empty);
 
-                    bool assetLoaderEnabled = assetConfig.GetBoolean("AssetLoaderEnabled", true);
+                    bool assetLoaderEnabled = assetConfig.GetValue<bool>("AssetLoaderEnabled", true);
 
                     if (assetLoaderEnabled && !HasChainedAssetService)
                     {

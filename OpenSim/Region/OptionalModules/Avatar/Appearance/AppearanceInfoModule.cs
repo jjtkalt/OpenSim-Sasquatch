@@ -50,7 +50,7 @@ namespace OpenSim.Region.OptionalModules.Avatar.Appearance
 
         public Type ReplaceableInterface { get { return null; } }
 
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
 //            m_log.DebugFormat("[APPEARANCE INFO MODULE]: INITIALIZED MODULE");
         }

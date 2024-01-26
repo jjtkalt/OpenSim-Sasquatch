@@ -25,23 +25,16 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using Nini.Config;
 using log4net;
-using System;
 using System.Reflection;
-using System.IO;
-using System.Net;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Xml;
-using System.Xml.Serialization;
-using System.Collections.Generic;
 using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework;
 using OpenSim.Framework.ServiceAuth;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenMetaverse;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Server.Handlers.Authentication
 {
@@ -58,23 +51,22 @@ namespace OpenSim.Server.Handlers.Authentication
         public AuthenticationServerPostHandler(IAuthenticationService service) :
                 this(service, null, null) {}
 
-        public AuthenticationServerPostHandler(IAuthenticationService service, IConfig config, IServiceAuth auth) :
+        public AuthenticationServerPostHandler(IAuthenticationService service, IConfiguration config, IServiceAuth auth) :
                 base("POST", "/auth", auth)
         {
             m_AuthenticationService = service;
 
             if (config != null)
             {
-                m_AllowGetAuthInfo = config.GetBoolean("AllowGetAuthInfo", m_AllowGetAuthInfo);
-                m_AllowSetAuthInfo = config.GetBoolean("AllowSetAuthInfo", m_AllowSetAuthInfo);
-                m_AllowSetPassword = config.GetBoolean("AllowSetPassword", m_AllowSetPassword);
+                m_AllowGetAuthInfo = config.GetValue<bool>("AllowGetAuthInfo", m_AllowGetAuthInfo);
+                m_AllowSetAuthInfo = config.GetValue<bool>("AllowSetAuthInfo", m_AllowSetAuthInfo);
+                m_AllowSetPassword = config.GetValue<bool>("AllowSetPassword", m_AllowSetPassword);
             }
         }
 
         protected override byte[] ProcessRequest(string path, Stream request,
                 IOSHttpRequest httpRequest, IOSHttpResponse httpResponse)
         {
-//            m_log.Error("[XXX]: Authenticating...");
             string[] p = SplitParams(path);
 
             if (p.Length > 0)

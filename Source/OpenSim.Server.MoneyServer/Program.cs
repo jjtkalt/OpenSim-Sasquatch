@@ -82,8 +82,8 @@ namespace OpenSim.Server.MoneyServer
                     {
                         configuration.AddIniFile(item, optional: true, reloadOnChange: false);
                     }
-
-//                    configuration.EnableSubstitutions("$(", ")");
+                    
+                    configuration.EnableSubstitutions("$(", ")");
                 })
                 .ConfigureContainer<ContainerBuilder>(builder =>
                 {

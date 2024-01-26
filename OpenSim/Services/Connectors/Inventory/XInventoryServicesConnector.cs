@@ -42,6 +42,7 @@ using OpenSim.Server.Base;
 using OpenMetaverse;
 using System.Text;
 using System.Threading;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.Connectors
 {
@@ -81,30 +82,31 @@ namespace OpenSim.Services.Connectors
 
         }
 
-        public XInventoryServicesConnector(IConfigSource source, string configName)
+        public XInventoryServicesConnector(IConfiguration source, string configName)
             : base(source, configName)
         {
             m_configName = configName;
             Initialise(source);
         }
 
-        public XInventoryServicesConnector(IConfigSource source)
+        public XInventoryServicesConnector(IConfiguration source)
             : base(source, "InventoryService")
         {
             Initialise(source);
         }
 
-        public virtual void Initialise(IConfigSource source)
+        public virtual void Initialise(IConfiguration source)
         {
-            IConfig config = source.Configs[m_configName];
-            if (config is null)
+            var config = source.GetSection(m_configName);
+            if (config.Exists() is false)
             {
                 m_log.ErrorFormat("[INVENTORY CONNECTOR]: {0} missing from OpenSim.ini", m_configName);
                 throw new Exception("Inventory connector init error");
             }
 
-            string serviceURI = config.GetString("InventoryServerURI", string.Empty);
-            if (serviceURI.Length == 0)
+            string serviceURI = config.GetValue("InventoryServerURI", string.Empty);
+
+            if (string.IsNullOrEmpty(serviceURI))
             {
                 m_log.Error("[INVENTORY CONNECTOR]: No Server URI named in section InventoryService");
                 throw new Exception("Inventory connector init error");
@@ -115,7 +117,7 @@ namespace OpenSim.Services.Connectors
             else
                 m_InventoryURL = serviceURI + "/xinventory";
 
-             m_requestTimeout = 1000 * config.GetInt("RemoteRequestTimeout", -1);
+             m_requestTimeout = 1000 * config.GetValue<int>("RemoteRequestTimeout", -1);
 
             StatsManager.RegisterStat(
                 new Stat(

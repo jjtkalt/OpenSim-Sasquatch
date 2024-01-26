@@ -50,7 +50,7 @@ namespace OpenSim.Groups
         private GroupsService m_GroupsService;
         private string m_ConfigName = "Groups";
 
-        public GroupsServiceRobustConnector(IConfigSource config, IHttpServer server, string configName) :
+        public GroupsServiceRobustConnector(IConfiguration config, IHttpServer server, string configName) :
             base(config, server, configName)
         {
             string key = string.Empty;

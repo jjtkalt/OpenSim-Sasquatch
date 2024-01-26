@@ -31,7 +31,7 @@ namespace OpenSim.ApplicationPlugins.LoadRegions
 {
     public interface IEstateLoader
     {
-        void SetIniConfigSource(IConfigSource configSource);
+        void SetIniConfigSource(IConfiguration configSource);
         void LoadEstates();
     }
 }

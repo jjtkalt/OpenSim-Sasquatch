@@ -25,9 +25,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Reflection;
 using System.Xml;
 
@@ -36,9 +33,10 @@ using OpenSim.Services.Base;
 using OpenSim.Services.Interfaces;
 
 using log4net;
-using Nini.Config;
+
 using OpenMetaverse;
 using PermissionMask = OpenSim.Framework.PermissionMask;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.InventoryService
 {
@@ -78,7 +76,7 @@ namespace OpenSim.Services.InventoryService
         static readonly uint m_NextPermissions = (uint)PermissionMask.AllAndExport;
         static readonly uint m_GroupPermissions = 0;
 
-        public LibraryService(IConfigSource config):base(config)
+        public LibraryService(IConfiguration config):base(config)
         {
             lock(m_rootLock)
             {
@@ -90,11 +88,11 @@ namespace OpenSim.Services.InventoryService
             string pLibrariesLocation = Path.Combine("inventory", "Libraries.xml");
             string pLibName = "OpenSim Library";
 
-            IConfig libConfig = config.Configs["LibraryService"];
+            var libConfig = config.GetSection("LibraryService");
             if (libConfig != null)
             {
-                pLibrariesLocation = libConfig.GetString("DefaultLibrary", pLibrariesLocation);
-                pLibName = libConfig.GetString("LibraryName", pLibName);
+                pLibrariesLocation = libConfig.GetValue("DefaultLibrary", pLibrariesLocation);
+                pLibName = libConfig.GetValue("LibraryName", pLibName);
             }
 
             m_log.Debug("[LIBRARY]: Starting library service...");

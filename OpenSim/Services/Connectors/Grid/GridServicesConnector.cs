@@ -26,18 +26,13 @@
  */
 
 using log4net;
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Reflection;
-using Nini.Config;
 using OpenSim.Framework;
-
-using OpenSim.Framework.ServiceAuth;
 using OpenSim.Services.Interfaces;
 using GridRegion = OpenSim.Services.Interfaces.GridRegion;
 using OpenSim.Server.Base;
 using OpenMetaverse;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.Connectors
 {
@@ -58,28 +53,28 @@ namespace OpenSim.Services.Connectors
             m_ServerURI = serverURI.TrimEnd('/');
         }
 
-        public GridServicesConnector(IConfigSource source)
+        public GridServicesConnector(IConfiguration source)
         {
             Initialise(source);
         }
 
-        public virtual void Initialise(IConfigSource source)
+        public virtual void Initialise(IConfiguration source)
         {
-            IConfig gridConfig = source.Configs["GridService"];
-            if (gridConfig == null)
+            var gridConfig = source.GetSection("GridService");
+            if (gridConfig.Exists() is false)
             {
                 m_log.Error("[GRID CONNECTOR]: GridService missing from OpenSim.ini");
                 throw new Exception("Grid connector init error");
             }
 
-            string serviceURI = gridConfig.GetString("GridServerURI",
-                    String.Empty);
+            string serviceURI = gridConfig.GetValue("GridServerURI", String.Empty);
 
-            if (serviceURI.Length == 0)
+            if (string.IsNullOrEmpty(serviceURI))
             {
                 m_log.Error("[GRID CONNECTOR]: No Server URI named in section GridService");
                 throw new Exception("Grid connector init error");
             }
+            
             m_ServerURI = serviceURI;
 
             base.Initialise(source, "GridService");

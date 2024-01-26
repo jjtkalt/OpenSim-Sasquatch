@@ -202,7 +202,7 @@ namespace Gloebit.GloebitMoneyModule
         /// Called on startup so the module can be configured.
         /// </summary>
         /// <param name="config">Configuration source.</param>
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             m_log.Info ("[GLOEBITMONEYMODULE] Initialising.");
 
@@ -305,7 +305,7 @@ namespace Gloebit.GloebitMoneyModule
         /// Load Addin Configuration from Addin config dir
         /// </summary>
         /// <param name="config"></param>
-        private void LoadConfig(IConfigSource config)
+        private void LoadConfig(IConfiguration config)
         {
            string configPath = string.Empty;
            bool created;

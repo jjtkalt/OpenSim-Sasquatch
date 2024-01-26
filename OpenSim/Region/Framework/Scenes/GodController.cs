@@ -42,6 +42,7 @@ using OpenSim.Framework.Monitoring;
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes.Types;
 using OpenSim.Services.Interfaces;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Region.Framework.Scenes
 {
@@ -53,6 +54,7 @@ namespace OpenSim.Region.Framework.Scenes
             RegionOwner = 220       // region owner implicit god level should be >= than estate
         }
 
+        IConfiguration m_configuration;
         ScenePresence m_scenePresence;
         Scene m_scene;
         protected bool m_allowGridGods;
@@ -76,8 +78,7 @@ namespace OpenSim.Region.Framework.Scenes
             m_scene = scene;
             m_scenePresence = sp;
             m_userLevel = userlevel;
-
-            IConfigSource config = scene.Config;
+            m_configuration = m_scene.Config;
 
             string[] sections = new string[] { "Startup", "Permissions" };
 
@@ -85,24 +86,24 @@ namespace OpenSim.Region.Framework.Scenes
             // level grid-wide. Others may become god locally but grid
             // gods are god everywhere.
             m_allowGridGods =
-                    Util.GetConfigVarFromSections<bool>(config,
+                    Util.GetConfigVarFromSections<bool>(m_configuration,
                     "allow_grid_gods", sections, false);
 
             // If grid gods are active, dont allow any other gods
             m_forceGridGodsOnly =
-                    Util.GetConfigVarFromSections<bool>(config,
+                    Util.GetConfigVarFromSections<bool>(m_configuration,
                     "force_grid_gods_only", sections, false);
 
             if(!m_forceGridGodsOnly)
             {
                 // The owner of a region is a god in his region only.
                 m_regionOwnerIsGod =
-                    Util.GetConfigVarFromSections<bool>(config,
+                    Util.GetConfigVarFromSections<bool>(m_configuration,
                     "region_owner_is_god", sections, false);
 
                 // Region managers are gods in the regions they manage.
                 m_regionManagerIsGod =
-                    Util.GetConfigVarFromSections<bool>(config,
+                    Util.GetConfigVarFromSections<bool>(m_configuration,
                     "region_manager_is_god", sections, false);
 
             }
@@ -113,14 +114,14 @@ namespace OpenSim.Region.Framework.Scenes
             // the user has god rights somewhere. They may choose
             // to turn it off again, though.
             m_forceGodModeAlwaysOn =
-                    Util.GetConfigVarFromSections<bool>(config,
+                    Util.GetConfigVarFromSections<bool>(m_configuration,
                     "automatic_gods", sections, false);
 
             // The user can execute any and all god functions, as
             // permitted by the viewer UI, without actually "godding
             // up". This is the default state in 0.8.2.
             m_allowGodActionsWithoutGodMode =
-                    Util.GetConfigVarFromSections<bool>(config,
+                    Util.GetConfigVarFromSections<bool>(m_configuration,
                     "implicit_gods", sections, false);
 
             m_rightsGodLevel = CalcRightsGodLevel();

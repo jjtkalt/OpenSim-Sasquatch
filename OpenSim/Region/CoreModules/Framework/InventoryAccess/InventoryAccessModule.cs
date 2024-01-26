@@ -73,7 +73,7 @@ namespace OpenSim.Region.CoreModules.Framework.InventoryAccess
             get { return "BasicInventoryAccessModule"; }
         }
 
-        public virtual void Initialise(IConfigSource source)
+        public virtual void Initialise(IConfiguration source)
         {
             IConfig moduleConfig = source.Configs["Modules"];
             if (moduleConfig is not null)
@@ -94,7 +94,7 @@ namespace OpenSim.Region.CoreModules.Framework.InventoryAccess
         /// Common module config for both this and descendant classes.
         /// </summary>
         /// <param name="source"></param>
-        protected virtual void InitialiseCommon(IConfigSource source)
+        protected virtual void InitialiseCommon(IConfiguration source)
         {
             IConfig inventoryConfig = source.Configs["Inventory"];
             CoalesceMultipleObjectsToInventory = inventoryConfig is null || inventoryConfig.GetBoolean("CoalesceMultipleObjectsToInventory", true);

@@ -31,13 +31,14 @@ using Nini.Config;
 using log4net;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Server.Handlers.Hypergrid
 {
-    public class HeloServiceInConnector : ServiceConnector
+    public class HeloServiceInConnector : ServiceConnector, IServiceConnector
     {
-        public HeloServiceInConnector(IConfigSource config, IHttpServer server, string configName) :
-                base(config, server, configName)
+        public HeloServiceInConnector(IConfiguration config, IHttpServer server) :
+                base(config, server, string.Empty)
         {
             server.AddSimpleStreamHandler(new HeloServerGetAndHeadHandler("opensim-robust"));
         }

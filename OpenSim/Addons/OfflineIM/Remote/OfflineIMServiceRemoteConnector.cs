@@ -25,11 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 
 using OpenSim.Framework;
 using OpenSim.Framework.ServiceAuth;
@@ -38,7 +34,8 @@ using OpenSim.Services.Interfaces;
 
 using OpenMetaverse;
 using log4net;
-using Nini.Config;
+
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.OfflineIM
 {
@@ -56,16 +53,16 @@ namespace OpenSim.OfflineIM
             m_log.DebugFormat("[OfflineIM.V2.RemoteConnector]: Offline IM server at {0}", m_ServerURI);
         }
 
-        public OfflineIMServiceRemoteConnector(IConfigSource config)
+        public OfflineIMServiceRemoteConnector(IConfiguration config)
         {
-            IConfig cnf = config.Configs["Messaging"];
-            if (cnf == null)
+            var cnf = config.GetSection("Messaging");
+            if (cnf.Exists() is false)
             {
                 m_log.WarnFormat("[OfflineIM.V2.RemoteConnector]: Missing Messaging configuration");
                 return;
             }
 
-            m_ServerURI = cnf.GetString("OfflineMessageURL", string.Empty);
+            m_ServerURI = cnf.GetValue("OfflineMessageURL", string.Empty);
 
             /// This is from BaseServiceConnector
             string authType = Util.GetConfigVarFromSections<string>(config, "AuthType", new string[] { "Network", "Messaging" }, "None");
@@ -76,6 +73,7 @@ namespace OpenSim.OfflineIM
                     m_Auth = new BasicHttpAuthentication(config, "Messaging");
                     break;
             }
+            
             ///
             m_log.DebugFormat("[OfflineIM.V2.RemoteConnector]: Offline IM server at {0} with auth {1}",
                 m_ServerURI, (m_Auth == null ? "None" : m_Auth.GetType().ToString()));

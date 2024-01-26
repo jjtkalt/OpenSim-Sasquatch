@@ -28,6 +28,7 @@
 using System;
 using OpenSim.Framework;
 using Nini.Config;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Region.ClientStack.LindenUDP
 {
@@ -73,14 +74,14 @@ namespace OpenSim.Region.ClientStack.LindenUDP
         /// Default constructor
         /// </summary>
         /// <param name="config">Config source to load defaults from</param>
-        public ThrottleRates(IConfigSource config)
+        public ThrottleRates(IConfiguration config)
         {
             try
             {
-                IConfig throttleConfig = config.Configs["ClientStack.LindenUDP"];
-                if(throttleConfig != null)
+                var throttleConfig = config.GetSection("ClientStack.LindenUDP");
+                if (throttleConfig.Exists())
                 {
-                    ClientMaxRate = throttleConfig.GetInt("client_throttle_max_bps", ClientMaxRate);
+                    ClientMaxRate = throttleConfig.GetValue<int>("client_throttle_max_bps", ClientMaxRate);
                     if (ClientMaxRate > 1000000)
                         ClientMaxRate = 1000000; // no more than 8Mbps
                     else if (ClientMaxRate < 6250)
@@ -89,7 +90,7 @@ namespace OpenSim.Region.ClientStack.LindenUDP
                     // Adaptive is broken
                     // AdaptiveThrottlesEnabled = throttleConfig.GetBoolean("enable_adaptive_throttles", false);
                     AdaptiveThrottlesEnabled = false;
-                    MinimumAdaptiveThrottleRate = throttleConfig.GetInt("adaptive_throttle_min_bps", 32000);
+                    MinimumAdaptiveThrottleRate = throttleConfig.GetValue<int>("adaptive_throttle_min_bps", 32000);
                 }
             }
             catch (Exception) { }

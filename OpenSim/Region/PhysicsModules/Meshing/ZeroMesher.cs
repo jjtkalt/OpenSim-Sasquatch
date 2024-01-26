@@ -25,14 +25,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System.Reflection;
 using OpenSim.Framework;
 using OpenSim.Region.Framework.Scenes;
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.PhysicsModules.SharedBase;
 using OpenMetaverse;
-using Nini.Config;
-using log4net;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+
 
 /*
  * This is the zero mesher.
@@ -49,8 +49,19 @@ namespace OpenSim.Region.PhysicsModule.Meshing
 {
     public class ZeroMesher : IMesher, INonSharedRegionModule
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
         private bool m_Enabled = false;
+
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<ZeroMesher> m_logger;
+
+        public ZeroMesher(
+            IConfiguration configuration,
+            ILogger<ZeroMesher> logger
+            )
+        {
+            m_configuration = configuration;
+            m_logger = logger;
+        }
 
         #region INonSharedRegionModule
         public string Name
@@ -63,14 +74,14 @@ namespace OpenSim.Region.PhysicsModule.Meshing
             get { return null; }
         }
 
-        public void Initialise(IConfigSource source)
+        public void Initialise()
         {
             // TODO: Move this out of Startup
-            IConfig config = source.Configs["Startup"];
-            if (config != null)
+            var config = m_configuration.GetSection("Startup");
+            if (config.Exists())
             {
                 // This is the default Mesher
-                string mesher = config.GetString("meshing", Name);
+                string mesher = config.GetValue("meshing", Name);
                 if (mesher == Name)
                     m_Enabled = true;
             }

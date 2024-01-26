@@ -52,7 +52,7 @@ namespace OpenSim.Region.OptionalModules.PrimLimitsModule
 
         public Type ReplaceableInterface { get { return null; } }
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             string permissionModules = Util.GetConfigVarFromSections<string>(config, "permissionmodules",
                 new string[] { "Startup", "Permissions" }, "DefaultPermissionsModule");

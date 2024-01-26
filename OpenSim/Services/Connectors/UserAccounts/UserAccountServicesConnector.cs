@@ -26,17 +26,12 @@
  */
 
 using log4net;
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Reflection;
-using Nini.Config;
 using OpenSim.Framework;
-
-using OpenSim.Framework.ServiceAuth;
 using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenMetaverse;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.Connectors
 {
@@ -57,21 +52,21 @@ namespace OpenSim.Services.Connectors
             m_ServerURI = serverURI.TrimEnd('/');
         }
 
-        public UserAccountServicesConnector(IConfigSource source)
+        public UserAccountServicesConnector(IConfiguration source)
         {
             Initialise(source);
         }
 
-        public virtual void Initialise(IConfigSource source)
+        public virtual void Initialise(IConfiguration source)
         {
-            IConfig assetConfig = source.Configs["UserAccountService"];
-            if (assetConfig == null)
+            var assetConfig = source.GetSection("UserAccountService");
+            if (assetConfig.Exists() is false)
             {
                 m_log.Error("[ACCOUNT CONNECTOR]: UserAccountService missing from OpenSim.ini");
                 throw new Exception("User account connector init error");
             }
 
-            string serviceURI = assetConfig.GetString("UserAccountServerURI", string.Empty);
+            string serviceURI = assetConfig.GetValue("UserAccountServerURI", string.Empty);
 
             if (string.IsNullOrWhiteSpace(serviceURI))
             {
@@ -80,6 +75,7 @@ namespace OpenSim.Services.Connectors
             }
 
             OSHHTPHost tmp = new OSHHTPHost(serviceURI, true);
+
             if (!tmp.IsResolvedHost)
             {
                 m_log.ErrorFormat("[ACCOUNT CONNECTOR]: {0}", tmp.IsValidHost ? "Could not resolve UserAccountServerURI" : "UserAccountServerURI is a invalid host");

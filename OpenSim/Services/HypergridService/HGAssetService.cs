@@ -63,7 +63,7 @@ namespace OpenSim.Services.HypergridService
 
         IAssetService m_assetService = null;
 
-        public HGAssetService(IConfigSource config, string configName) : base(config)
+        public HGAssetService(IConfiguration config, string configName) : base(config)
         {
             m_log.Debug("[HGAsset Service]: Starting");
             IConfig assetConfig = config.Configs[configName];

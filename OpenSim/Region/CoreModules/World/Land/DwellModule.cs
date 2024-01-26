@@ -36,7 +36,7 @@ namespace OpenSim.Region.CoreModules.World.Land
     public class DefaultDwellModule : INonSharedRegionModule, IDwellModule
     {
         private Scene m_scene;
-        private IConfigSource m_Config;
+        private IConfiguration m_Config;
         private bool m_Enabled = false;
 
         public Type ReplaceableInterface
@@ -49,7 +49,7 @@ namespace OpenSim.Region.CoreModules.World.Land
             get { return "DefaultDwellModule"; }
         }
 
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
             m_Config = source;
 

@@ -25,41 +25,35 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net;
-using System.Reflection;
-using System.Text;
-using System.Collections;
-
 using OpenSim.Framework;
 using OpenSim.Services.Interfaces;
+
 using GridRegion = OpenSim.Services.Interfaces.GridRegion;
 
 using OpenMetaverse;
 using OpenMetaverse.StructuredData;
-using log4net;
-using Nini.Config;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Services.Connectors.Simulation
 {
     public class SimulationServiceConnector : ISimulationService
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
-        // we use this dictionary to track the pending updateagent requests, maps URI --> position update
+      // we use this dictionary to track the pending updateagent requests, maps URI --> position update
         private Dictionary<string,AgentPosition> m_updateAgentQueue = new Dictionary<string,AgentPosition>();
 
         //private GridRegion m_Region;
 
-        public SimulationServiceConnector()
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<SimulationServiceConnector> m_logger;
+        
+        public SimulationServiceConnector(
+            IConfiguration configuration, 
+            ILogger<SimulationServiceConnector> logger)
         {
-        }
-
-        public SimulationServiceConnector(IConfigSource config)
-        {
-            //m_Region = region;
+            m_configuration = configuration;
+            m_logger = logger;
         }
 
         public IScene GetScene(UUID regionId)
@@ -87,6 +81,7 @@ namespace OpenSim.Services.Connectors.Simulation
                 args["source_y"] = OSD.FromString(source.RegionLocY.ToString());
                 args["source_name"] = OSD.FromString(source.RegionName);
                 args["source_uuid"] = OSD.FromString(source.RegionID.ToString());
+
                 if (!String.IsNullOrEmpty(source.RawServerURI))
                     args["source_server_uri"] = OSD.FromString(source.RawServerURI);
             }
@@ -105,11 +100,11 @@ namespace OpenSim.Services.Connectors.Simulation
             if (destination == null)
             {
                 reason = "Destination not found";
-                m_log.Debug("[REMOTE SIMULATION CONNECTOR]: Create agent destination is null");
+                m_logger.LogDebug("Create agent destination is null");
                 return false;
             }
 
-            m_log.DebugFormat("[REMOTE SIMULATION CONNECTOR]: Creating agent at {0}", destination.ServerURI);
+            m_logger.LogDebug($"Creating agent at {destination.ServerURI}");
 
             string uri = destination.ServerURI + AgentPath() + aCircuit.AgentID + "/";
             OSD tmpOSD;
@@ -118,6 +113,7 @@ namespace OpenSim.Services.Connectors.Simulation
                 OSDMap args = aCircuit.PackAgentCircuitData(ctx);
                 if(ctx == null)
                     ctx = new EntityTransferContext();
+
                 args["context"] = ctx.Pack();
                 PackData(args, source, aCircuit, destination, flags);
 
@@ -143,21 +139,19 @@ namespace OpenSim.Services.Connectors.Simulation
                         reason = data["reason"].AsString();
                         success = data["success"].AsBoolean();
 
-                        m_log.WarnFormat(
-                            "[REMOTE SIMULATION CONNECTOR]: Remote simulator {0} did not accept compressed transfer, suggest updating that simulator.", destination.RegionName);
+                        m_logger.LogWarning($"Remote simulator {destination.RegionName} did not accept compressed transfer, suggest updating that simulator.");
                         return success;
                     }
                 }
 
-                m_log.WarnFormat(
-                    "[REMOTE SIMULATION CONNECTOR]: Failed to create agent {0} {1} at remote simulator {2}",
-                    aCircuit.firstname, aCircuit.lastname, destination.RegionName);
+                m_logger.LogWarning($"Failed to create agent {aCircuit.firstname} {aCircuit.lastname} at remote simulator {destination.RegionName}");
+
                 reason = result["Message"] != null ? result["Message"].AsString() : "error";
                 return false;
             }
             catch (Exception e)
             {
-                m_log.Warn("[REMOTE SIMULATION CONNECTOR]: CreateAgent failed with exception: " + e.ToString());
+                m_logger.LogWarning(e, "CreateAgent failed");
                 reason = e.Message;
             }
 
@@ -248,7 +242,7 @@ namespace OpenSim.Services.Connectors.Simulation
         /// </summary>
         private bool UpdateAgent(GridRegion destination, IAgentData cAgentData, EntityTransferContext ctx, int timeout)
         {
-            // m_log.DebugFormat("[REMOTE SIMULATION CONNECTOR]: UpdateAgent in {0}", destination.ServerURI);
+            // m_logger.LogDebug($"UpdateAgent in {0}", destination.ServerURI);
 
             // Eventually, we want to use a caps url instead of the agentID
             string uri = destination.ServerURI + AgentPath() + cAgentData.AgentID + "/";
@@ -280,7 +274,7 @@ namespace OpenSim.Services.Connectors.Simulation
             }
             catch (Exception e)
             {
-                m_log.Warn("[REMOTE SIMULATION CONNECTOR]: UpdateAgent failed with exception: " + e.ToString());
+                m_logger.LogWarning(e, "UpdateAgent failed");
             }
 
             return false;
@@ -293,7 +287,7 @@ namespace OpenSim.Services.Connectors.Simulation
 
             reason = "Failed to contact destination";
 
-            // m_log.DebugFormat("[REMOTE SIMULATION CONNECTOR]: QueryAccess start, position={0}", position);
+            // m_logger.LogDebug($"QueryAccess start, position={0}", position);
 
             // Eventually, we want to use a caps url instead of the agentID
             string uri = destination.ServerURI + AgentPath() + agentID + "/" + destination.RegionID.ToString() + "/";
@@ -360,9 +354,7 @@ namespace OpenSim.Services.Connectors.Simulation
                         }
                     }
 
-                    m_log.DebugFormat(
-                        "[REMOTE SIMULATION CONNECTOR]: QueryAccess to {0} returned {1}, reason {2}, version {3}/{4}",
-                        uri, success, reason, ctx.InboundVersion, ctx.OutboundVersion);
+                    m_logger.LogDebug($"QueryAccess to {uri} returned {success}, reason {reason}, version {ctx.InboundVersion}/{ctx.OutboundVersion}");
                 }
 
                 if (!success || ctx.InboundVersion == 0f || ctx.OutboundVersion == 0f)
@@ -376,7 +368,7 @@ namespace OpenSim.Services.Connectors.Simulation
                             string message = tmpOSD.AsString();
                             if (message == "Service request failed: [MethodNotAllowed] MethodNotAllowed") // Old style region
                             {
-                                m_log.Info("[REMOTE SIMULATION CONNECTOR]: The above web util error was caused by a TP to a sim that doesn't support QUERYACCESS and can be ignored");
+                                m_logger.LogInformation("The above web util error was caused by a TP to a sim that doesn't support QUERYACCESS and can be ignored");
                                 return true;
                             }
 
@@ -413,7 +405,7 @@ namespace OpenSim.Services.Connectors.Simulation
             }
             catch (Exception e)
             {
-                m_log.WarnFormat("[REMOTE SIMULATION CONNECTOR] QueryAcesss failed with exception; {0}",e.ToString());
+                m_logger.LogWarning(e, "QueryAcesss failed");
             }
 
             return false;
@@ -423,7 +415,7 @@ namespace OpenSim.Services.Connectors.Simulation
         /// </summary>
         public bool ReleaseAgent(UUID origin, UUID id, string uri)
         {
-            // m_log.DebugFormat("[REMOTE SIMULATION CONNECTOR]: ReleaseAgent start");
+            // m_logger.LogDebug($"ReleaseAgent start");
 
             try
             {
@@ -431,7 +423,7 @@ namespace OpenSim.Services.Connectors.Simulation
             }
             catch (Exception e)
             {
-                m_log.WarnFormat("[REMOTE SIMULATION CONNECTOR] ReleaseAgent failed with exception; {0}",e.ToString());
+                m_logger.LogWarning(e, "ReleaseAgent failed");
             }
 
             return true;
@@ -442,7 +434,7 @@ namespace OpenSim.Services.Connectors.Simulation
         public bool CloseAgent(GridRegion destination, UUID id, string auth_code)
         {
             string uri = destination.ServerURI + AgentPath() + id + "/" + destination.RegionID.ToString() + "/?auth=" + auth_code;
-            m_log.DebugFormat("[REMOTE SIMULATION CONNECTOR]: CloseAgent {0}", uri);
+            m_logger.LogDebug($"CloseAgent {0}", uri);
 
             try
             {
@@ -450,7 +442,7 @@ namespace OpenSim.Services.Connectors.Simulation
             }
             catch (Exception e)
             {
-                m_log.WarnFormat("[REMOTE SIMULATION CONNECTOR] CloseAgent failed with exception; {0}",e.ToString());
+                m_logger.LogWarning(e, "CloseAgent failed");
             }
 
             return true;
@@ -470,7 +462,7 @@ namespace OpenSim.Services.Connectors.Simulation
         /// </summary>
         public bool CreateObject(GridRegion destination, Vector3 newPosition, ISceneObject sog, bool isLocalCall)
         {
-            // m_log.DebugFormat("[REMOTE SIMULATION CONNECTOR]: CreateObject start");
+            // m_logger.LogDebug($"CreateObject start");
 
             string uri = destination.ServerURI + ObjectPath() + sog.UUID + "/";
 
@@ -503,7 +495,7 @@ namespace OpenSim.Services.Connectors.Simulation
             }
             catch (Exception e)
             {
-                m_log.WarnFormat("[REMOTE SIMULATION CONNECTOR] CreateObject failed with exception; {0}",e.ToString());
+                m_logger.LogWarning(e, "CreateObject failed");
                 return false;
             }
 

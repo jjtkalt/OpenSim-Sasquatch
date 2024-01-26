@@ -29,15 +29,14 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using log4net;
+using Microsoft.Extensions.Configuration;
 using Nini.Config;
 
 namespace OpenSim.Framework.ServiceAuth
 {
     public class ServiceAuth
     {
-//        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
-        public static IServiceAuth Create(IConfigSource config, string section)
+        public static IServiceAuth Create(IConfiguration config, string section)
         {
             CompoundAuthentication compoundAuth = new CompoundAuthentication();
 

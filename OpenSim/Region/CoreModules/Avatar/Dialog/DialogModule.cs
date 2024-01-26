@@ -42,7 +42,7 @@ namespace OpenSim.Region.CoreModules.Avatar.Dialog
 
         protected Scene m_scene;
 
-        public void Initialise(IConfigSource source) { }
+        public void Initialise(IConfiguration source) { }
 
         public Type ReplaceableInterface { get { return null; } }
 

@@ -25,31 +25,26 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using NUnit.Framework;
+using Xunit;
 using OpenSim.Framework;
 using OpenMetaverse;
-using OpenMetaverse.StructuredData;
-using System;
 using System.Globalization;
-using System.Threading;
-using OpenSim.Tests.Common;
 
 namespace OpenSim.Framework.Tests
 {
-    [TestFixture]
-    public class MundaneFrameworkTests : OpenSimTestCase
+    public class MundaneFrameworkTests
     {
         private bool m_RegionSettingsOnSaveEventFired;
 
-        [Test]
+        [Fact]
         public void ChildAgentDataUpdate01()
         {
             // code coverage
             ChildAgentDataUpdate cadu = new ChildAgentDataUpdate();
-            Assert.IsFalse(cadu.alwaysrun, "Default is false");
+            Assert.False(cadu.alwaysrun, "Default is false");
         }
 
-        [Test]
+        [Fact]
         public void AgentPositionTest01()
         {
             UUID AgentId1 = UUID.Random();
@@ -100,7 +95,7 @@ namespace OpenSim.Framework.Tests
             AgentPosition position2 = new AgentPosition();
             position2.CopyFrom(cadu, position1.SessionID);
 
-            Assert.IsTrue(
+            Assert.True(
                 position2.AgentID == position1.AgentID
                 && position2.Size == position1.Size
                 && position2.Position == position1.Position
@@ -108,31 +103,29 @@ namespace OpenSim.Framework.Tests
                 && position2.Center == position1.Center
                 && position2.RegionHandle == position1.RegionHandle
                 && position2.Far == position1.Far
-
                 ,"Copy From ChildAgentDataUpdate failed");
 
             position2 = new AgentPosition();
 
-            Assert.IsFalse(position2.AgentID == position1.AgentID, "Test Error, position2 should be a blank uninitialized AgentPosition");
+            Assert.False(position2.AgentID == position1.AgentID, "Test Error, position2 should be a blank uninitialized AgentPosition");
             EntityTransferContext ctx = new EntityTransferContext();
             position2.Unpack(position1.Pack(ctx), null, ctx);
 
-            Assert.IsTrue(position2.AgentID == position1.AgentID, "Agent ID didn't unpack the same way it packed");
-            Assert.IsTrue(position2.Position == position1.Position, "Position didn't unpack the same way it packed");
-            Assert.IsTrue(position2.Velocity == position1.Velocity, "Velocity didn't unpack the same way it packed");
-            Assert.IsTrue(position2.SessionID == position1.SessionID, "SessionID didn't unpack the same way it packed");
-            Assert.IsTrue(position2.CircuitCode == position1.CircuitCode, "CircuitCode didn't unpack the same way it packed");
-            Assert.IsTrue(position2.LeftAxis == position1.LeftAxis, "LeftAxis didn't unpack the same way it packed");
-            Assert.IsTrue(position2.UpAxis == position1.UpAxis, "UpAxis didn't unpack the same way it packed");
-            Assert.IsTrue(position2.AtAxis == position1.AtAxis, "AtAxis didn't unpack the same way it packed");
-            Assert.IsTrue(position2.RegionHandle == position1.RegionHandle, "RegionHandle didn't unpack the same way it packed");
-            Assert.IsTrue(position2.ChangedGrid == position1.ChangedGrid, "ChangedGrid didn't unpack the same way it packed");
-            Assert.IsTrue(position2.Center == position1.Center, "Center didn't unpack the same way it packed");
-            Assert.IsTrue(position2.Size == position1.Size, "Size didn't unpack the same way it packed");
-
+            Assert.True(position2.AgentID == position1.AgentID, "Agent ID didn't unpack the same way it packed");
+            Assert.True(position2.Position == position1.Position, "Position didn't unpack the same way it packed");
+            Assert.True(position2.Velocity == position1.Velocity, "Velocity didn't unpack the same way it packed");
+            Assert.True(position2.SessionID == position1.SessionID, "SessionID didn't unpack the same way it packed");
+            Assert.True(position2.CircuitCode == position1.CircuitCode, "CircuitCode didn't unpack the same way it packed");
+            Assert.True(position2.LeftAxis == position1.LeftAxis, "LeftAxis didn't unpack the same way it packed");
+            Assert.True(position2.UpAxis == position1.UpAxis, "UpAxis didn't unpack the same way it packed");
+            Assert.True(position2.AtAxis == position1.AtAxis, "AtAxis didn't unpack the same way it packed");
+            Assert.True(position2.RegionHandle == position1.RegionHandle, "RegionHandle didn't unpack the same way it packed");
+            Assert.True(position2.ChangedGrid == position1.ChangedGrid, "ChangedGrid didn't unpack the same way it packed");
+            Assert.True(position2.Center == position1.Center, "Center didn't unpack the same way it packed");
+            Assert.True(position2.Size == position1.Size, "Size didn't unpack the same way it packed");
         }
 
-        [Test]
+        [Fact]
         public void RegionSettingsTest01()
         {
             RegionSettings settings = new RegionSettings();
@@ -145,49 +138,50 @@ namespace OpenSim.Framework.Tests
 //            string id = settings.LoadedCreationID;
 //            string time = settings.LoadedCreationTime;
 
-            Assert.That(m_RegionSettingsOnSaveEventFired, "RegionSettings Save Event didn't Fire");
+            Assert.True(m_RegionSettingsOnSaveEventFired, "RegionSettings Save Event didn't Fire");
 
         }
-        public void RegionSaveFired(RegionSettings settings)
+
+        internal void RegionSaveFired(RegionSettings settings)
         {
             m_RegionSettingsOnSaveEventFired = true;
         }
 
-        [Test]
+        [Fact]
         public void InventoryItemBaseConstructorTest01()
         {
             InventoryItemBase b1 = new InventoryItemBase();
-            Assert.That(b1.ID == UUID.Zero, "void constructor should create an inventory item with ID = UUID.Zero");
-            Assert.That(b1.Owner == UUID.Zero, "void constructor should create an inventory item with Owner = UUID.Zero");
+            Assert.True(b1.ID == UUID.Zero, "void constructor should create an inventory item with ID = UUID.Zero");
+            Assert.True(b1.Owner == UUID.Zero, "void constructor should create an inventory item with Owner = UUID.Zero");
 
             UUID ItemID = UUID.Random();
             UUID OwnerID = UUID.Random();
 
             InventoryItemBase b2 = new InventoryItemBase(ItemID);
-            Assert.That(b2.ID == ItemID, "ID constructor should create an inventory item with ID = ItemID");
-            Assert.That(b2.Owner == UUID.Zero, "ID constructor  should create an inventory item with Owner = UUID.Zero");
+            Assert.True(b2.ID == ItemID, "ID constructor should create an inventory item with ID = ItemID");
+            Assert.True(b2.Owner == UUID.Zero, "ID constructor  should create an inventory item with Owner = UUID.Zero");
 
             InventoryItemBase b3 = new InventoryItemBase(ItemID,OwnerID);
-            Assert.That(b3.ID == ItemID, "ID,OwnerID constructor should create an inventory item with ID = ItemID");
-            Assert.That(b3.Owner == OwnerID, "ID,OwnerID  constructor  should create an inventory item with Owner = OwnerID");
+            Assert.True(b3.ID == ItemID, "ID,OwnerID constructor should create an inventory item with ID = ItemID");
+            Assert.True(b3.Owner == OwnerID, "ID,OwnerID  constructor  should create an inventory item with Owner = OwnerID");
 
         }
 
-        [Test]
+        [Fact]
         public void AssetMetaDataNonNullContentTypeTest01()
         {
             AssetMetadata assetMetadata = new AssetMetadata();
             assetMetadata.ContentType = "image/jp2";
-            Assert.That(assetMetadata.Type == (sbyte)AssetType.Texture, "Content type should be AssetType.Texture");
-            Assert.That(assetMetadata.ContentType == "image/jp2", "Text of content type should be image/jp2");
+            Assert.True(assetMetadata.Type == (sbyte)AssetType.Texture, "Content type should be AssetType.Texture");
+            Assert.True(assetMetadata.ContentType == "image/jp2", "Text of content type should be image/jp2");
             UUID rndID = UUID.Random();
             assetMetadata.ID = rndID.ToString();
-            Assert.That(assetMetadata.ID.ToLower() == rndID.ToString().ToLower(), "assetMetadata.ID Setter/Getter not Consistent");
+            Assert.True(assetMetadata.ID.ToLower() == rndID.ToString().ToLower(), "assetMetadata.ID Setter/Getter not Consistent");
             DateTime fixedTime = DateTime.Now;
             assetMetadata.CreationDate = fixedTime;
         }
 
-        [Test]
+        [Fact]
         public void EstateSettingsMundateTests()
         {
             EstateSettings es = new EstateSettings();
@@ -199,73 +193,73 @@ namespace OpenSim.Framework.Tests
                               BannedHostNameMask = string.Empty,
                               BannedUserID = bannedUserId}
                           );
-            Assert.IsTrue(es.IsBanned(bannedUserId, 32), "User Should be banned but is not.");
-            Assert.IsFalse(es.IsBanned(UUID.Zero, 32), "User Should not be banned but is.");
+            Assert.True(es.IsBanned(bannedUserId, 32), "User Should be banned but is not.");
+            Assert.False(es.IsBanned(UUID.Zero, 32), "User Should not be banned but is.");
 
             es.RemoveBan(bannedUserId);
 
-            Assert.IsFalse(es.IsBanned(bannedUserId, 32), "User Should not be banned but is.");
+            Assert.False(es.IsBanned(bannedUserId, 32), "User Should not be banned but is.");
 
             es.AddEstateManager(UUID.Zero);
 
             es.AddEstateManager(bannedUserId);
-            Assert.IsTrue(es.IsEstateManagerOrOwner(bannedUserId), "bannedUserId should be EstateManager but isn't.");
+            Assert.True(es.IsEstateManagerOrOwner(bannedUserId), "bannedUserId should be EstateManager but isn't.");
 
             es.RemoveEstateManager(bannedUserId);
-            Assert.IsFalse(es.IsEstateManagerOrOwner(bannedUserId), "bannedUserID is estateManager but shouldn't be");
+            Assert.False(es.IsEstateManagerOrOwner(bannedUserId), "bannedUserID is estateManager but shouldn't be");
 
-            Assert.IsFalse(es.HasAccess(bannedUserId), "bannedUserID has access but shouldn't");
+            Assert.False(es.HasAccess(bannedUserId), "bannedUserID has access but shouldn't");
 
             es.AddEstateUser(bannedUserId);
 
-            Assert.IsTrue(es.HasAccess(bannedUserId), "bannedUserID doesn't have access but should");
+            Assert.True(es.HasAccess(bannedUserId), "bannedUserID doesn't have access but should");
             es.RemoveEstateUser(bannedUserId);
 
             es.AddEstateManager(bannedUserId);
 
-            Assert.IsTrue(es.HasAccess(bannedUserId), "bannedUserID doesn't have access but should");
+            Assert.True(es.HasAccess(bannedUserId), "bannedUserID doesn't have access but should");
 
-            Assert.That(es.EstateGroups.Length == 0, "No Estate Groups Added..   so the array should be 0 length");
+            Assert.True(es.EstateGroups.Length == 0, "No Estate Groups Added..   so the array should be 0 length");
 
             es.AddEstateGroup(bannedUserId);
 
-            Assert.That(es.EstateGroups.Length == 1, "1 Estate Groups Added..   so the array should be 1 length");
+            Assert.True(es.EstateGroups.Length == 1, "1 Estate Groups Added..   so the array should be 1 length");
 
-            Assert.That(es.EstateGroups[0] == bannedUserId,"User ID should be in EstateGroups");
+            Assert.True(es.EstateGroups[0] == bannedUserId,"User ID should be in EstateGroups");
 
         }
 
-        [Test]
+        [Fact]
         public void InventoryFolderBaseConstructorTest01()
         {
             UUID uuid1 = UUID.Random();
             UUID uuid2 = UUID.Random();
 
             InventoryFolderBase fld = new InventoryFolderBase(uuid1);
-            Assert.That(fld.ID == uuid1, "ID constructor failed to save value in ID field.");
+            Assert.True(fld.ID == uuid1, "ID constructor failed to save value in ID field.");
 
             fld = new InventoryFolderBase(uuid1, uuid2);
-            Assert.That(fld.ID == uuid1, "ID,Owner constructor failed to save value in ID field.");
-            Assert.That(fld.Owner == uuid2, "ID,Owner constructor failed to save value in ID field.");
+            Assert.True(fld.ID == uuid1, "ID,Owner constructor failed to save value in ID field.");
+            Assert.True(fld.Owner == uuid2, "ID,Owner constructor failed to save value in ID field.");
         }
 
-        [Test]
+        [Fact]
         public void AsssetBaseConstructorTest01()
         {
             AssetBase abase = new AssetBase();
-            Assert.IsNotNull(abase.Metadata, "void constructor of AssetBase should have created a MetaData element but didn't.");
+            Assert.True(abase.Metadata != null, "void constructor of AssetBase should have created a MetaData element but didn't.");
             UUID itemID = UUID.Random();
             UUID creatorID = UUID.Random();
             abase = new AssetBase(itemID.ToString(), "test item", (sbyte) AssetType.Texture, creatorID.ToString());
 
-            Assert.IsNotNull(abase.Metadata, "string,string,sbyte,string constructor of AssetBase should have created a MetaData element but didn't.");
-            Assert.That(abase.ID == itemID.ToString(), "string,string,sbyte,string constructor failed to set ID property");
-            Assert.That(abase.Metadata.CreatorID == creatorID.ToString(), "string,string,sbyte,string constructor failed to set Creator ID");
+            Assert.True(abase.Metadata != null, "string,string,sbyte,string constructor of AssetBase should have created a MetaData element but didn't.");
+            Assert.True(abase.ID == itemID.ToString(), "string,string,sbyte,string constructor failed to set ID property");
+            Assert.True(abase.Metadata.CreatorID == creatorID.ToString(), "string,string,sbyte,string constructor failed to set Creator ID");
 
 
             abase = new AssetBase(itemID.ToString(), "test item", -1, creatorID.ToString());
-            Assert.IsNotNull(abase.Metadata, "string,string,sbyte,string constructor of AssetBase with unknown type should have created a MetaData element but didn't.");
-            Assert.That(abase.Metadata.Type == -1, "Unknown Type passed to string,string,sbyte,string constructor and was a known type when it came out again");
+            Assert.True(abase.Metadata != null, "string,string,sbyte,string constructor of AssetBase with unknown type should have created a MetaData element but didn't.");
+            Assert.True(abase.Metadata.Type == -1, "Unknown Type passed to string,string,sbyte,string constructor and was a known type when it came out again");
 
             AssetMetadata metts = new AssetMetadata();
             metts.FullID = itemID;
@@ -273,16 +267,16 @@ namespace OpenSim.Framework.Tests
             metts.Name = "test item";
             abase.Metadata = metts;
 
-            Assert.That(abase.ToString() == itemID.ToString(), "ToString is overriden to be fullID.ToString()");
-            Assert.That(abase.ID == itemID.ToString(),"ID should be MetaData.FullID.ToString() when string.empty or null is provided to the ID property");
+            Assert.True(abase.ToString() == itemID.ToString(), "ToString is overriden to be fullID.ToString()");
+            Assert.True(abase.ID == itemID.ToString(),"ID should be MetaData.FullID.ToString() when string.empty or null is provided to the ID property");
         }
 
-        [Test]
+        [Fact]
         public void CultureSetCultureTest01()
         {
             CultureInfo ci = new CultureInfo("en-US", false);
             Culture.SetCurrentCulture();
-            Assert.That(Thread.CurrentThread.CurrentCulture.Name == ci.Name, "SetCurrentCulture failed to set thread culture to en-US");
+            Assert.True(Thread.CurrentThread.CurrentCulture.Name == ci.Name, "SetCurrentCulture failed to set thread culture to en-US");
 
         }
     }

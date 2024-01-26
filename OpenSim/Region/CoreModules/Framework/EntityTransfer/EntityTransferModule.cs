@@ -236,7 +236,7 @@ namespace OpenSim.Region.CoreModules.Framework.EntityTransfer
             get { return "BasicEntityTransferModule"; }
         }
 
-        public virtual void Initialise(IConfigSource source)
+        public virtual void Initialise(IConfiguration source)
         {
             IConfig moduleConfig = source.Configs["Modules"];
             if (moduleConfig != null)
@@ -254,7 +254,7 @@ namespace OpenSim.Region.CoreModules.Framework.EntityTransfer
         /// Initialize config common for this module and any descendents.
         /// </summary>
         /// <param name="source"></param>
-        protected virtual void InitialiseCommon(IConfigSource source)
+        protected virtual void InitialiseCommon(IConfiguration source)
         {
             IConfig transferConfig = source.Configs["EntityTransfer"];
             if (transferConfig != null)

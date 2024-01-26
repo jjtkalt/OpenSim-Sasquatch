@@ -137,7 +137,7 @@ namespace OpenSim.Region.CoreModules.World.LegacyMap
         #endregion
 
         private Scene m_scene;
-        private IConfigSource m_config;
+        private IConfiguration m_config;
         private Color m_color_water;
         private Color m_color_1;
         private Color m_color_2;
@@ -151,7 +151,7 @@ namespace OpenSim.Region.CoreModules.World.LegacyMap
         private Dictionary<UUID, Color> m_mapping;
 
 
-        public void Initialise(Scene scene, IConfigSource source)
+        public void Initialise(Scene scene, IConfiguration source)
         {
             m_scene = scene;
             m_config = source;

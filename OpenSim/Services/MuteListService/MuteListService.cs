@@ -25,54 +25,49 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
 using System.Text;
 using OpenMetaverse;
-using log4net;
-using Nini.Config;
 using OpenSim.Services.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Data;
 using OpenSim.Framework;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.EstateService
 {
     public class MuteListService : ServiceBase, IMuteListService
     {
-//        private static readonly ILog m_log =
-//                LogManager.GetLogger(
-//                MethodBase.GetCurrentMethod().DeclaringType);
-
         protected IMuteListData m_database;
 
-        public MuteListService(IConfigSource config)
+        public MuteListService(IConfiguration config)
             : base(config)
         {
             string dllName = String.Empty;
             string connString = String.Empty;
 
             // Try reading the [DatabaseService] section, if it exists
-            IConfig dbConfig = config.Configs["DatabaseService"];
-            if (dbConfig != null)
+            var dbConfig = config.GetSection("DatabaseService");
+            if (dbConfig.Exists())
             {
-                dllName = dbConfig.GetString("StorageProvider", String.Empty);
-                connString = dbConfig.GetString("ConnectionString", String.Empty);
-                connString = dbConfig.GetString("MuteConnectionString", connString);
+                dllName = dbConfig.GetValue("StorageProvider", String.Empty);
+                connString = dbConfig.GetValue("ConnectionString", String.Empty);
+                connString = dbConfig.GetValue("MuteConnectionString", connString);
             }
 
             // Try reading the [MuteListStore] section, if it exists
-            IConfig muteConfig = config.Configs["MuteListStore"];
-            if (muteConfig != null)
+            var muteConfig = config.GetSection("MuteListStore");
+            if (muteConfig.Exists())
             {
-                dllName = muteConfig.GetString("StorageProvider", dllName);
-                connString = muteConfig.GetString("ConnectionString", connString);
+                dllName = muteConfig.GetValue("StorageProvider", dllName);
+                connString = muteConfig.GetValue("ConnectionString", connString);
             }
 
             // We tried, but this doesn't exist. We can't proceed
-            if (dllName.Length == 0)
+            if (string.IsNullOrEmpty(dllName))
                 throw new Exception("No StorageProvider configured");
 
             m_database = LoadPlugin<IMuteListData>(dllName, new Object[] { connString });
+            
             if (m_database == null)
                 throw new Exception("Could not find a storage interface in the given module");
         }

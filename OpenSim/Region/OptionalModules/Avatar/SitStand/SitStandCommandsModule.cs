@@ -48,7 +48,7 @@ namespace OpenSim.Region.OptionalModules.Avatar.SitStand
 
         public Type ReplaceableInterface { get { return null; } }
 
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
 //            m_log.DebugFormat("[ANIMATIONS COMMAND MODULE]: INITIALIZED MODULE");
         }

@@ -90,7 +90,7 @@ namespace OpenSim.Region.OptionalModules.Avatar.Voice.FreeSwitchVoice
 
         private IFreeswitchService m_FreeswitchService;
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             m_Config = config.Configs["FreeSwitchVoice"];
 

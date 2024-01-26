@@ -52,7 +52,7 @@ namespace OpenSim.Region.ClientStack.Linden
 
         #region INonSharedRegionModule Members
 
-        public void Initialise(IConfigSource pSource)
+        public void Initialise(IConfiguration pSource)
         {
             IConfig config = pSource.Configs["ClientStack.LindenCaps"];
             if (config == null)

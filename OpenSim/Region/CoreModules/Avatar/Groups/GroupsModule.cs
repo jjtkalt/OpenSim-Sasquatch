@@ -58,7 +58,7 @@ namespace OpenSim.Region.CoreModules.Avatar.Groups
 
         #region ISharedRegionModule Members
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             IConfig groupsConfig = config.Configs["Groups"];
 

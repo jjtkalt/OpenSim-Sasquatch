@@ -41,7 +41,7 @@ namespace OpenSim.Server.RegionServer
         /// <summary>
         /// A source of Configuration data
         /// </summary>
-        protected IConfigSource m_config;
+        protected IConfiguration m_config;
 
         /// <summary>
         /// Various Config settings the region needs to start
@@ -65,7 +65,7 @@ namespace OpenSim.Server.RegionServer
         /// <param name="configSettings"></param>
         /// <param name="networkInfo"></param>
         /// <returns>A configuration that gets passed to modules</returns>
-        public IConfigSource LoadConfigSettings(IConfigSource argvSource)
+        public IConfiguration LoadConfigSettings(IConfiguration argvSource)
         {
             bool iniFileExists = false;
 
@@ -167,7 +167,7 @@ namespace OpenSim.Server.RegionServer
 
                 if (overrideSources.Count > 0)
                 {
-                    IConfigSource overrideConfig = new IniConfigSource();
+                    IConfiguration overrideConfig = new IniConfigSource();
 
                     for (int i = 0; i < overrideSources.Count; i++)
                     {
@@ -230,7 +230,7 @@ namespace OpenSim.Server.RegionServer
         /// Adds the included files as ini configuration files
         /// </summary>
         /// <param name="sources">List of URL strings or filename strings</param>
-        private void AddIncludes(IConfigSource configSource, List<string> sources)
+        private void AddIncludes(IConfiguration configSource, List<string> sources)
         {
             //loop over config sources
             foreach (IConfig config in configSource.Configs)
@@ -301,7 +301,7 @@ namespace OpenSim.Server.RegionServer
         /// </summary>
         /// <param name="iniPath">Full path to the ini</param>
         /// <returns></returns>
-        private bool ReadConfig(IConfigSource configSource, string iniPath)
+        private bool ReadConfig(IConfiguration configSource, string iniPath)
         {
             bool success = false;
 

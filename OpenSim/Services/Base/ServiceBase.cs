@@ -32,6 +32,7 @@ using System.Reflection;
 using log4net;
 using Nini.Config;
 using OpenSim.Services.Interfaces;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.Base
 {
@@ -115,7 +116,7 @@ namespace OpenSim.Services.Base
             }
         }
 
-        public ServiceBase(IConfigSource config)
+        public ServiceBase(IConfiguration config)
         {
         }
     }

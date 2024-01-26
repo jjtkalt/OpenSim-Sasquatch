@@ -25,24 +25,17 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net.NetworkInformation;
 using System.Text;
-using System.Threading;
-using log4net;
-using Nini.Config;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using OpenMetaverse.StructuredData;
 
 namespace OpenSim.Framework.Monitoring
 {
     public class ServerStatsCollector
     {
-        private readonly ILog m_log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
-        private readonly string LogHeader = "[SERVER STATS]";
-
         public bool Enabled = false;
         private static Dictionary<string, Stat> RegisteredStats = new Dictionary<string, Stat>();
 
@@ -55,6 +48,17 @@ namespace OpenSim.Framework.Monitoring
         public readonly string ContainerProcess = "process";
 
         public string NetworkInterfaceTypes = "Ethernet";
+
+        private readonly IConfiguration m_Configuration;
+        private readonly ILogger<ServerStatsCollector> m_Logger;
+
+        public ServerStatsCollector(
+            IConfiguration configuration, 
+            ILogger<ServerStatsCollector> logger)
+        {
+            m_Configuration = configuration;
+            m_Logger = logger;
+        }
 
         //readonly int performanceCounterSampleInterval = 500;
         //int lastperformanceCounterSampleTime = 0;
@@ -80,19 +84,17 @@ namespace OpenSim.Framework.Monitoring
         */
 
         // IRegionModuleBase.Initialize
-        public void Initialise(IConfigSource source)
+        public void Initialise( )
         {
-            if (source == null)
-                return;
-
-            IConfig cfg = source.Configs["Monitoring"];
-
-            if (cfg != null)
-                Enabled = cfg.GetBoolean("ServerStatsEnabled", false);
+            var cfg = m_Configuration.GetSection("Monitoring");
+            if (cfg.Exists())
+            {
+                Enabled = cfg.GetValue<bool>("ServerStatsEnabled", false);
+            }
 
             if (Enabled)
             {
-                NetworkInterfaceTypes = cfg.GetString("NetworkInterfaceTypes", "Ethernet");
+                NetworkInterfaceTypes = cfg.GetValue("NetworkInterfaceTypes", "Ethernet");
             }
         }
 
@@ -117,6 +119,7 @@ namespace OpenSim.Framework.Monitoring
                     StatsManager.DeregisterStat(stat);
                     stat.Dispose();
                 }
+
                 RegisteredStats.Clear();
             }
         }
@@ -131,6 +134,7 @@ namespace OpenSim.Framework.Monitoring
             string desc = pDesc;
             if (desc == null)
                 desc = pName;
+
             Stat stat = new Stat(pName, pName, desc, pUnit, CategoryServer, pContainer, StatType.Pull, moi, act, StatVerbosity.Debug);
             StatsManager.RegisterStat(stat);
             RegisteredStats.Add(pName, stat);
@@ -169,7 +173,7 @@ namespace OpenSim.Framework.Monitoring
             }
             catch (Exception e)
             {
-                m_log.ErrorFormat("{0} Exception creating 'Process': {1}", LogHeader, e);
+                m_Logger.LogError(e, $"Exception creating 'Process'");
             }
 
             MakeStat("BuiltinThreadpoolWorkerThreadsAvailable", null, "threads", ContainerThreadpool,
@@ -211,6 +215,7 @@ namespace OpenSim.Framework.Monitoring
                 List<string> okInterfaceTypes = new List<string>(NetworkInterfaceTypes.Split(','));
 
                 IEnumerable<NetworkInterface> nics = NetworkInterface.GetAllNetworkInterfaces();
+
                 foreach (NetworkInterface nic in nics)
                 {
                     if (nic.OperationalStatus != OperationalStatus.Up)
@@ -219,16 +224,15 @@ namespace OpenSim.Framework.Monitoring
                     string nicInterfaceType = nic.NetworkInterfaceType.ToString();
                     if (!okInterfaceTypes.Contains(nicInterfaceType))
                     {
-                        m_log.DebugFormat("{0} Not including stats for network interface '{1}' of type '{2}'.",
-                                                LogHeader, nic.Name, nicInterfaceType);
-                        m_log.DebugFormat("{0}     To include, add to comma separated list in [Monitoring]NetworkInterfaceTypes={1}",
-                                                LogHeader, NetworkInterfaceTypes);
+                        m_Logger.LogDebug($"Not including stats for network interface '{nic.Name}' of type '{nicInterfaceType}'.");
+                        m_Logger.LogDebug($"To include, add to comma separated list in [Monitoring]NetworkInterfaceTypes={NetworkInterfaceTypes}");
                         continue;
                     }
 
                     if (nic.Supports(NetworkInterfaceComponent.IPv4))
                     {
                         IPv4InterfaceStatistics nicStats = nic.GetIPv4Statistics();
+
                         if (nicStats != null)
                         {
                             MakeStat("BytesRcvd/" + nic.Name, nic.Name, "KB", ContainerNetwork,
@@ -244,7 +248,7 @@ namespace OpenSim.Framework.Monitoring
             }
             catch (Exception e)
             {
-                m_log.ErrorFormat("{0} Exception creating 'Network Interface': {1}", LogHeader, e);
+                m_Logger.LogError(e, $"Exception creating 'Network Interface'");
             }
 
             MakeStat("ProcessMemory", null, "MB", ContainerMemory,
@@ -349,10 +353,10 @@ namespace OpenSim.Framework.Monitoring
                     break;
                 }
             }
-            catch
+            catch (Exception e)
             {
                 // There are times interfaces go away so we just won't update the stat for this
-                m_log.ErrorFormat("{0} Exception fetching stat on interface '{1}'", LogHeader, stat.Description);
+                m_Logger.LogError(e, $"Exception fetching stat on interface '{stat.Description}'");
             }
         }
     }

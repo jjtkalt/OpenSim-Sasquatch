@@ -93,7 +93,7 @@ namespace OpenSim.Region.OptionalModules.DataSnapshot
 
         #region Region Module interface
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             if (!m_configLoaded)
             {

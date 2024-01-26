@@ -25,13 +25,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using Nini.Config;
 using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Framework.ServiceAuth;
 using OpenSim.Server.Handlers.Base;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Server.Handlers.Presence
 {
@@ -40,17 +39,15 @@ namespace OpenSim.Server.Handlers.Presence
         private IPresenceService m_PresenceService;
         private string m_ConfigName = "PresenceService";
 
-        public PresenceServiceConnector(IConfigSource config, IHttpServer server, string configName) :
+        public PresenceServiceConnector(IConfiguration config, IHttpServer server, string configName) :
                 base(config, server, configName)
         {
-            IConfig serverConfig = config.Configs[m_ConfigName];
-            if (serverConfig == null)
+            var serverConfig = config.GetSection(m_ConfigName);
+            if (serverConfig.Exists() is false)
                 throw new Exception(String.Format("No section {0} in config file", m_ConfigName));
 
-            string gridService = serverConfig.GetString("LocalServiceModule",
-                    String.Empty);
-
-            if (gridService.Length == 0)
+            string gridService = serverConfig.GetValue("LocalServiceModule", String.Empty);
+            if (string.IsNullOrEmpty(gridService))
                 throw new Exception("No LocalServiceModule in config file");
 
             Object[] args = new Object[] { config };

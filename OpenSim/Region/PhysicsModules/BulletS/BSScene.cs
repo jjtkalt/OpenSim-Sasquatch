@@ -48,7 +48,7 @@ namespace OpenSim.Region.PhysicsModule.BulletS
         internal static readonly string LogHeader = "[BULLETS SCENE]";
 
         private bool m_Enabled = false;
-        private IConfigSource m_Config;
+        private IConfiguration m_Config;
 
         // The name of the region we're working for.
         public string RegionName { get; private set; }
@@ -214,7 +214,7 @@ namespace OpenSim.Region.PhysicsModule.BulletS
             get { return null; }
         }
 
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
             // TODO: Move this out of Startup
             IConfig config = source.Configs["Startup"];
@@ -289,7 +289,7 @@ namespace OpenSim.Region.PhysicsModule.BulletS
 
         #region Initialization
 
-        private void Initialise(IConfigSource config, Vector3 regionExtent)
+        private void Initialise(IConfiguration config, Vector3 regionExtent)
         {
             _taintOperations = new List<TaintCallbackEntry>();
             _postTaintOperations = new Dictionary<string, TaintCallbackEntry>();
@@ -365,7 +365,7 @@ namespace OpenSim.Region.PhysicsModule.BulletS
 
         // All default parameter values are set here. There should be no values set in the
         // variable definitions.
-        private void GetInitialParameterValues(IConfigSource config)
+        private void GetInitialParameterValues(IConfiguration config)
         {
             ConfigurationParameters parms = new ConfigurationParameters();
             UnmanagedParams[0] = parms;

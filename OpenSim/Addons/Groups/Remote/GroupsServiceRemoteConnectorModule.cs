@@ -53,7 +53,7 @@ namespace OpenSim.Groups
         {
         }
 
-        public GroupsServiceRemoteConnectorModule(IConfigSource config, IUserManagement uman)
+        public GroupsServiceRemoteConnectorModule(IConfiguration config, IUserManagement uman)
         {
             Init(config);
             m_UserManagement = uman;
@@ -62,7 +62,7 @@ namespace OpenSim.Groups
         }
         #endregion
 
-        private void Init(IConfigSource config)
+        private void Init(IConfiguration config)
         {
             m_GroupsService = new GroupsServiceRemoteConnector(config);
             m_Scenes = new List<Scene>();
@@ -71,7 +71,7 @@ namespace OpenSim.Groups
 
         #region ISharedRegionModule
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             IConfig groupsConfig = config.Configs["Groups"];
             if (groupsConfig == null)

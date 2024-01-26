@@ -25,38 +25,38 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using Nini.Config;
 using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework.ServiceAuth;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Server.Handlers.GridUser
 {
-    public class GridUserServiceConnector : ServiceConnector
+    public class GridUserServiceConnector : ServiceConnector, IServiceConnector
     {
         private IGridUserService m_GridUserService;
-        private string m_ConfigName = "GridUserService";
 
-        public GridUserServiceConnector(IConfigSource config, IHttpServer server, string configName) :
+        public GridUserServiceConnector(IConfiguration config, IHttpServer server) :
+                this(config, server, "GridUserService")
+        { }
+
+        public GridUserServiceConnector(IConfiguration config, IHttpServer server, string configName) :
                 base(config, server, configName)
         {
-            IConfig serverConfig = config.Configs[m_ConfigName];
-            if (serverConfig == null)
-                throw new Exception(String.Format("No section {0} in config file", m_ConfigName));
+            var serverConfig = config.GetSection(configName);
+            if (serverConfig.Exists() is false)
+                throw new Exception($"No section {configName} in config file");
 
-            string service = serverConfig.GetString("LocalServiceModule",
-                    String.Empty);
-
-            if (service.Length == 0)
+            string service = serverConfig.GetValue("LocalServiceModule", String.Empty);
+            if (string.IsNullOrEmpty(service))
                 throw new Exception("No LocalServiceModule in config file");
 
             Object[] args = new Object[] { config };
             m_GridUserService = ServerUtils.LoadPlugin<IGridUserService>(service, args);
 
-            IServiceAuth auth = ServiceAuth.Create(config, m_ConfigName);
+            IServiceAuth auth = ServiceAuth.Create(config, configName);
 
             server.AddStreamHandler(new GridUserServerPostHandler(m_GridUserService, auth));
         }

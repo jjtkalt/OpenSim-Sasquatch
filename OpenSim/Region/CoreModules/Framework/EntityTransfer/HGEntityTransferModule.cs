@@ -116,7 +116,7 @@ namespace OpenSim.Region.CoreModules.Framework.EntityTransfer
             get { return "HGEntityTransferModule"; }
         }
 
-        public override void Initialise(IConfigSource source)
+        public override void Initialise(IConfiguration source)
         {
             IConfig moduleConfig = source.Configs["Modules"];
 

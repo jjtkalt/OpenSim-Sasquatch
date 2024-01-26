@@ -3,6 +3,7 @@ using OpenSim.Framework;
 using OpenSim.Framework.ServiceAuth;
 
 using Nini.Config;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.Connectors
 {
@@ -12,12 +13,12 @@ namespace OpenSim.Services.Connectors
 
         public BaseServiceConnector() { }
 
-        public BaseServiceConnector(IConfigSource config, string section)
+        public BaseServiceConnector(IConfiguration config, string section)
         {
             Initialise(config, section);
         }
 
-        public void Initialise(IConfigSource config, string section)
+        public void Initialise(IConfiguration config, string section)
         {
             string authType = Util.GetConfigVarFromSections<string>(config, "AuthType", new string[] { "Network", section }, "None");
 

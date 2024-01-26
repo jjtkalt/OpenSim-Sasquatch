@@ -40,6 +40,7 @@ using OpenSim.Services.Connectors;
 using OpenSim.Services.Interfaces;
 using OpenSim.Server.Base;
 using System.Net.Http;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.Connectors
 {
@@ -53,28 +54,28 @@ namespace OpenSim.Services.Connectors
         private ExpiringCache<string, List<EstateSettings>> m_EstateCache = new ExpiringCache<string, List<EstateSettings>>();
         private const int EXPIRATION = 5 * 60; // 5 minutes in secs
 
-        public EstateDataRemoteConnector(IConfigSource source)
+        public EstateDataRemoteConnector(IConfiguration source)
         {
             Initialise(source);
         }
 
-        public virtual void Initialise(IConfigSource source)
+        public virtual void Initialise(IConfiguration source)
         {
-            IConfig gridConfig = source.Configs["EstateService"];
-            if (gridConfig == null)
+            var gridConfig = source.GetSection("EstateService");
+            if (gridConfig.Exists() is false)
             {
                 m_log.Error("[ESTATE CONNECTOR]: EstateService missing from OpenSim.ini");
                 throw new Exception("Estate connector init error");
             }
 
-            string serviceURI = gridConfig.GetString("EstateServerURI",
-                    String.Empty);
+            string serviceURI = gridConfig.GetValue("EstateServerURI", String.Empty);
 
-            if (serviceURI.Length == 0)
+            if (string.IsNullOrEmpty(serviceURI))
             {
                 m_log.Error("[ESTATE CONNECTOR]: No Server URI named in section EstateService");
                 throw new Exception("Estate connector init error");
             }
+
             m_ServerURI = serviceURI;
 
             base.Initialise(source, "EstateService");

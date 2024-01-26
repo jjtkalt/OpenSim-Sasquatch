@@ -68,7 +68,7 @@ namespace OpenSim.Server.RegionServer
 
         public static ConfigurationLoader ConfigLoader { get; set; }
 
-        public static IConfigSource Configuration { get; set; }
+        public static IConfiguration Configuration { get; set; }
         
         public static void Configure(string[] args)
         {

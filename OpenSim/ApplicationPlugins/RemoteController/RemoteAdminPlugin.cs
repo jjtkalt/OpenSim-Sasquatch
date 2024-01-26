@@ -67,11 +67,11 @@ namespace OpenSim.ApplicationPlugins.RemoteController
         private string m_version = "0.0";
         private string m_openSimVersion;
 
-        private IConfigSource _configuration;
+        private IConfiguration _configuration;
         private ILogger<RemoteAdminPlugin> _logger;
 
         public RemoteAdminPlugin(
-            IConfigSource configuration,
+            IConfiguration configuration,
             ILogger<RemoteAdminPlugin> logger)
         {
             _configuration = configuration;

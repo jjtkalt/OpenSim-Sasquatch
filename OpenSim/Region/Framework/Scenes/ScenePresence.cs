@@ -43,6 +43,7 @@ using OpenSim.Services.Interfaces;
 using TeleportFlags = OpenSim.Framework.Constants.TeleportFlags;
 
 using ACFlags = OpenMetaverse.AgentManager.ControlFlags;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Region.Framework.Scenes
 {
@@ -1179,10 +1180,10 @@ namespace OpenSim.Region.Framework.Scenes
 
             HealRate = 0.5f;
 
-            IConfig sconfig = m_scene.Config.Configs["EntityTransfer"];
-            if (sconfig != null)
+            var sconfig = m_scene.Config.GetSection("EntityTransfer");
+            if (sconfig.Exists())
             {
-                string lpb = sconfig.GetString("LandingPointBehavior", "LandingPointBehavior_OS");
+                string lpb = sconfig.GetValue<string>("LandingPointBehavior", "LandingPointBehavior_OS");
                 if (lpb == "LandingPointBehavior_SL")
                     m_LandingPointBehavior = LandingPointBehavior.SL;
             }

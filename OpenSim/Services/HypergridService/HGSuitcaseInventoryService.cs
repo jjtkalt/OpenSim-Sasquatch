@@ -63,7 +63,7 @@ namespace OpenSim.Services.HypergridService
         private ExpiringCache<UUID, List<XInventoryFolder>> m_SuitcaseTrees = new ExpiringCache<UUID, List<XInventoryFolder>>();
         private ExpiringCache<UUID, AvatarAppearance> m_Appearances = new ExpiringCache<UUID, AvatarAppearance>();
 
-        public HGSuitcaseInventoryService(IConfigSource config, string configName)
+        public HGSuitcaseInventoryService(IConfiguration config, string configName)
             : base(config, configName)
         {
             m_log.DebugFormat("[HG SUITCASE INVENTORY SERVICE]: Starting with config name {0}", configName);

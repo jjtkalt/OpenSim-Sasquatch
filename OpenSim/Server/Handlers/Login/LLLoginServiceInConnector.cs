@@ -35,22 +35,24 @@ using OpenSim.Services.Interfaces;
 using OpenSim.Framework;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Server.Handlers.Login
 {
-    public class LLLoginServiceInConnector : ServiceConnector
+    public class LLLoginServiceInConnector : ServiceConnector, IServiceConnector
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         private ILoginService m_LoginService;
         private bool m_Proxy;
         private BasicDosProtectorOptions m_DosProtectionOptions;
+        private static string _configName = "LoginService";
 
-        public LLLoginServiceInConnector(IConfigSource config, IHttpServer server, IScene scene) :
-                base(config, server, String.Empty)
+        public LLLoginServiceInConnector(IConfiguration config, IHttpServer server, IScene scene) :
+                base(config, server, _configName)
         {
             m_log.Debug("[LLLOGIN IN CONNECTOR]: Starting...");
-            string loginService = ReadLocalServiceFromConfig(config);
+            string loginService = ReadLocalServiceFromConfig(config, _configName);
 
             ISimulationService simService = scene.RequestModuleInterface<ISimulationService>();
             ILibraryService libService = scene.RequestModuleInterface<ILibraryService>();
@@ -61,10 +63,10 @@ namespace OpenSim.Server.Handlers.Login
             InitializeHandlers(server);
         }
 
-        public LLLoginServiceInConnector(IConfigSource config, IHttpServer server, string configName) :
+        public LLLoginServiceInConnector(IConfiguration config, IHttpServer server, string configName) :
             base(config, server, configName)
         {
-            string loginService = ReadLocalServiceFromConfig(config);
+            string loginService = ReadLocalServiceFromConfig(config, configName);
 
             Object[] args = new Object[] { config };
 
@@ -73,32 +75,31 @@ namespace OpenSim.Server.Handlers.Login
             InitializeHandlers(server);
         }
 
-        public LLLoginServiceInConnector(IConfigSource config, IHttpServer server) :
-            this(config, server, String.Empty)
-        {
-        }
+        public LLLoginServiceInConnector(IConfiguration config, IHttpServer server) :
+            this(config, server, _configName)
+        { }
 
-        private string ReadLocalServiceFromConfig(IConfigSource config)
+        private string ReadLocalServiceFromConfig(IConfiguration config, string configName)
         {
-            IConfig serverConfig = config.Configs["LoginService"];
-            if (serverConfig == null)
-                throw new Exception(String.Format("No section LoginService in config file"));
+            var serverConfig = config.GetSection(configName);
+            if (serverConfig.Exists() is false)
+                throw new Exception($"No section LoginService in config file");
 
-            string loginService = serverConfig.GetString("LocalServiceModule", String.Empty);
-            if (loginService.Length == 0)
+            string loginService = serverConfig.GetValue("LocalServiceModule", String.Empty);
+            if (string.IsNullOrEmpty(loginService))
                 throw new Exception(String.Format("No LocalServiceModule for LoginService in config file"));
 
-            m_Proxy = serverConfig.GetBoolean("HasProxy", false);
+            m_Proxy = serverConfig.GetValue<bool>("HasProxy", false);
             m_DosProtectionOptions = new BasicDosProtectorOptions();
-            // Dos Protection Options
-            m_DosProtectionOptions.AllowXForwardedFor = serverConfig.GetBoolean("DOSAllowXForwardedForHeader", false);
-            m_DosProtectionOptions.RequestTimeSpan =
-                TimeSpan.FromMilliseconds(serverConfig.GetInt("DOSRequestTimeFrameMS", 10000));
-            m_DosProtectionOptions.MaxRequestsInTimeframe = serverConfig.GetInt("DOSMaxRequestsInTimeFrame", 5);
-            m_DosProtectionOptions.ForgetTimeSpan =
-                TimeSpan.FromMilliseconds(serverConfig.GetInt("DOSForgiveClientAfterMS", 120000));
-            m_DosProtectionOptions.ReportingName = "LOGINDOSPROTECTION";
 
+            // Dos Protection Options
+            m_DosProtectionOptions.AllowXForwardedFor = serverConfig.GetValue<bool>("DOSAllowXForwardedForHeader", false);
+            m_DosProtectionOptions.RequestTimeSpan =
+                TimeSpan.FromMilliseconds(serverConfig.GetValue<int>("DOSRequestTimeFrameMS", 10000));
+            m_DosProtectionOptions.MaxRequestsInTimeframe = serverConfig.GetValue<int>("DOSMaxRequestsInTimeFrame", 5);
+            m_DosProtectionOptions.ForgetTimeSpan =
+                TimeSpan.FromMilliseconds(serverConfig.GetValue<int>("DOSForgiveClientAfterMS", 120000));
+            m_DosProtectionOptions.ReportingName = "LOGINDOSPROTECTION";
 
             return loginService;
         }

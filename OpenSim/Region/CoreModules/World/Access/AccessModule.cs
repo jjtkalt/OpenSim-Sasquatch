@@ -38,7 +38,7 @@ namespace OpenSim.Region.CoreModules.World
 
         private List<Scene> m_SceneList = new List<Scene>();
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             MainConsole.Instance.Commands.AddCommand("Users", true,
                     "login enable",

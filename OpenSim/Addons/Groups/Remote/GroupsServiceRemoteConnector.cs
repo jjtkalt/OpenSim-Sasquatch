@@ -49,7 +49,7 @@ namespace OpenSim.Groups
         private IServiceAuth m_Auth;
         private object m_Lock = new object();
 
-        public GroupsServiceRemoteConnector(IConfigSource config)
+        public GroupsServiceRemoteConnector(IConfiguration config)
         {
             IConfig groupsConfig = config.Configs["Groups"];
             string url = groupsConfig.GetString("GroupsServerURI", string.Empty);

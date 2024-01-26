@@ -2,12 +2,12 @@
  * AJLDuarte 2012
  */
 
-using System;
 using OpenSim.Framework;
 using OpenSim.Region.PhysicsModules.SharedBase;
-using log4net;
-using Nini.Config;
 using OpenMetaverse;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Region.PhysicsModule.ubOde
 {
@@ -63,9 +63,8 @@ namespace OpenSim.Region.PhysicsModule.ubOde
 
     public class ODEMeshWorker
     {
-        private readonly ILog m_log;
-        private readonly ODEScene m_scene;
-        private readonly IMesher m_mesher;
+        private ODEScene m_scene;
+        private IMesher m_mesher;
 
         public bool meshSculptedPrim = true;
         public float meshSculptLOD = 32;
@@ -78,20 +77,34 @@ namespace OpenSim.Region.PhysicsModule.ubOde
 
         private readonly object m_threadLock = new();
 
-        public ODEMeshWorker(ODEScene pScene, ILog pLog, IMesher pMesher, IConfig pConfig)
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<ODEMeshWorker> m_logger;
+
+        public ODEMeshWorker(
+            IConfiguration configuration, 
+            ILogger<ODEMeshWorker> logger
+            )   
+        {
+            m_configuration = configuration;
+            m_logger = logger;
+
+            var physicsconfig = m_configuration.GetSection("ODEPhysicsSettings");
+            if (physicsconfig.Exists())
+            {
+                meshSculptedPrim = physicsconfig.GetValue<bool>("mesh_sculpted_prim", meshSculptedPrim);
+                meshSculptLOD = physicsconfig.GetValue<float>("mesh_lod", meshSculptLOD);
+                MinSizeToMeshmerize =  physicsconfig.GetValue<float>("mesh_min_size", MinSizeToMeshmerize);
+                MeshSculptphysicalLOD = physicsconfig.GetValue<float>("mesh_physical_lod", MeshSculptphysicalLOD);
+            }
+        }
+
+        public void Initialize(ODEScene pScene, IMesher pMesher)
         {
             m_scene = pScene;
-            m_log = pLog;
             m_mesher = pMesher;
 
-            if (pConfig is not null)
-            {
-                meshSculptedPrim = pConfig.GetBoolean("mesh_sculpted_prim", meshSculptedPrim);
-                meshSculptLOD = pConfig.GetFloat("mesh_lod", meshSculptLOD);
-                MinSizeToMeshmerize =  pConfig.GetFloat("mesh_min_size", MinSizeToMeshmerize);
-                MeshSculptphysicalLOD = pConfig.GetFloat("mesh_physical_lod", MeshSculptphysicalLOD);
-            }
             m_running = true;
+
             Util.FireAndForget(DoCacheExpire, null, "OdeCacheExpire", false);
             lock(m_threadLock)
             {
@@ -212,8 +225,8 @@ namespace OpenSim.Region.PhysicsModule.ubOde
 
                 if (vertexCount == 0 || indexCount == 0)
                 {
-                    m_log.WarnFormat("[PHYSICS]: Invalid mesh data on prim {0} mesh UUID {1}",
-                        repData.actor.Name, repData.pbs.SculptTexture.ToString());
+                    m_logger.LogWarning($"Invalid mesh data on prim {repData.actor.Name} mesh UUID {repData.pbs.SculptTexture}");
+
                     repData.meshState = MeshState.MeshFailed;
                     repData.hasOBB = false;
                     repData.mesh = null;
@@ -271,7 +284,8 @@ namespace OpenSim.Region.PhysicsModule.ubOde
             RequestAssetDelegate assetProvider = m_scene.RequestAssetMethod;
             if (assetProvider is null)
                 return;
-            ODEAssetRequest asr = new(this, assetProvider, repData, m_log);
+
+            ODEAssetRequest asr = new(this, assetProvider, repData, m_logger);
         }
 
 
@@ -873,14 +887,17 @@ namespace OpenSim.Region.PhysicsModule.ubOde
     public class ODEAssetRequest
     {
         private readonly ODEMeshWorker m_worker;
-        private readonly ILog m_log;
+        private readonly ILogger<ODEMeshWorker> m_logger;
         private readonly ODEPhysRepData repData;
 
-        public ODEAssetRequest(ODEMeshWorker pWorker, RequestAssetDelegate provider,
-            ODEPhysRepData pRepData, ILog plog)
+        public ODEAssetRequest(
+            ODEMeshWorker pWorker, 
+            RequestAssetDelegate provider,
+            ODEPhysRepData pRepData, 
+            ILogger<ODEMeshWorker> plog)
         {
             m_worker = pWorker;
-            m_log = plog;
+            m_logger = plog;
             repData = pRepData;
 
             repData.meshState = MeshState.loadingAsset;
@@ -908,12 +925,14 @@ namespace OpenSim.Region.PhysicsModule.ubOde
                     m_worker.AssetLoaded(repData);
                 }
                 else
-                    m_log.WarnFormat("[PHYSICS]: asset provider returned invalid mesh data for prim {0} asset UUID {1}.",
-                        repData.actor.Name, asset.ID.ToString());
+                {
+                    m_logger.LogWarning($"Asset provider returned invalid mesh data for prim {repData.actor.Name} asset UUID {asset.ID}.");
+                }
             }
             else
-                m_log.WarnFormat("[PHYSICS]: asset provider returned null asset for mesh of prim {0}.",
-                    repData.actor.Name);
+            {
+                m_logger.LogWarning($"Asset provider returned null asset for mesh of prim {repData.actor.Name}.");
+            }
         }
     }
 }

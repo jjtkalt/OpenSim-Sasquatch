@@ -31,32 +31,31 @@ using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Server.Handlers.Authorization
 {
-    public class AuthorizationServerConnector : ServiceConnector
+    public class AuthorizationServerConnector : ServiceConnector, IServiceConnector
     {
         private IAuthorizationService m_AuthorizationService;
-        private string m_ConfigName = "AuthorizationService";
 
-        public AuthorizationServerConnector(IConfigSource config, IHttpServer server, string configName) :
+        public AuthorizationServerConnector(IConfiguration config, IHttpServer server) :
+                this(config, server, "AuthorizationService")
+        { }
+
+        public AuthorizationServerConnector(IConfiguration config, IHttpServer server, string configName) :
                 base(config, server, configName)
         {
-            if (configName != String.Empty)
-                m_ConfigName = configName;
-            IConfig serverConfig = config.Configs[m_ConfigName];
-            if (serverConfig == null)
-                throw new Exception(String.Format("No section '{0}' in config file", m_ConfigName));
+            var serverConfig = config.GetSection(configName);
+            if (serverConfig.Exists() is false)
+                throw new Exception($"No section {configName} in config file");
 
-            string authorizationService = serverConfig.GetString("LocalServiceModule",
-                    String.Empty);
-
-            if (authorizationService.Length == 0)
+            string authorizationService = serverConfig.GetValue<string>("LocalServiceModule", String.Empty);
+            if (string.IsNullOrEmpty(authorizationService))
                 throw new Exception("No AuthorizationService in config file");
 
             Object[] args = new Object[] { config };
-            m_AuthorizationService =
-                    ServerUtils.LoadPlugin<IAuthorizationService>(authorizationService, args);
+            m_AuthorizationService = ServerUtils.LoadPlugin<IAuthorizationService>(authorizationService, args);
 
             server.AddStreamHandler(new AuthorizationServerPostHandler(m_AuthorizationService));
         }

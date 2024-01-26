@@ -135,7 +135,7 @@ namespace OpenSim.Region.CoreModules.World.WorldMap
         }
 
         #region INonSharedRegionModule Members
-        public virtual void Initialise(IConfigSource config)
+        public virtual void Initialise(IConfiguration config)
         {
             string[] configSections = new string[] { "Map", "Startup" };
 

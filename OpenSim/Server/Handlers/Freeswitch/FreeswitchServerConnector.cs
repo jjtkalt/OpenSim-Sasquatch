@@ -25,48 +25,42 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
 using System.Collections;
 using System.Web;
 using System.Reflection;
-using Nini.Config;
 using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
 using log4net;
-using OpenMetaverse;
-using OpenMetaverse.StructuredData;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Server.Handlers.Freeswitch
 {
-    public class FreeswitchServerConnector : ServiceConnector
+    public class FreeswitchServerConnector : ServiceConnector, IServiceConnector
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         private IFreeswitchService m_FreeswitchService;
-        private string m_ConfigName = "FreeswitchService";
         protected readonly string m_freeSwitchAPIPrefix = "/fsapi";
 
-        public FreeswitchServerConnector(IConfigSource config, IHttpServer server, string configName) :
+        public FreeswitchServerConnector(IConfiguration config, IHttpServer server) :
+                this(config, server, "FreeswitchService")
+        { }
+
+        public FreeswitchServerConnector(IConfiguration config, IHttpServer server, string configName) :
                 base(config, server, configName)
         {
-            if (configName != String.Empty)
-                m_ConfigName = configName;
+            var serverConfig = config.GetSection(configName);
+            if (serverConfig.Exists() is false)
+                throw new Exception($"No section {configName} in config file");
 
-            IConfig serverConfig = config.Configs[m_ConfigName];
-            if (serverConfig == null)
-                throw new Exception(String.Format("No section '{0}' in config file", m_ConfigName));
-
-            string freeswitchService = serverConfig.GetString("LocalServiceModule",
-                    String.Empty);
-
-            if (freeswitchService.Length == 0)
+            string freeswitchService = serverConfig.GetValue<string>("LocalServiceModule", String.Empty);
+            if (string.IsNullOrEmpty(freeswitchService))
                 throw new Exception("No LocalServiceModule in config file");
 
             Object[] args = new Object[] { config };
-            m_FreeswitchService =
-                    ServerUtils.LoadPlugin<IFreeswitchService>(freeswitchService, args);
+            m_FreeswitchService = ServerUtils.LoadPlugin<IFreeswitchService>(freeswitchService, args);
 
             server.AddHTTPHandler(String.Format("{0}/freeswitch-config", m_freeSwitchAPIPrefix), FreeSwitchConfigHTTPHandler);
             server.AddHTTPHandler(String.Format("{0}/region-config", m_freeSwitchAPIPrefix), RegionConfigHTTPHandler);

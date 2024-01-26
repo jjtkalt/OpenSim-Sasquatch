@@ -25,59 +25,54 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using log4net;
-using System;
-using System.IO;
 using System.Collections;
-using System.Reflection;
-using Nini.Config;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using OpenSim.Framework;
 
 using OpenSim.Services.Interfaces;
-using OpenSim.Server.Base;
-using OpenMetaverse;
 
 namespace OpenSim.Services.Connectors
 {
     public class RemoteFreeswitchConnector : IFreeswitchService
     {
-        private static readonly ILog m_log =
-                LogManager.GetLogger(
-                MethodBase.GetCurrentMethod().DeclaringType);
-
         private string m_ServerURI = String.Empty;
 
-        public RemoteFreeswitchConnector()
-        {
-        }
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<RemoteFreeswitchConnector> m_logger;
 
-        public RemoteFreeswitchConnector(string serverURI)
+        public RemoteFreeswitchConnector(
+            IConfiguration configuration, 
+            ILogger<RemoteFreeswitchConnector> logger,
+            string serverURI)
+            : this(configuration, logger)
         {
             m_ServerURI = serverURI.TrimEnd('/') + "/region-config";
         }
 
-        public RemoteFreeswitchConnector(IConfigSource source)
+        public RemoteFreeswitchConnector(
+            IConfiguration configuration, 
+            ILogger<RemoteFreeswitchConnector> logger)
         {
-            Initialise(source);
+            Initialise();
         }
 
-        public virtual void Initialise(IConfigSource source)
+        public virtual void Initialise()
         {
-            IConfig freeswitchConfig = source.Configs["FreeSwitchVoice"];
-            if (freeswitchConfig == null)
+            var freeswitchConfig = m_configuration.GetSection("FreeSwitchVoice");
+            if (freeswitchConfig.Exists() is false)
             {
-                m_log.Error("[FREESWITCH CONNECTOR]: FreeSwitchVoice missing from OpenSim.ini");
+                m_logger.LogError("FreeSwitchVoice missing from OpenSim.ini");
                 throw new Exception("Freeswitch connector init error");
             }
 
-            string serviceURI = freeswitchConfig.GetString("FreeswitchServiceURL",
-                    String.Empty);
-
-            if (serviceURI.Length == 0)
+            string serviceURI = freeswitchConfig.GetValue("FreeswitchServiceURL", String.Empty);
+            if (string.IsNullOrEmpty(serviceURI))
             {
-                m_log.Error("[FREESWITCH CONNECTOR]: No FreeswitchServiceURL named in section FreeSwitchVoice");
+                m_logger.LogError("No FreeswitchServiceURL named in section FreeSwitchVoice");
                 throw new Exception("Freeswitch connector init error");
             }
+
             m_ServerURI = serviceURI.TrimEnd('/') + "/region-config";
         }
 
@@ -95,9 +90,8 @@ namespace OpenSim.Services.Connectors
 
         public string GetJsonConfig()
         {
-            m_log.DebugFormat("[FREESWITCH CONNECTOR]: Requesting config from {0}", m_ServerURI);
-            return SynchronousRestFormsRequester.MakeRequest("GET",
-                    m_ServerURI, String.Empty);
+            m_logger.LogDebug($"Requesting config from {m_ServerURI}");
+            return SynchronousRestFormsRequester.MakeRequest("GET", m_ServerURI, String.Empty);
         }
     }
 }

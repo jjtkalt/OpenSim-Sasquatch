@@ -25,18 +25,15 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
 using System.Reflection;
-using Nini.Config;
 using OpenSim.Data;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework;
 using OpenSim.Framework.Console;
-using GridRegion = OpenSim.Services.Interfaces.GridRegion;
 
 using OpenMetaverse;
 using log4net;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.UserAccountService
 {
@@ -45,7 +42,7 @@ namespace OpenSim.Services.UserAccountService
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
         private static bool m_Initialized;
 
-        public GridUserService(IConfigSource config) : base(config)
+        public GridUserService(IConfiguration config) : base(config)
         {
             m_log.Debug("[GRID USER SERVICE]: Starting user grid service");
 

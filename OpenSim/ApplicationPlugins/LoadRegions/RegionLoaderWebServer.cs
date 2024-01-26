@@ -40,9 +40,9 @@ namespace OpenSim.ApplicationPlugins.LoadRegions
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
-        private IConfigSource m_configSource;
+        private IConfiguration m_configSource;
 
-        public void SetIniConfigSource(IConfigSource configSource)
+        public void SetIniConfigSource(IConfiguration configSource)
         {
             m_configSource = configSource;
         }

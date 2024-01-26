@@ -51,7 +51,7 @@ namespace OpenSim.Region.CoreModules.World.Land
 
         #region INonSharedRegionModule Members
 
-        public override void Initialise(IConfigSource source)
+        public override void Initialise(IConfiguration source)
         {
             string[] configSections = new string[] { "Map", "Startup" };
             if (Util.GetConfigVarFromSections<string>(

@@ -88,19 +88,19 @@ namespace OpenSim.Region.CoreModules.ServiceConnectorsOut.Inventory
             m_RemoteConnector = new XInventoryServicesConnector(url);
         }
 
-        public RemoteXInventoryServicesConnector(IConfigSource source)
+        public RemoteXInventoryServicesConnector(IConfiguration source)
         {
             Init(source);
         }
 
-        protected void Init(IConfigSource source)
+        protected void Init(IConfiguration source)
         {
             m_RemoteConnector = new XInventoryServicesConnector(source);
         }
 
         #region ISharedRegionModule
 
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
             IConfig moduleConfig = source.Configs["Modules"];
             if (moduleConfig != null)

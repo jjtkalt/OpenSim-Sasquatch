@@ -36,11 +36,6 @@
     <ProjectReference Include="..\..\Services\UserAccountService\OpenSim.Services.UserAccountService.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Remove="Asset\Tests\AssetServerPostHandlerTests.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="Autofac" Version="7.1.0" />
-    <PackageReference Include="log4net" Version="2.0.15" />
-    <PackageReference Include="RawScape.Nini" Version="1.0.0" />
   </ItemGroup>
 </Project>

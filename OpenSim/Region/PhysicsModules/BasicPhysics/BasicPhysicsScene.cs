@@ -25,12 +25,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using Nini.Config;
 using OpenMetaverse;
 using OpenSim.Framework;
 using OpenSim.Region.PhysicsModules.SharedBase;
 using OpenSim.Region.Framework.Scenes;
 using OpenSim.Region.Framework.Interfaces;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Region.PhysicsModule.BasicPhysics
 {
@@ -50,6 +52,18 @@ namespace OpenSim.Region.PhysicsModule.BasicPhysics
 
         private bool m_Enabled = false;
 
+        protected readonly IConfiguration m_configuration;
+        protected readonly ILogger<BasicScene> m_logger;
+
+        public BasicScene(
+            IConfiguration configuration,
+            ILogger<BasicScene> logger
+            )
+        {
+            m_configuration = configuration;
+            m_logger = logger;
+        }
+
         //protected internal string sceneIdentifier;
         #region INonSharedRegionModule
         public string Name
@@ -67,17 +81,16 @@ namespace OpenSim.Region.PhysicsModule.BasicPhysics
             get { return null; }
         }
 
-        public void Initialise(IConfigSource source)
+        public void Initialise()
         {
             // TODO: Move this out of Startup
-            IConfig config = source.Configs["Startup"];
-            if (config != null)
+            var config = m_configuration.GetSection("Startup");
+            if (config.Exists())
             {
-                string physics = config.GetString("physics", string.Empty);
+                string physics = config.GetValue("physics", string.Empty);
                 if (physics == Name)
                     m_Enabled = true;
             }
-
         }
 
         public void Close()

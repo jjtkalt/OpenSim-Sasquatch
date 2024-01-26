@@ -42,41 +42,39 @@ using GridRegion = OpenSim.Services.Interfaces.GridRegion;
 using log4net;
 using Nwc.XmlRpc;
 using OpenMetaverse;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Server.Handlers.Hypergrid
 {
-    public class InstantMessageServerConnector : ServiceConnector
+    public class InstantMessageServerConnector : ServiceConnector, IServiceConnector
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         private IInstantMessage m_IMService;
 
-        public InstantMessageServerConnector(IConfigSource config, IHttpServer server) :
+        private static string _configName = "HGInstantMessageService";
+
+        public InstantMessageServerConnector(IConfiguration config, IHttpServer server) :
             this(config, server, (IInstantMessageSimConnector)null)
         {
         }
 
-        public InstantMessageServerConnector(IConfigSource config, IHttpServer server, string configName) :
-            this(config, server)
+        public InstantMessageServerConnector(IConfiguration config, IHttpServer server, IInstantMessageSimConnector simConnector) :
+                base(config, server, _configName)
         {
-        }
-
-        public InstantMessageServerConnector(IConfigSource config, IHttpServer server, IInstantMessageSimConnector simConnector) :
-                base(config, server, String.Empty)
-        {
-            IConfig gridConfig = config.Configs["HGInstantMessageService"];
-            if (gridConfig != null)
+            var gridConfig = config.GetSection(_configName);
+            if (gridConfig.Exists())
             {
-                string serviceDll = gridConfig.GetString("LocalServiceModule", string.Empty);
+                string serviceDll = gridConfig.GetValue("LocalServiceModule", string.Empty);
 
                 Object[] args = new Object[] { config, simConnector };
                 m_IMService = ServerUtils.LoadPlugin<IInstantMessage>(serviceDll, args);
             }
+
             if (m_IMService == null)
                 throw new Exception("InstantMessage server connector cannot proceed because of missing service");
 
             server.AddXmlRPCHandler("grid_instant_message", ProcessInstantMessage, false);
-
         }
 
         public IInstantMessage GetService()

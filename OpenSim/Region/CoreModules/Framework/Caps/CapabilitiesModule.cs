@@ -62,7 +62,7 @@ namespace OpenSim.Region.CoreModules.Framework
         protected Dictionary<UUID, Dictionary<ulong, string>> m_childrenSeeds
             = new Dictionary<UUID, Dictionary<ulong, string>>();
 
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
         }
 

@@ -25,32 +25,27 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Reflection;
-using NUnit.Framework;
-using OpenMetaverse;
-using OpenMetaverse.StructuredData;
+using Xunit;
 using OpenSim.Framework;
-using OpenSim.Tests.Common;
+using OpenMetaverse;
 
 namespace OpenSim.Framework.Tests
 {
-    [TestFixture]
-    public class PrimeNumberHelperTests : OpenSimTestCase
+        public class PrimeNumberHelperTests
     {
-        [Test]
+        [Fact]
         public void TestGetPrime()
         {
             int prime1 = PrimeNumberHelper.GetPrime(7919);
-            Assert.That(prime1 == 8419, "Prime Number Get Prime Failed, 7919 is prime");
-            Assert.That(PrimeNumberHelper.IsPrime(prime1),"Prime1 should be prime");
-            Assert.That(PrimeNumberHelper.IsPrime(7919), "7919 is prime but is falsely failing the prime test");
+            Assert.True(prime1 == 8419, "Prime Number Get Prime Failed, 7919 is prime");
+            Assert.True(PrimeNumberHelper.IsPrime(prime1),"Prime1 should be prime");
+            Assert.True(PrimeNumberHelper.IsPrime(7919), "7919 is prime but is falsely failing the prime test");
             prime1 = PrimeNumberHelper.GetPrime(Int32.MaxValue - 1);
-            Assert.That(prime1 == -1, "prime1 should have been -1 since there are no primes between Int32.MaxValue-1 and Int32.MaxValue");
+            Assert.True(prime1 == -1, "prime1 should have been -1 since there are no primes between Int32.MaxValue-1 and Int32.MaxValue");
 
         }
 
-        [Test]
+        [Fact]
         public void Test1000SmallPrimeNumbers()
         {
             int[] primes = {
@@ -122,7 +117,7 @@ namespace OpenSim.Framework.Tests
                            };
             for (int i = 0; i < primes.Length; i++)
             {
-                Assert.That(PrimeNumberHelper.IsPrime(primes[i]),primes[i] + " is prime but is erroniously failing the prime test");
+                Assert.True(PrimeNumberHelper.IsPrime(primes[i]),primes[i] + " is prime but is erroniously failing the prime test");
             }
 
             int[] nonprimes = {
@@ -135,10 +130,10 @@ namespace OpenSim.Framework.Tests
                            };
             for (int i = 0; i < nonprimes.Length; i++)
             {
-                Assert.That(!PrimeNumberHelper.IsPrime(nonprimes[i]), nonprimes[i] + " is not prime but is erroniously passing the prime test");
+                Assert.True(!PrimeNumberHelper.IsPrime(nonprimes[i]), nonprimes[i] + " is not prime but is erroniously passing the prime test");
             }
 
-            Assert.That(PrimeNumberHelper.IsPrime(3));
+            Assert.True(PrimeNumberHelper.IsPrime(3));
         }
     }
 }

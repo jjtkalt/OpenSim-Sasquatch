@@ -72,7 +72,7 @@ namespace OpenSim.Region.ScriptEngine.Yengine
         public bool m_ScriptDebugSaveSource;
         public bool m_ScriptDebugSaveIL;
         public Scene m_Scene;
-        private IConfigSource m_ConfigSource;
+        private IConfiguration m_ConfigSource;
         private IConfig m_Config;
         private string m_ScriptBasePath;
         private bool m_Enabled = false;
@@ -168,7 +168,7 @@ namespace OpenSim.Region.ScriptEngine.Yengine
             }
         }
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             TraceCalls("[YEngine]: Initialize entry");
             m_ConfigSource = config;
@@ -1050,7 +1050,7 @@ namespace OpenSim.Region.ScriptEngine.Yengine
             }
         }
 
-        public IConfigSource ConfigSource
+        public IConfiguration ConfigSource
         {
             get
             {

@@ -53,7 +53,7 @@ namespace OpenSim.Region.OptionalModules.ViewerSupport
             get { return null; }
         }
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
         }
 

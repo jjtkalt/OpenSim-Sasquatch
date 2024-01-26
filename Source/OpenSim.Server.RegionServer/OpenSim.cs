@@ -76,16 +76,16 @@ namespace OpenSim.Server.RegionServer
         private string m_timedScript = "disabled";
         private int m_timeInterval = 1200;
 
-        private IConfigSource _configuration;
+        private IConfiguration _configuration;
         private IServiceProvider _provider;
 
-        public OpenSim(IServiceProvider provider, IConfigSource configSource) : base(configSource)
+        public OpenSim(IServiceProvider provider, IConfiguration configSource) : base(configSource)
         {
             _configuration = configSource;
             _provider = provider;
         }
 
-        public OpenSim(IConfigSource configSource) : base(configSource)
+        public OpenSim(IConfiguration configSource) : base(configSource)
         {
         }
 

@@ -50,7 +50,7 @@ namespace OpenSim.OfflineIM
         private IOfflineIMService m_OfflineIMService;
         private string m_ConfigName = "Messaging";
 
-        public OfflineIMServiceRobustConnector(IConfigSource config, IHttpServer server, string configName) :
+        public OfflineIMServiceRobustConnector(IConfiguration config, IHttpServer server, string configName) :
             base(config, server, configName)
         {
             if (configName != String.Empty)

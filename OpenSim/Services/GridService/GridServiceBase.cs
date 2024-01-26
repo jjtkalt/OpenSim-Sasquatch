@@ -25,13 +25,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Reflection;
-using Nini.Config;
-using OpenSim.Framework;
 using OpenSim.Data;
-using OpenSim.Services.Interfaces;
 using OpenSim.Services.Base;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.GridService
 {
@@ -39,7 +35,7 @@ namespace OpenSim.Services.GridService
     {
         protected IRegionData m_Database = null;
 
-        public GridServiceBase(IConfigSource config)
+        public GridServiceBase(IConfiguration config)
             : base(config)
         {
             string dllName = String.Empty;
@@ -49,24 +45,24 @@ namespace OpenSim.Services.GridService
             //
             // Try reading the [DatabaseService] section, if it exists
             //
-            IConfig dbConfig = config.Configs["DatabaseService"];
-            if (dbConfig != null)
+            var dbConfig = config.GetSection("DatabaseService");
+            if (dbConfig.Exists())
             {
-                if (dllName.Length == 0)
-                    dllName = dbConfig.GetString("StorageProvider", String.Empty);
-                if (connString.Length == 0)
-                    connString = dbConfig.GetString("ConnectionString", String.Empty);
+                if (string.IsNullOrEmpty(dllName))
+                    dllName = dbConfig.GetValue("StorageProvider", String.Empty);
+                if (string.IsNullOrEmpty(connString))
+                    connString = dbConfig.GetValue("ConnectionString", String.Empty);
             }
 
             //
             // [GridService] section overrides [DatabaseService], if it exists
             //
-            IConfig gridConfig = config.Configs["GridService"];
-            if (gridConfig != null)
+            var gridConfig = config.GetSection("GridService");
+            if (gridConfig.Exists())
             {
-                dllName = gridConfig.GetString("StorageProvider", dllName);
-                connString = gridConfig.GetString("ConnectionString", connString);
-                realm = gridConfig.GetString("Realm", realm);
+                dllName = gridConfig.GetValue("StorageProvider", dllName);
+                connString = gridConfig.GetValue("ConnectionString", connString);
+                realm = gridConfig.GetValue("Realm", realm);
             }
 
             //
@@ -76,9 +72,9 @@ namespace OpenSim.Services.GridService
                 throw new Exception("No StorageProvider configured");
 
             m_Database = LoadPlugin<IRegionData>(dllName, new Object[] { connString, realm });
+
             if (m_Database == null)
                 throw new Exception("Could not find a storage interface in the given module");
-
         }
     }
 }

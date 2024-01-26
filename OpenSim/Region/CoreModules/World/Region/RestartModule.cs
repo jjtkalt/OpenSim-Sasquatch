@@ -56,7 +56,7 @@ namespace OpenSim.Region.CoreModules.World.Region
         protected bool m_shortCircuitDelays = false;
         protected bool m_rebootAll = false;
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             IConfig restartConfig = config.Configs["RestartModule"];
             if (restartConfig != null)

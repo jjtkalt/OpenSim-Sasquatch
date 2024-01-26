@@ -25,36 +25,41 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using log4net;
-using Nini.Config;
-using System.Collections.Generic;
 using System.Reflection;
 using OpenSim.Framework;
 using OpenSim.Services.Interfaces;
 using OpenMetaverse;
 
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+
 namespace OpenSim.Services.Connectors
 {
     public class HGAssetServiceConnector : IAssetService
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
         private ExpiringCacheOS<string, AssetServicesConnector> m_connectors = new ExpiringCacheOS<string, AssetServicesConnector>(60000);
 
-        public HGAssetServiceConnector(IConfigSource source)
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<HGAssetServiceConnector> m_logger;
+
+        public HGAssetServiceConnector(IConfiguration source, ILogger<HGAssetServiceConnector> logger)
         {
-            IConfig moduleConfig = source.Configs["Modules"];
-            if (moduleConfig != null)
+            m_configuration = source;
+            m_logger = logger;
+
+            var moduleConfig = m_configuration.GetSection("Modules");
+            if (moduleConfig.Exists())
             {
                 // string name = moduleConfig.GetString("AssetServices", "");
 
-                IConfig assetConfig = source.Configs["AssetService"];
-                if (assetConfig == null)
+                var assetConfig = m_configuration.GetSection("AssetService");
+                if (assetConfig.Exists() is false)
                 {
-                    m_log.Error("[HG ASSET SERVICE]: AssetService missing from OpenSim.ini");
+                    m_logger.LogError("AssetService missing from OpenSim.ini");
                     return;
                 }
 
-                m_log.Info("[HG ASSET SERVICE]: HG asset service enabled");
+                m_logger.LogInformation("HG asset service enabled");
             }
         }
 

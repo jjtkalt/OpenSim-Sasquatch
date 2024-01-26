@@ -39,7 +39,7 @@ namespace OpenSim.OfflineIM
     {
         protected IOfflineIMData m_Database = null;
 
-        public OfflineIMServiceBase(IConfigSource config)
+        public OfflineIMServiceBase(IConfiguration config)
             : base(config)
         {
             string dllName = String.Empty;

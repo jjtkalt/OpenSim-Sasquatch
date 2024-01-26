@@ -53,7 +53,7 @@ namespace OpenSim.Region.CoreModules.Avatar.Lure
 
         private readonly ExpiringCacheOS<UUID, GridInstantMessage> m_PendingLures = new ExpiringCacheOS<UUID, GridInstantMessage>(3600000);
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             if (config.Configs["Messaging"] != null)
             {

@@ -114,7 +114,7 @@ namespace OpenSim.Region.CoreModules.Scripting.LSLHttp
             get { return "UrlModule"; }
         }
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             IConfig networkConfig = config.Configs["Network"];
             m_enabled = false;

@@ -40,7 +40,7 @@ namespace OpenSim.Groups
         protected IGroupsData m_Database = null;
         protected IGridUserData m_GridUserService = null;
 
-        public GroupsServiceBase(IConfigSource config, string cName)
+        public GroupsServiceBase(IConfiguration config, string cName)
             : base(config)
         {
             string dllName = String.Empty;

@@ -70,7 +70,7 @@ namespace OpenSim.Region.OptionalModules.World.MoneyModule
         private bool m_enabled = true;
         private bool m_sellEnabled = true;
 
-        private IConfigSource m_gConfig;
+        private IConfiguration m_gConfig;
 
         /// <summary>
         /// Region UUIDS indexed by AgentID
@@ -121,7 +121,7 @@ namespace OpenSim.Region.OptionalModules.World.MoneyModule
         /// Called on startup so the module can be configured.
         /// </summary>
         /// <param name="config">Configuration source.</param>
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             m_gConfig = config;
             ReadConfigAndPopulate();

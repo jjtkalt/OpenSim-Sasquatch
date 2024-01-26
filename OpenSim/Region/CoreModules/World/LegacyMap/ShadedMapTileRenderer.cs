@@ -42,10 +42,10 @@ namespace OpenSim.Region.CoreModules.World.LegacyMap
         private static readonly string LogHeader = "[SHADED MAPTILE RENDERER]";
 
         private Scene m_scene;
-        private IConfigSource m_config;
+        private IConfiguration m_config;
         private Color m_color_water;
 
-        public void Initialise(Scene scene, IConfigSource config)
+        public void Initialise(Scene scene, IConfiguration config)
         {
             m_scene = scene;
             m_config = config;

@@ -108,7 +108,7 @@ namespace OpenSim.Region.OptionalModules.World.AutoBackup
         private bool m_doneFirst;
         private double m_baseInterval;
 
-        private IConfigSource m_configSource;
+        private IConfiguration m_configSource;
 
         /// <summary>
         /// Required by framework.
@@ -140,7 +140,7 @@ namespace OpenSim.Region.OptionalModules.World.AutoBackup
         /// Called once in the lifetime of the module at startup.
         /// </summary>
         /// <param name="source">The input config source for OpenSim.ini.</param>
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
             // Determine if we have been enabled at all in OpenSim.ini -- this is part and parcel of being an optional module
             m_configSource = source;

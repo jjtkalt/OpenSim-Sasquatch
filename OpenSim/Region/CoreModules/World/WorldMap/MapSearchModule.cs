@@ -45,7 +45,7 @@ namespace OpenSim.Region.CoreModules.World.WorldMap
         UUID m_stupidScope = UUID.Zero;
 
         #region ISharedRegionModule Members
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
         }
 

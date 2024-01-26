@@ -55,7 +55,7 @@ namespace OpenSim.Region.CoreModules.Avatars.Commands
 
         public Type ReplaceableInterface { get { return null; } }
 
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
 //            m_log.DebugFormat("[USER COMMANDS MODULE]: INITIALIZED MODULE");
         }

@@ -1,21 +1,30 @@
-﻿using System.Reflection;
-using log4net;
-using Nini.Config;
-using OpenSim.Region.Framework.Scenes;
+﻿using OpenSim.Region.Framework.Scenes;
 using OpenSim.Region.Framework.Interfaces;
+
 using OpenMetaverse;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Region.PhysicsModule.ubOde
 {
     class ubOdeModule : INonSharedRegionModule
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         ODEScene m_odeScene = null;
 
-        private IConfigSource m_config;
         private string m_libVersion = string.Empty;
+
         private bool m_Enabled = false;
+        
+        private readonly IConfiguration m_config;
+
+        private readonly ILogger<ubOdeModule> m_logger;
+        
+        public ubOdeModule(IConfiguration configuration, ILogger<ubOdeModule> logger)
+        {
+            m_config = configuration;
+            m_logger = logger;
+        }
 
         #region INonSharedRegionModule
 
@@ -34,21 +43,19 @@ namespace OpenSim.Region.PhysicsModule.ubOde
             get { return null; }
         }
 
-        public void Initialise(IConfigSource source)
+        public void Initialise( )
         {
-            IConfig config = source.Configs["Startup"];
-            if (config != null)
+            var config = m_config.GetSection("Startup");
+            if (config.Exists() is false)
             {
-                string physics = config.GetString("physics", string.Empty);
+                string physics = config.GetValue("physics", string.Empty);
                 if (physics == Name)
                 {
-                    m_config = source;
-                    string mesher = config.GetString("meshing", string.Empty);
-                    
+                    string mesher = config.GetValue("meshing", string.Empty);                   
                     if (string.IsNullOrEmpty(mesher) || !mesher.Equals("ubODEMeshmerizer"))
                     {
-                        m_log.Error("[ubODE] Opensim.ini meshing option must be set to \"ubODEMeshmerizer\"");
-                        //throw new Exception("Invalid physics meshing option");
+                        m_logger.LogError("Opensim.ini meshing option must be set to \"ubODEMeshmerizer\"");
+                        return;
                     }
 
                     DllmapConfigHelper.RegisterAssembly(typeof(ubOdeModule).Assembly);
@@ -58,33 +65,36 @@ namespace OpenSim.Region.PhysicsModule.ubOde
                     string ode_config = UBOdeNative.GetConfiguration();
                     if (string.IsNullOrEmpty(ode_config))
                     {
-                        m_log.Error("[ubODE] Native ode library version not supported");
+                        m_logger.LogError("[ubODE] Native ode library version not supported");
                         return;
                     }
 
                     int indx = ode_config.IndexOf("ODE_OPENSIM");
                     if (indx < 0)
                     {
-                        m_log.Error("[ubODE] Native ode library version not supported");
+                        m_logger.LogError("[ubODE] Native ode library version not supported");
                         return;
                     }
+
                     indx += 12;
                     if (indx >= ode_config.Length)
                     {
-                        m_log.Error("[ubODE] Native ode library version not supported");
+                        m_logger.LogError("[ubODE] Native ode library version not supported");
                         return;
                     }
+
                     m_libVersion = ode_config.Substring(indx);
                     if (string.IsNullOrEmpty(m_libVersion))
                     {
-                        m_log.Error("[ubODE] Native ode library version not supported");
+                        m_logger.LogError("[ubODE] Native ode library version not supported");
                         return;
                     }
+
                     m_libVersion.Trim();
                     if(m_libVersion.StartsWith("OS"))
                         m_libVersion = m_libVersion.Substring(2);
 
-                    m_log.InfoFormat("[ubODE] ode library configuration: {0}", ode_config);
+                    m_logger.LogInformation($"[ubODE] ode library configuration: {ode_config}");
                     m_Enabled = true;
                 }
             }

@@ -25,13 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
 using System.Reflection;
-using System.Text;
 using System.Xml;
-using System.Collections.Generic;
-using System.IO;
-using Nini.Config;
 using OpenSim.Framework;
 using OpenSim.Framework.ServiceAuth;
 using OpenSim.Server.Base;
@@ -40,41 +35,38 @@ using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
 using log4net;
 using OpenMetaverse;
-
-using System.Threading;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Server.Handlers.Inventory
 {
-    public class XInventoryInConnector : ServiceConnector
+    public class XInventoryInConnector : ServiceConnector, IServiceConnector
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         private IInventoryService m_InventoryService;
-        private string m_ConfigName = "InventoryService";
+        private static string _configName = "InventoryService";
 
-        public XInventoryInConnector(IConfigSource config, IHttpServer server, string configName) :
+        public XInventoryInConnector(IConfiguration config, IHttpServer server) :
+            this(config, server, _configName)
+        { }
+
+        public XInventoryInConnector(IConfiguration config, IHttpServer server, string configName) :
                 base(config, server, configName)
         {
-            if (configName != String.Empty)
-                m_ConfigName = configName;
+            m_log.DebugFormat("[XInventoryInConnector]: Starting with config name {0}", configName);
 
-            m_log.DebugFormat("[XInventoryInConnector]: Starting with config name {0}", m_ConfigName);
+            var serverConfig = config.GetSection(_configName);
+            if (serverConfig.Exists() is false)
+                throw new Exception($"No section '{configName}' in config file");
 
-            IConfig serverConfig = config.Configs[m_ConfigName];
-            if (serverConfig == null)
-                throw new Exception(String.Format("No section '{0}' in config file", m_ConfigName));
-
-            string inventoryService = serverConfig.GetString("LocalServiceModule",
-                    String.Empty);
-
-            if (inventoryService.Length == 0)
+            string inventoryService = serverConfig.GetValue("LocalServiceModule", String.Empty);
+            if (string.IsNullOrEmpty(inventoryService))
                 throw new Exception("No InventoryService in config file");
 
-            Object[] args = new Object[] { config, m_ConfigName };
-            m_InventoryService =
-                    ServerUtils.LoadPlugin<IInventoryService>(inventoryService, args);
+            Object[] args = new Object[] { config, configName };
+            m_InventoryService = ServerUtils.LoadPlugin<IInventoryService>(inventoryService, args);
 
-            IServiceAuth auth = ServiceAuth.Create(config, m_ConfigName);
+            IServiceAuth auth = ServiceAuth.Create(config, configName);
 
             server.AddStreamHandler(new XInventoryConnectorPostHandler(m_InventoryService, auth));
         }

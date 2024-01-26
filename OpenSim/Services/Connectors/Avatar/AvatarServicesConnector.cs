@@ -26,18 +26,13 @@
  */
 
 using log4net;
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Reflection;
-using Nini.Config;
 using OpenSim.Framework;
-using OpenSim.Framework.ServiceAuth;
 using OpenSim.Services.Interfaces;
-using GridRegion = OpenSim.Services.Interfaces.GridRegion;
 using IAvatarService = OpenSim.Services.Interfaces.IAvatarService;
 using OpenSim.Server.Base;
 using OpenMetaverse;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.Connectors
 {
@@ -58,29 +53,29 @@ namespace OpenSim.Services.Connectors
             m_ServerURI = serverURI.TrimEnd('/');
         }
 
-        public AvatarServicesConnector(IConfigSource source)
+        public AvatarServicesConnector(IConfiguration source)
             : base(source, "AvatarService")
         {
             Initialise(source);
         }
 
-        public virtual void Initialise(IConfigSource source)
+        public virtual void Initialise(IConfiguration source)
         {
-            IConfig gridConfig = source.Configs["AvatarService"];
-            if (gridConfig == null)
+            var gridConfig = source.GetSection("AvatarService");
+            if (gridConfig.Exists() is false)
             {
                 m_log.Error("[AVATAR CONNECTOR]: AvatarService missing from OpenSim.ini");
                 throw new Exception("Avatar connector init error");
             }
 
-            string serviceURI = gridConfig.GetString("AvatarServerURI",
-                    String.Empty);
+            string serviceURI = gridConfig.GetValue("AvatarServerURI", String.Empty);
 
-            if (serviceURI.Length == 0)
+            if (string.IsNullOrEmpty(serviceURI))
             {
                 m_log.Error("[AVATAR CONNECTOR]: No Server URI named in section AvatarService");
                 throw new Exception("Avatar connector init error");
             }
+            
             m_ServerURI = serviceURI;
 
             base.Initialise(source, "AvatarService");

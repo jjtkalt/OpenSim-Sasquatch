@@ -52,7 +52,7 @@ namespace OpenSim.Groups
         {
         }
 
-        public GroupsServiceLocalConnectorModule(IConfigSource config, IUserManagement uman)
+        public GroupsServiceLocalConnectorModule(IConfiguration config, IUserManagement uman)
         {
             Init(config);
             m_UserManagement = uman;
@@ -60,7 +60,7 @@ namespace OpenSim.Groups
         }
         #endregion
 
-        private void Init(IConfigSource config)
+        private void Init(IConfiguration config)
         {
             m_GroupsService = new GroupsService(config);
             m_Scenes = new List<Scene>();
@@ -68,7 +68,7 @@ namespace OpenSim.Groups
 
         #region ISharedRegionModule
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             IConfig groupsConfig = config.Configs["Groups"];
             if (groupsConfig == null)

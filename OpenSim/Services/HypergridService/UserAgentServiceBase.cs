@@ -36,7 +36,7 @@ namespace OpenSim.Services.HypergridService
     {
         protected IHGTravelingData m_Database = null;
 
-        public UserAgentServiceBase(IConfigSource config)
+        public UserAgentServiceBase(IConfiguration config)
             : base(config)
         {
             string dllName = String.Empty;

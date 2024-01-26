@@ -65,7 +65,7 @@ namespace OpenSim.Region.CoreModules.Avatar.InstantMessage
             }
         }
 
-        public virtual void Initialise(IConfigSource config)
+        public virtual void Initialise(IConfiguration config)
         {
             IConfig cnf = config.Configs["Messaging"];
             if (cnf != null)

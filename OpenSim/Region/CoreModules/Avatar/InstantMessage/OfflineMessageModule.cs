@@ -53,7 +53,7 @@ namespace OpenSim.Region.CoreModules.Avatar.InstantMessage
         private bool m_ForwardOfflineGroupMessages = true;
         private Dictionary<IClientAPI, List<UUID>> m_repliesSent= new Dictionary<IClientAPI, List<UUID>>();
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             IConfig cnf = config.Configs["Messaging"];
             if (cnf == null)

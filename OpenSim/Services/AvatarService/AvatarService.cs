@@ -36,6 +36,7 @@ using OpenSim.Framework.Console;
 using OpenSim.Data;
 using OpenSim.Services.Interfaces;
 using OpenMetaverse;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.AvatarService
 {
@@ -45,7 +46,7 @@ namespace OpenSim.Services.AvatarService
                 LogManager.GetLogger(
                 MethodBase.GetCurrentMethod().DeclaringType);
 
-        public AvatarService(IConfigSource config)
+        public AvatarService(IConfiguration config)
             : base(config)
         {
             m_log.Debug("[AVATAR SERVICE]: Starting avatar service");

@@ -25,14 +25,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
-using Nini.Config;
 using OpenMetaverse;
 using OpenSim.Framework;
 using OpenSim.Region.PhysicsModules.SharedBase;
 using OpenSim.Region.Framework.Scenes;
 using OpenSim.Region.Framework.Interfaces;
+using Microsoft.Extensions.Configuration;
+using log4net.Core;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Region.PhysicsModule.POS
 {
@@ -45,6 +45,15 @@ namespace OpenSim.Region.PhysicsModule.POS
 
         private bool m_Enabled = false;
         //protected internal string sceneIdentifier;
+
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<POSScene> m_logger;
+
+        public POSScene(IConfiguration configuration, ILogger<POSScene> logger)
+        {
+            m_configuration = configuration;
+            m_logger = logger;
+        }
 
         #region INonSharedRegionModule
         public string Name
@@ -62,17 +71,16 @@ namespace OpenSim.Region.PhysicsModule.POS
             get { return null; }
         }
 
-        public void Initialise(IConfigSource source)
+        public void Initialise()
         {
             // TODO: Move this out of Startup
-            IConfig config = source.Configs["Startup"];
-            if (config != null)
+            var config = m_configuration.GetSection("Startup");
+            if (config.Exists())
             {
-                string physics = config.GetString("physics", string.Empty);
+                string physics = config.GetValue("physics", string.Empty);
                 if (physics == Name)
                     m_Enabled = true;
             }
-
         }
 
         public void Close()
@@ -92,7 +100,6 @@ namespace OpenSim.Region.PhysicsModule.POS
             base.Initialise(scene.PhysicsRequestAsset,
                 (scene.Heightmap != null ? scene.Heightmap.GetFloatsSerialised() : new float[Constants.RegionSize * Constants.RegionSize]),
                 (float)scene.RegionInfo.RegionSettings.WaterHeight);
-
         }
 
         public void RemoveRegion(Scene scene)

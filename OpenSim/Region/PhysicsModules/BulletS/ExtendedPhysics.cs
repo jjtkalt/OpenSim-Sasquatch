@@ -24,30 +24,20 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading;
-
-using OpenSim.Framework;
-using OpenSim.Region.Framework;
+ 
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
 using OpenSim.Region.PhysicsModules.SharedBase;
 
-using Nini.Config;
-using log4net;
 using OpenMetaverse;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Region.PhysicsModule.BulletS
 {
     public class ExtendedPhysics : INonSharedRegionModule
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-        private static string LogHeader = "[EXTENDED PHYSICS]";
-
         // =============================================================
         // Since BulletSim is a plugin, this these values aren't defined easily in one place.
         // This table must correspond to an identical table in BSScene.
@@ -69,37 +59,48 @@ namespace OpenSim.Region.PhysicsModule.BulletS
 
         // =============================================================
 
-        private IConfig Configuration { get; set; }
         private bool Enabled { get; set; }
         private Scene BaseScene { get; set; }
         private IScriptModuleComms Comms { get; set; }
+
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<ExtendedPhysics> m_logger;
+
+        public ExtendedPhysics(
+            IConfiguration configuration,
+            ILogger<ExtendedPhysics> logger
+            )
+        {
+            m_configuration = configuration;
+            m_logger = logger;
+        }
 
         #region INonSharedRegionModule
 
         public string Name { get { return this.GetType().Name; } }
 
-        public void Initialise(IConfigSource config)
+        public void Initialise()
         {
             BaseScene = null;
             Enabled = false;
-            Configuration = null;
             Comms = null;
 
             try
             {
-                if ((Configuration = config.Configs["ExtendedPhysics"]) != null)
+                var section = m_configuration.GetSection("ExtendedPhysics");
+                if (section.Exists())
                 {
                     //IConfig cStartup = config.Configs["Startup"];
                     //if (cStartup?.GetString("physics", string.Empty) == "BulletSim")
-                        Enabled = Configuration.GetBoolean("Enabled", Enabled);
+                    Enabled = section.GetValue<bool>("Enabled", Enabled);
                 }
             }
             catch (Exception e)
             {
-                m_log.ErrorFormat("{0} Initialization error: {0}", LogHeader, e);
+                m_logger.LogError(e, $"Initialization error");
             }
 
-            m_log.InfoFormat("{0} module {1} enabled", LogHeader, (Enabled ? "is" : "is not"));
+            m_logger.LogInformation($"module {(Enabled ? "is" : "is not")} enabled");
         }
 
         public void Close()
@@ -133,7 +134,7 @@ namespace OpenSim.Region.PhysicsModule.BulletS
             Comms = BaseScene.RequestModuleInterface<IScriptModuleComms>();
             if (Comms == null)
             {
-                m_log.WarnFormat("{0} ScriptModuleComms interface not defined", LogHeader);
+                m_logger.LogWarning($"ScriptModuleComms interface not defined");
                 Enabled = false;
 
                 return;
@@ -191,7 +192,8 @@ namespace OpenSim.Region.PhysicsModule.BulletS
             {
                 if (GetRootPhysActor(hostId, out PhysicsActor rootPhysActor))
                 {
-                    m_log.DebugFormat("{0} physDisableDeactivation: hostId={1}, scriptId={2}, val={3}", LogHeader, hostId, scriptId, disable);
+                    m_logger.LogDebug($"physDisableDeactivation: hostId={hostId}, scriptId={scriptId}, val={disable}");
+
                     object[] parms2 = { rootPhysActor, null, disable };
                     ret = MakeIntError(rootPhysActor.Extension(PhysFunctDisableDeactivation, parms2));
                 }
@@ -325,19 +327,17 @@ namespace OpenSim.Region.PhysicsModule.BulletS
                     }
                     else
                     {
-                        m_log.WarnFormat("{0} physSetLinksetType: root part does not have a physics actor. rootName={1}, hostID={2}",
-                                            LogHeader, rootPart.Name, hostID);
+                        m_logger.LogWarning($"physSetLinksetType: root part does not have a physics actor. rootName={rootPart.Name}, hostID={hostID}");
                     }
                 }
                 else
                 {
-                    m_log.WarnFormat("{0} physSetLinksetType: root part does not exist. RequestingPartName={1}, hostID={2}",
-                                        LogHeader, requestingPart.Name, hostID);
+                    m_logger.LogWarning($"physSetLinksetType: root part does not exist. RequestingPartName={requestingPart.Name}, hostID={hostID}");
                 }
             }
             else
             {
-                m_log.WarnFormat("{0} physSetLinsetType: cannot find script object in scene. hostID={1}", LogHeader, hostID);
+                m_logger.LogWarning($"physSetLinsetType: cannot find script object in scene. hostID={hostID}");
             }
             return ret;
         }
@@ -356,7 +356,7 @@ namespace OpenSim.Region.PhysicsModule.BulletS
             }
             else
             {
-                m_log.WarnFormat("{0} physGetLinsetType: cannot find script object in scene. hostID={1}", LogHeader, hostID);
+                m_logger.LogWarning($"physGetLinsetType: cannot find script object in scene. hostID={hostID}");
             }
             return ret;
         }
@@ -551,24 +551,22 @@ namespace OpenSim.Region.PhysicsModule.BulletS
                         }
                         else
                         {
-                            m_log.WarnFormat("{0} GetRootAndChildPhysActors: Root part does not have a physics actor. rootName={1}, hostID={2}",
-                                            LogHeader, rootPart.Name, hostID);
+                            m_logger.LogWarning($"GetRootAndChildPhysActors: Root part does not have a physics actor. rootName={rootPart.Name}, hostID={hostID}");
                         }
                     }
                     else
                     {
-                        m_log.WarnFormat("{0} GetRootAndChildPhysActors: Root part does not exist. RequestingPartName={1}, hostID={2}",
-                                        LogHeader, requestingPart.Name, hostID);
+                        m_logger.LogWarning($"GetRootAndChildPhysActors: Root part does not exist. RequestingPartName={requestingPart.Name}, hostID={hostID}");
                     }
                 }
                 else
                 {
-                    m_log.WarnFormat("{0} GetRootAndChildPhysActors: Containing group missing or deleted. hostID={1}", LogHeader, hostID);
+                    m_logger.LogWarning($"GetRootAndChildPhysActors: Containing group missing or deleted. hostID={hostID}");
                 }
             }
             else
             {
-                m_log.WarnFormat("{0} GetRootAndChildPhysActors: cannot find script object in scene. hostID={1}", LogHeader, hostID);
+                m_logger.LogWarning($"GetRootAndChildPhysActors: cannot find script object in scene. hostID={hostID}");
             }
 
             return ret;
@@ -597,20 +595,17 @@ namespace OpenSim.Region.PhysicsModule.BulletS
                     }
                     else
                     {
-                        m_log.WarnFormat("{0} GetRootAndChildPhysActors: Link part has no physical actor. rootName={1}, hostID={2}, linknum={3}",
-                                            LogHeader, rootPart.Name, hostID, linkNum);
+                        m_logger.LogWarning($"GetRootAndChildPhysActors: Link part has no physical actor. rootName={rootPart.Name}, hostID={hostID}, linknum={linkNum}");
                     }
                 }
                 else
                 {
-                    m_log.WarnFormat("{0} GetRootAndChildPhysActors: Could not find linknum part. rootName={1}, hostID={2}, linknum={3}",
-                                        LogHeader, rootPart.Name, hostID, linkNum);
+                    m_logger.LogWarning($"GetRootAndChildPhysActors: Could not find linknum part. rootName={rootPart.Name}, hostID={hostID}, linknum={linkNum}");
                 }
             }
             else
             {
-                m_log.WarnFormat("{0} GetRootAndChildPhysActors: Root part does not have a physics actor. rootName={1}, hostID={2}",
-                                LogHeader, rootPart.Name, hostID);
+                m_logger.LogWarning($"GetRootAndChildPhysActors: Root part does not have a physics actor. rootName={rootPart.Name}, hostID={hostID}");
             }
 
             return ret;

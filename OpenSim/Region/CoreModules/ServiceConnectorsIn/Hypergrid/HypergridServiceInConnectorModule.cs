@@ -42,7 +42,7 @@ namespace OpenSim.Region.CoreModules.ServiceConnectorsIn.Hypergrid
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
         private static bool m_Enabled = false;
 
-        private IConfigSource m_Config;
+        private IConfiguration m_Config;
         private bool m_Registered = false;
         private string m_LocalServiceDll = string.Empty;
         private GatekeeperServiceInConnector m_HypergridHandler;
@@ -50,7 +50,7 @@ namespace OpenSim.Region.CoreModules.ServiceConnectorsIn.Hypergrid
 
         #region Region Module interface
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             m_Config = config;
             IConfig moduleConfig = config.Configs["Modules"];

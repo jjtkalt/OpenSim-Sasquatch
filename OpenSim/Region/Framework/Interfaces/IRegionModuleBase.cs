@@ -26,7 +26,7 @@
  */
 
 using System;
-using Nini.Config;
+using Microsoft.Extensions.Configuration;
 using OpenSim.Region.Framework.Scenes;
 
 namespace OpenSim.Region.Framework.Interfaces
@@ -57,10 +57,8 @@ namespace OpenSim.Region.Framework.Interfaces
         /// exactly once, after creating the single (shared) instance. For non-shared modules,
         /// this is called once on each instance, after the instace for the region has been created.
         /// </summary>
-        /// <param name="source">
-        /// A <see cref="IConfigSource"/>
         /// </param>
-        void Initialise(IConfigSource source);
+        void Initialise();
 
         /// <summary>
         /// This is the inverse to <see cref="Initialise"/>. After a Close(), this instance won't be usable anymore.

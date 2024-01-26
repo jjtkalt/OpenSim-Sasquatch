@@ -30,6 +30,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Reflection;
 using log4net;
+using Microsoft.Extensions.Configuration;
 using Nini.Config;
 
 namespace OpenSim.Framework
@@ -369,23 +370,24 @@ namespace OpenSim.Framework
         private string m_DestinationGuideURL = string.Empty;
         private string m_economyURL = string.Empty;
 
-        public GridInfo (IConfigSource config, string defaultURI = "")
+        public GridInfo (IConfiguration config, string defaultURI = "")
         {
             string[] sections = new string[] {"Const", "Startup", "Hypergrid"};
 
             string gatekeeper = Util.GetConfigVarFromSections<string>(config, "GatekeeperURI", sections, string.Empty);
+
             if (string.IsNullOrEmpty(gatekeeper))
             {
-                IConfig serverConfig = config.Configs["GatekeeperService"];
-                if (serverConfig != null)
-                    gatekeeper = serverConfig.GetString("ExternalName", string.Empty);
+                var serverConfig = config.GetSection("GatekeeperService");
+                gatekeeper = serverConfig.GetValue<string>("ExternalName", string.Empty);
             }
+
             if (string.IsNullOrEmpty(gatekeeper))
             {
-                IConfig gridConfig = config.Configs["GridService"];
-                if (gridConfig != null)
-                    gatekeeper = gridConfig.GetString("Gatekeeper", string.Empty);
+                var gridConfig = config.GetSection("GridService");
+                gatekeeper = gridConfig.GetValue<string>("Gatekeeper", string.Empty);
             }
+            
             if (string.IsNullOrEmpty(gatekeeper))
             {
                 m_hasHGconfig = false;

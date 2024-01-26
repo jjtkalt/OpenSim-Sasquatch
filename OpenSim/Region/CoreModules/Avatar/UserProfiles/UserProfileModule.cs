@@ -209,7 +209,7 @@ namespace OpenSim.Region.CoreModules.Avatar.UserProfiles
         /// <value>
         /// The configuration
         /// </value>
-        public IConfigSource Config
+        public IConfiguration Config
         {
             get;
             set;
@@ -261,7 +261,7 @@ namespace OpenSim.Region.CoreModules.Avatar.UserProfiles
         /// <param name='source'>
         /// Source.
         /// </param>
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
             Config = source;
             ReplaceableInterface = typeof(IProfileModule);

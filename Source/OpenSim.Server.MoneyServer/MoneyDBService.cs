@@ -30,8 +30,6 @@ using Microsoft.Extensions.Logging;
 
 using OpenSim.Data.MySQL.MoneyData;
 using OpenSim.Region.OptionalModules.Currency;
-using log4net;
-using System.Reflection;
 using OpenMetaverse;
 using MySqlConnector;
 
@@ -73,8 +71,8 @@ namespace OpenSim.Server.MoneyServer
         public void Initialise(string connectionString, int maxDBConnections)
         {
             m_connect = connectionString;
-            // m_maxConnections = maxDBConnections; XXX
-            m_maxConnections = 1;
+            m_maxConnections = maxDBConnections;
+            
             if (connectionString != string.Empty)
             {
                 //m_moneyManager = new MySQLMoneyManager(connectionString);
@@ -144,12 +142,14 @@ namespace OpenSim.Server.MoneyServer
             }
             catch (MySqlException e)
             {
+                _logger.LogError(e, "getBalance() mysql exception, Retrying.");
+
                 dbm.Manager.Reconnect();
                 return dbm.Manager.getBalance(userID);
             }
             catch (Exception e)
             {
-                _logger.LogError(e.ToString());
+                _logger.LogError(e, "getBalance() general exception. Aborting.");
                 return 0;
             }
             finally
@@ -169,12 +169,13 @@ namespace OpenSim.Server.MoneyServer
             }
             catch (MySqlException e)
             {
+                _logger.LogError(e, "withdrawMoney() mysql exception, Retrying.");
                 dbm.Manager.Reconnect();
                 return dbm.Manager.withdrawMoney(transactionID, senderID, amount);
             }
             catch (Exception e)
             {
-                _logger.LogError(e.ToString());
+                _logger.LogError(e, "withdrawMoney() general exception. Aborting.");
                 return false;
             }
             finally
@@ -194,12 +195,13 @@ namespace OpenSim.Server.MoneyServer
             }
             catch (MySqlException e)
             {
+                _logger.LogError(e, "giveMoney() MySQLException. Retrying.");
                 dbm.Manager.Reconnect();
                 return dbm.Manager.giveMoney(transactionID, receiverID, amount);
             }
             catch (Exception e)
             {
-                _logger.LogError(e.ToString());
+                _logger.LogError(e, "giveMoney() general exception. Aborting.");
                 return false;
             }
             finally
@@ -248,12 +250,13 @@ namespace OpenSim.Server.MoneyServer
             }
             catch (MySqlException e)
             {
+                _logger.LogError(e, "addTransaction() MySqlException. Retrying.");
                 dbm.Manager.Reconnect();
                 return dbm.Manager.addTransaction(transaction);
             }
             catch (Exception e)
             {
-                _logger.LogError(e.ToString());
+                _logger.LogError(e, "addTransaction() general exception. Aborting.");
                 return false;
             }
             finally
@@ -292,12 +295,13 @@ namespace OpenSim.Server.MoneyServer
             }
             catch (MySqlException e)
             {
+                _logger.LogError(e, "addUser() MySqlException. Retrying.");
                 dbm.Manager.Reconnect();
                 ret = dbm.Manager.addUser(userID, 0, status, type);     // make Balance Table
             }
             catch (Exception e)
             {
-                _logger.LogError(e.ToString());
+                _logger.LogError(e, "addUser() general exception. Aborting.");
                 return false;
             }
             finally
@@ -321,12 +325,13 @@ namespace OpenSim.Server.MoneyServer
             }
             catch (MySqlException e)
             {
+                _logger.LogError(e, "updateTransactionStatus() MySqlException. Retrying.");
                 dbm.Manager.Reconnect();
                 return dbm.Manager.updateTransactionStatus(transactionID, status, description);
             }
             catch (Exception e)
             {
-                _logger.LogError(e.ToString());
+                _logger.LogError(e, "updateTransactionStatus() general exception. Aborting.");
                 return false;
             }
             finally
@@ -346,12 +351,13 @@ namespace OpenSim.Server.MoneyServer
             }
             catch (MySqlException e)
             {
+                _logger.LogError(e, "SetTransExpired() MySqlException. Retrying.");
                 dbm.Manager.Reconnect();
                 return dbm.Manager.SetTransExpired(deadTime);
             }
             catch (Exception e)
             {
-                _logger.LogError(e.ToString());
+                _logger.LogError(e, "SetTransExpired() general exception. Aborting.");
                 return false;
             }
             finally
@@ -371,12 +377,13 @@ namespace OpenSim.Server.MoneyServer
             }
             catch (MySqlException e)
             {
+                _logger.LogError(e, "ValidateTransfer() MySqlException. Retrying.");
                 dbm.Manager.Reconnect();
                 return dbm.Manager.ValidateTransfer(secureCode, transactionID);
             }
             catch (Exception e)
             {
-                _logger.LogError(e.ToString());
+                _logger.LogError(e, "ValidateTransfer() general exception. Aborting.");
                 return false;
             }
             finally
@@ -396,12 +403,13 @@ namespace OpenSim.Server.MoneyServer
             }
             catch (MySqlException e)
             {
+                _logger.LogError(e, "FetchTransaction() MySqlException. Retrying.");
                 dbm.Manager.Reconnect();
                 return dbm.Manager.FetchTransaction(transactionID);
             }
             catch (Exception e)
             {
-                _logger.LogError(e.ToString());
+                _logger.LogError(e, "FetchTransaction() general exception. Aborting.");
                 return null;
             }
             finally
@@ -425,12 +433,13 @@ namespace OpenSim.Server.MoneyServer
             }
             catch (MySqlException e)
             {
+                _logger.LogError(e, "FetchTransaction2() MySqlException. Retrying.");
                 dbm.Manager.Reconnect();
                 arrTransaction = dbm.Manager.FetchTransaction(userID, startTime, endTime, index, 1);
             }
             catch (Exception e)
             {
-                _logger.LogError(e.ToString());
+                _logger.LogError(e, "FetchTransaction2() general exception. Aborting.");
                 return null;
             }
             finally
@@ -572,12 +581,13 @@ namespace OpenSim.Server.MoneyServer
             }
             catch (MySqlException e)
             {
+                _logger.LogError(e, "TryAddUserInfo() MySqlException. Retrying.");
                 dbm.Manager.Reconnect();
                 userInfo = dbm.Manager.fetchUserInfo(user.UserID);
             }
             catch (Exception e)
             {
-                _logger.LogError(e.ToString());
+                _logger.LogError(e, "TryAddUserInfo() Exception. Aborting.");
                 dbm.Release();
                 return false;
             }
@@ -621,13 +631,14 @@ namespace OpenSim.Server.MoneyServer
             }
             catch (MySqlException e)
             {
+                _logger.LogError(e, "FetchUserInfo() MySqlException. Retrying.");
                 dbm.Manager.Reconnect();
                 userInfo = dbm.Manager.fetchUserInfo(userID);
                 return userInfo;
             }
             catch (Exception e)
             {
-                _logger.LogError(e.ToString());
+                _logger.LogError(e, "FetchUserInfo() Exception. Aborting.");
                 return null;
             }
             finally
@@ -647,12 +658,13 @@ namespace OpenSim.Server.MoneyServer
             }
             catch (MySqlException e)
             {
+                _logger.LogError(e, "getTransactionNum() MySqlException. Retrying.");
                 dbm.Manager.Reconnect();
                 return dbm.Manager.getTransactionNum(userID, startTime, endTime);
             }
             catch (Exception e)
             {
-                _logger.LogError(e.ToString());
+                _logger.LogError(e, "getTransactionNum() Exception. Aborting.");
                 return -1;
             }
             finally

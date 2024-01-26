@@ -26,14 +26,10 @@
  */
 
 using log4net;
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Reflection;
-using Nini.Config;
 using OpenSim.Framework;
 using OpenSim.Services.Interfaces;
-using OpenMetaverse;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.Connectors
 {
@@ -55,35 +51,33 @@ namespace OpenSim.Services.Connectors
             m_ServerURI = serverURI.TrimEnd('/');
         }
 
-        public AuthorizationServicesConnector(IConfigSource source)
+        public AuthorizationServicesConnector(IConfiguration source)
         {
             Initialise(source);
         }
 
-        public virtual void Initialise(IConfigSource source)
+        public virtual void Initialise(IConfiguration source)
         {
-            IConfig authorizationConfig = source.Configs["AuthorizationService"];
-            if (authorizationConfig == null)
+            var authorizationConfig = source.GetSection("AuthorizationService");
+            if (authorizationConfig.Exists() is false)
             {
-                //m_log.Info("[AUTHORIZATION CONNECTOR]: AuthorizationService missing from OpenSim.ini");
                 throw new Exception("Authorization connector init error");
             }
 
-            string serviceURI = authorizationConfig.GetString("AuthorizationServerURI",
-                    String.Empty);
-
-            if (serviceURI.Length == 0)
+            string serviceURI = authorizationConfig.GetValue("AuthorizationServerURI", String.Empty);
+            if (string.IsNullOrEmpty(serviceURI))
             {
-                m_log.Error("[AUTHORIZATION CONNECTOR]: No Server URI named in section AuthorizationService");
-                throw new Exception("Authorization connector init error");
+                throw new Exception("No Server URI named in section AuthorizationService");
             }
+
             m_ServerURI = serviceURI;
 
             // this dictates what happens if the remote service fails, if the service fails and the value is true
             // the user is authorized for the region.
-            bool responseOnFailure = authorizationConfig.GetBoolean("ResponseOnFailure",true);
+            bool responseOnFailure = authorizationConfig.GetValue<bool>("ResponseOnFailure",true);
 
             m_ResponseOnFailure = responseOnFailure;
+            
             m_log.Info("[AUTHORIZATION CONNECTOR]: AuthorizationService initialized");
         }
 

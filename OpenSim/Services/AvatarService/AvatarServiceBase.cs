@@ -25,12 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Reflection;
-using Nini.Config;
-using OpenSim.Framework;
+using Microsoft.Extensions.Configuration;
 using OpenSim.Data;
-using OpenSim.Services.Interfaces;
 using OpenSim.Services.Base;
 
 namespace OpenSim.Services.AvatarService
@@ -38,8 +34,9 @@ namespace OpenSim.Services.AvatarService
     public class AvatarServiceBase : ServiceBase
     {
         protected IAvatarData m_Database = null;
+        protected string m_ConfigName = "AvatarService";
 
-        public AvatarServiceBase(IConfigSource config)
+        public AvatarServiceBase(IConfiguration config)
             : base(config)
         {
             string dllName = String.Empty;
@@ -47,38 +44,37 @@ namespace OpenSim.Services.AvatarService
             string realm = "Avatars";
 
             //
-            // Try reading the [DatabaseService] section, if it exists
+            // [AvatarService] section overrides [DatabaseService], if it exists
             //
-            IConfig dbConfig = config.Configs["DatabaseService"];
-            if (dbConfig != null)
+            var presenceConfig = config.GetSection(m_ConfigName);
+            if (presenceConfig.Exists())
             {
-                if (dllName.Length == 0)
-                    dllName = dbConfig.GetString("StorageProvider", String.Empty);
-                if (connString.Length == 0)
-                    connString = dbConfig.GetString("ConnectionString", String.Empty);
+                dllName = presenceConfig.GetValue("StorageProvider", dllName);
+                connString = presenceConfig.GetValue("ConnectionString", connString);
+                realm = presenceConfig.GetValue("Realm", realm);
             }
 
             //
-            // [AvatarService] section overrides [DatabaseService], if it exists
+            // Try reading the [DatabaseService] section, if it exists
             //
-            IConfig presenceConfig = config.Configs["AvatarService"];
-            if (presenceConfig != null)
+            var dbConfig = config.GetSection("DatabaseService");
+            if (dbConfig.Exists())
             {
-                dllName = presenceConfig.GetString("StorageProvider", dllName);
-                connString = presenceConfig.GetString("ConnectionString", connString);
-                realm = presenceConfig.GetString("Realm", realm);
+                if (string.IsNullOrEmpty(dllName))
+                    dllName = dbConfig.GetValue("StorageProvider", String.Empty);
+                if (string.IsNullOrEmpty(connString))
+                    connString = dbConfig.GetValue("ConnectionString", String.Empty);
             }
 
             //
             // We tried, but this doesn't exist. We can't proceed.
             //
             if (string.IsNullOrEmpty(dllName))
-                throw new Exception("No StorageProvider configured");
+                throw new Exception($"No StorageProvider configured for {m_ConfigName}");
 
             m_Database = LoadPlugin<IAvatarData>(dllName, new Object[] { connString, realm });
             if (m_Database == null)
-                throw new Exception("Could not find a storage interface in the given module " + dllName);
-
+                throw new Exception($"Could not find a storage interface for {m_ConfigName} in the given module {dllName}");
         }
     }
 }

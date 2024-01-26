@@ -68,7 +68,7 @@ namespace OpenSim.Region.CoreModules.Agent.Xfer
 
         #region INonSharedRegionModule Members
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             lastTimeTick = (int)Util.GetTimeStampMS() + 30000;
             lastFilesExpire = lastTimeTick + 180000;

@@ -106,7 +106,7 @@ namespace OpenSim.Region.CoreModules.Scripting.WorldComm
 
         #region INonSharedRegionModule Members
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             // wrap this in a try block so that defaults will work if
             // the config file doesn't specify otherwise.

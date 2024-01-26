@@ -89,7 +89,7 @@ namespace OpenSim.Region.CoreModules.Scripting.HttpRequest
 
         #region INonSharedRegionModule Members
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             lock (m_mainLock)
             {

@@ -39,10 +39,11 @@ using OpenSim.Framework;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
 using OpenMetaverse;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Server.Handlers.Inventory
 {
-    public class InventoryServiceInConnector : ServiceConnector
+    public class InventoryServiceInConnector : ServiceConnector, IServiceConnector
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -54,32 +55,34 @@ namespace OpenSim.Server.Handlers.Inventory
         //private AuthedSessionCache m_session_cache = new AuthedSessionCache(INVENTORY_DEFAULT_SESSION_TIME);
 
         private string m_userserver_url;
-        protected string m_ConfigName = "InventoryService";
+        protected static string _configName = "InventoryService";
+        
+        public InventoryServiceInConnector(IConfiguration config, IHttpServer server) :
+                this(config, server, _configName)
+        {
+        }
 
-        public InventoryServiceInConnector(IConfigSource config, IHttpServer server, string configName) :
+        public InventoryServiceInConnector(IConfiguration config, IHttpServer server, string configName) :
                 base(config, server, configName)
         {
-            if (configName != string.Empty)
-                m_ConfigName = configName;
+            var serverConfig = config.GetSection(configName);
+            if (serverConfig.Exists() is false)
+                throw new Exception($"No section '{configName}' in config file");
 
-            IConfig serverConfig = config.Configs[m_ConfigName];
-            if (serverConfig == null)
-                throw new Exception(String.Format("No section '{0}' in config file", m_ConfigName));
+            string inventoryService = serverConfig.GetValue("LocalServiceModule", String.Empty);
 
-            string inventoryService = serverConfig.GetString("LocalServiceModule",
-                    String.Empty);
-
-            if (inventoryService.Length == 0)
+            if (string.IsNullOrEmpty(inventoryService))
                 throw new Exception("No LocalServiceModule in config file");
 
             Object[] args = new Object[] { config };
             m_InventoryService =
                     ServerUtils.LoadPlugin<IInventoryService>(inventoryService, args);
 
-            m_userserver_url = serverConfig.GetString("UserServerURI", String.Empty);
-            m_doLookup = serverConfig.GetBoolean("SessionAuthentication", false);
+            m_userserver_url = serverConfig.GetValue("UserServerURI", String.Empty);
+            m_doLookup = serverConfig.GetValue<bool>("SessionAuthentication", false);
 
             AddHttpHandlers(server);
+            
             m_log.Debug("[INVENTORY HANDLER]: handlers initialized");
         }
 

@@ -25,16 +25,13 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
 using System.Reflection;
 using log4net;
-using Nini.Config;
-using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Server.Handlers.Neighbour
 {
@@ -45,7 +42,7 @@ namespace OpenSim.Server.Handlers.Neighbour
         private INeighbourService m_NeighbourService;
         private IAuthenticationService m_AuthenticationService = null;
 
-        public NeighbourServiceInConnector(IConfigSource source, IHttpServer server, INeighbourService nService, IScene scene) :
+        public NeighbourServiceInConnector(IConfiguration source, IHttpServer server, INeighbourService nService, IScene scene) :
                 base(source, server, String.Empty)
         {
 

@@ -53,7 +53,7 @@ namespace OpenSim.Region.ClientStack.Linden
             get { return null; }
         }
 
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
             m_enabled = false; // whatever
             IConfig config = source.Configs["ClientStack.LindenCaps"];

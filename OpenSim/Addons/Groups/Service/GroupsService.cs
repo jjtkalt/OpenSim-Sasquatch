@@ -105,12 +105,12 @@ namespace OpenSim.Groups
 
         private System.Timers.Timer m_CleanupTimer;
 
-        public GroupsService(IConfigSource config, string configName)
+        public GroupsService(IConfiguration config, string configName)
             : base(config, configName)
         {
         }
 
-        public GroupsService(IConfigSource config)
+        public GroupsService(IConfiguration config)
             : this(config, string.Empty)
         {
             // Once a day

@@ -25,16 +25,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
 using log4net;
-using Nini.Config;
 using OpenMetaverse;
 
 using OpenSim.Framework;
@@ -44,6 +40,8 @@ using OpenSim.Services.Interfaces;
 using GridRegion = OpenSim.Services.Interfaces.GridRegion;
 using FriendInfo = OpenSim.Services.Interfaces.FriendInfo;
 using OpenSim.Services.Connectors.Hypergrid;
+
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.LLLoginService
 {
@@ -93,45 +91,46 @@ namespace OpenSim.Services.LLLoginService
         protected bool m_allowDuplicatePresences = false;
         protected string m_messageKey;
         protected bool m_allowLoginFallbackToAnyRegion = true;  // if login requested region if not found and there are no Default or fallback regions,
-                                                                // try any online. This is legacy behaviour
 
-        readonly IConfig  m_LoginServerConfig;
-//        IConfig m_ClientsConfig;
-
-        public LLLoginService(IConfigSource config, ISimulationService simService, ILibraryService libraryService)
+        public LLLoginService(IConfiguration config) : 
+            this(config, null, null)
         {
-            m_LoginServerConfig = config.Configs["LoginService"];
-            if (m_LoginServerConfig is null)
-                throw new Exception(string.Format("No section LoginService in config file"));
+        }
 
-            string accountService = m_LoginServerConfig.GetString("UserAccountService", string.Empty);
-            string gridUserService = m_LoginServerConfig.GetString("GridUserService", string.Empty);
-            string agentService = m_LoginServerConfig.GetString("UserAgentService", string.Empty);
-            string authService = m_LoginServerConfig.GetString("AuthenticationService", string.Empty);
-            string invService = m_LoginServerConfig.GetString("InventoryService", string.Empty);
-            string gridService = m_LoginServerConfig.GetString("GridService", string.Empty);
-            string presenceService = m_LoginServerConfig.GetString("PresenceService", string.Empty);
-            string libService = m_LoginServerConfig.GetString("LibraryService", string.Empty);
-            string friendsService = m_LoginServerConfig.GetString("FriendsService", string.Empty);
-            string avatarService = m_LoginServerConfig.GetString("AvatarService", string.Empty);
-            string simulationService = m_LoginServerConfig.GetString("SimulationService", string.Empty);
+        public LLLoginService(IConfiguration config, ISimulationService simService, ILibraryService libraryService)
+        {
+            var loginServerConfig = config.GetSection("LoginService");
+            if (loginServerConfig.Exists() is false)
+                throw new Exception($"No section LoginService in config file");
 
-            m_WelcomeMessage = m_LoginServerConfig.GetString("WelcomeMessage", "Welcome to OpenSim!");
-            m_RequireInventory = m_LoginServerConfig.GetBoolean("RequireInventory", true);
-            m_AllowRemoteSetLoginLevel = m_LoginServerConfig.GetBoolean("AllowRemoteSetLoginLevel", false);
-            m_MinLoginLevel = m_LoginServerConfig.GetInt("MinLoginLevel", 0);
+            string accountService = loginServerConfig.GetValue("UserAccountService", string.Empty);
+            string gridUserService = loginServerConfig.GetValue("GridUserService", string.Empty);
+            string agentService = loginServerConfig.GetValue("UserAgentService", string.Empty);
+            string authService = loginServerConfig.GetValue("AuthenticationService", string.Empty);
+            string invService = loginServerConfig.GetValue("InventoryService", string.Empty);
+            string gridService = loginServerConfig.GetValue("GridService", string.Empty);
+            string presenceService = loginServerConfig.GetValue("PresenceService", string.Empty);
+            string libService = loginServerConfig.GetValue("LibraryService", string.Empty);
+            string friendsService = loginServerConfig.GetValue("FriendsService", string.Empty);
+            string avatarService = loginServerConfig.GetValue("AvatarService", string.Empty);
+            string simulationService = loginServerConfig.GetValue("SimulationService", string.Empty);
+
+            m_WelcomeMessage = loginServerConfig.GetValue("WelcomeMessage", "Welcome to OpenSim!");
+            m_RequireInventory = loginServerConfig.GetValue<bool>("RequireInventory", true);
+            m_AllowRemoteSetLoginLevel = loginServerConfig.GetValue<bool>("AllowRemoteSetLoginLevel", false);
+            m_MinLoginLevel = loginServerConfig.GetValue<int>("MinLoginLevel", 0);
             m_GatekeeperURL = Util.GetConfigVarFromSections<string>(config, "GatekeeperURI",
                 new string[] { "Startup", "Hypergrid", "LoginService" }, string.Empty);
-            m_MapTileURL = m_LoginServerConfig.GetString("MapTileURL", string.Empty);
-            m_ProfileURL = m_LoginServerConfig.GetString("ProfileServerURL", string.Empty);
-            m_OpenIDURL = m_LoginServerConfig.GetString("OpenIDServerURL", string.Empty);
-            m_SearchURL = m_LoginServerConfig.GetString("SearchURL", string.Empty);
-            m_Currency = m_LoginServerConfig.GetString("Currency", string.Empty);
-            m_ClassifiedFee = m_LoginServerConfig.GetString("ClassifiedFee", string.Empty);
-            m_DestinationGuide = m_LoginServerConfig.GetString ("DestinationGuide", string.Empty);
-            m_AvatarPicker = m_LoginServerConfig.GetString("AvatarPicker", string.Empty);
+            m_MapTileURL = loginServerConfig.GetValue("MapTileURL", string.Empty);
+            m_ProfileURL = loginServerConfig.GetValue("ProfileServerURL", string.Empty);
+            m_OpenIDURL = loginServerConfig.GetValue("OpenIDServerURL", string.Empty);
+            m_SearchURL = loginServerConfig.GetValue("SearchURL", string.Empty);
+            m_Currency = loginServerConfig.GetValue("Currency", string.Empty);
+            m_ClassifiedFee = loginServerConfig.GetValue("ClassifiedFee", string.Empty);
+            m_DestinationGuide = loginServerConfig.GetValue ("DestinationGuide", string.Empty);
+            m_AvatarPicker = loginServerConfig.GetValue("AvatarPicker", string.Empty);
 
-            m_allowLoginFallbackToAnyRegion = m_LoginServerConfig.GetBoolean("AllowLoginFallbackToAnyRegion", m_allowLoginFallbackToAnyRegion);
+            m_allowLoginFallbackToAnyRegion = loginServerConfig.GetValue<bool>("AllowLoginFallbackToAnyRegion", m_allowLoginFallbackToAnyRegion);
 
             string[] accessControlConfigSections = new string[] { "AccessControl", "LoginService" };
             string AllowedClients = Util.GetConfigVarFromSections<string>(config, "AllowedClients", accessControlConfigSections, string.Empty);
@@ -165,17 +164,17 @@ namespace OpenSim.Services.LLLoginService
             m_DeniedMacs = Util.GetConfigVarFromSections<string>(config, "DeniedMacs", accessControlConfigSections, string.Empty);
             m_DeniedID0s = Util.GetConfigVarFromSections<string>(config, "DeniedID0s", accessControlConfigSections, string.Empty);
 
-            m_MessageUrl = m_LoginServerConfig.GetString("MessageUrl", string.Empty);
-            m_DSTZone = m_LoginServerConfig.GetString("DSTZone", "America/Los_Angeles;Pacific Standard Time");
+            m_MessageUrl = loginServerConfig.GetValue("MessageUrl", string.Empty);
+            m_DSTZone = loginServerConfig.GetValue("DSTZone", "America/Los_Angeles;Pacific Standard Time");
 
-            IConfig groupConfig = config.Configs["Groups"];
-            if (groupConfig is not null)
-                m_MaxAgentGroups = groupConfig.GetInt("MaxAgentGroups", 42);
+            var groupConfig = config.GetSection("Groups");
+            if (groupConfig.Exists())
+                m_MaxAgentGroups = groupConfig.GetValue<int>("MaxAgentGroups", 42);
 
-            IConfig presenceConfig = config.Configs["PresenceService"];
-            if (presenceConfig is not null)
+            var presenceConfig = config.GetSection("PresenceService");
+            if (presenceConfig.Exists())
             {
-                m_allowDuplicatePresences = presenceConfig.GetBoolean("AllowDuplicatePresences", m_allowDuplicatePresences);
+                m_allowDuplicatePresences = presenceConfig.GetValue<bool>("AllowDuplicatePresences", m_allowDuplicatePresences);
             }
 
             // Clean up some of these vars
@@ -186,11 +185,12 @@ namespace OpenSim.Services.LLLoginService
                     m_MapTileURL += "/";
             }
 
-            IConfig messagingConfig = config.Configs["Messaging"];
-            if (messagingConfig is not null)
-                m_messageKey = messagingConfig.GetString("MessageKey", string.Empty);
+            var messagingConfig = config.GetSection("Messaging");
+            if (messagingConfig.Exists())
+                m_messageKey = messagingConfig.GetValue("MessageKey", string.Empty);
+
             // These are required; the others aren't
-            if (accountService.Length == 0 || authService.Length == 0)
+            if (string.IsNullOrEmpty(accountService) || string.IsNullOrEmpty(authService))
                 throw new Exception("LoginService is missing service specifications");
 
             // replace newlines in welcome message
@@ -199,6 +199,7 @@ namespace OpenSim.Services.LLLoginService
             object[] args = new object[] { config };
             m_UserAccountService = ServerUtils.LoadPlugin<IUserAccountService>(accountService, args);
             m_GridUserService = ServerUtils.LoadPlugin<IGridUserService>(gridUserService, args);
+
             object[] authArgs = new object[] { config, m_UserAccountService };
             m_AuthenticationService = ServerUtils.LoadPlugin<IAuthenticationService>(authService, authArgs);
             m_InventoryService = ServerUtils.LoadPlugin<IInventoryService>(invService, args);
@@ -217,14 +218,15 @@ namespace OpenSim.Services.LLLoginService
                 m_UserAgentService = ServerUtils.LoadPlugin<IUserAgentService>(agentService, args);
 
             // Get the Hypergrid inventory service (exists only if Hypergrid is enabled)
-            string hgInvServicePlugin = m_LoginServerConfig.GetString("HGInventoryServicePlugin", string.Empty);
+            string hgInvServicePlugin = loginServerConfig.GetValue("HGInventoryServicePlugin", string.Empty);
             if (!string.IsNullOrWhiteSpace(hgInvServicePlugin))
             {
-                string hgInvServiceArg = m_LoginServerConfig.GetString("HGInventoryServiceConstructorArg", string.Empty);
+                string hgInvServiceArg = loginServerConfig.GetValue("HGInventoryServiceConstructorArg", string.Empty);
                 if (!string.IsNullOrWhiteSpace(hgInvServiceArg))
                 {
                     hgInvServicePlugin = hgInvServiceArg + "@" + hgInvServicePlugin;
                 }
+
                 m_HGInventoryService = ServerUtils.LoadPlugin<IInventoryService>(hgInvServicePlugin, args);
             }
 
@@ -252,11 +254,6 @@ namespace OpenSim.Services.LLLoginService
             }
 
             m_log.DebugFormat("[LLOGIN SERVICE]: Starting...");
-
-        }
-
-        public LLLoginService(IConfigSource config) : this(config, null, null)
-        {
         }
 
         public Hashtable SetLevel(string firstName, string lastName, string passwd, int level, IPEndPoint clientIP)
@@ -1048,7 +1045,7 @@ namespace OpenSim.Services.LLLoginService
             }
 
             // New style: service keys  start with SRV_; override the previous
-            string[] keys = m_LoginServerConfig.GetKeys();
+            string[] keys = loginServerConfig.GetKeys();
 
             if (keys.Length > 0)
             {
@@ -1057,7 +1054,7 @@ namespace OpenSim.Services.LLLoginService
                 foreach (string serviceKey in serviceKeys)
                 {
                     string keyName = serviceKey.Replace("SRV_", "");
-                    string keyValue = m_LoginServerConfig.GetString(serviceKey, string.Empty);
+                    string keyValue = loginServerConfig.GetValue(serviceKey, string.Empty);
                     if (!keyValue.EndsWith("/"))
                         keyValue += "/";
 
@@ -1146,7 +1143,7 @@ namespace OpenSim.Services.LLLoginService
                     break;
 
                 case "reset":
-                    m_MinLoginLevel = m_LoginServerConfig.GetInt("MinLoginLevel", 0);
+                    m_MinLoginLevel = loginServerConfig.GetInt("MinLoginLevel", 0);
                     MainConsole.Instance.Output("Reset min login level to {0}", m_MinLoginLevel);
                     break;
 

@@ -41,6 +41,7 @@ using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenMetaverse;
 using OpenMetaverse.StructuredData;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.Connectors
 {
@@ -61,30 +62,31 @@ namespace OpenSim.Services.Connectors
             m_ServerURI = serverURI.TrimEnd('/');
         }
 
-        public MapImageServicesConnector(IConfigSource source)
+        public MapImageServicesConnector(IConfiguration source)
         {
             Initialise(source);
         }
 
-        public virtual void Initialise(IConfigSource source)
+        public virtual void Initialise(IConfiguration source)
         {
-            IConfig config = source.Configs["MapImageService"];
-            if (config == null)
+            var config = source.GetSection("MapImageService");
+            if (config.Exists() is false)
             {
                 m_log.Error("[MAP IMAGE CONNECTOR]: MapImageService missing");
                 throw new Exception("MapImage connector init error");
             }
 
-            string serviceURI = config.GetString("MapImageServerURI",
-                    String.Empty);
+            string serviceURI = config.GetValue("MapImageServerURI", String.Empty);
 
-            if (serviceURI.Length == 0)
+            if (string.IsNullOrEmpty(serviceURI))
             {
                 m_log.Error("[MAP IMAGE CONNECTOR]: No Server URI named in section MapImageService");
                 throw new Exception("MapImage connector init error");
             }
+
             m_ServerURI = serviceURI;
             m_ServerURI = serviceURI.TrimEnd('/');
+            
             base.Initialise(source, "MapImageService");
         }
 

@@ -51,7 +51,7 @@ namespace OpenSim.Region.CoreModules.Avatar.BakedTextures
 
         private static IServiceAuth m_Auth;
 
-        public void Initialise(IConfigSource configSource)
+        public void Initialise(IConfiguration configSource)
         {
             IConfig config = configSource.Configs["XBakes"];
             if (config == null)

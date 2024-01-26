@@ -43,7 +43,7 @@ namespace OpenSim.Region.CoreModules.Avatar.Gestures
 
         protected Scene m_scene;
 
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
         }
 

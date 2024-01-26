@@ -55,7 +55,7 @@ namespace OpenSim.Region.CoreModules.ServiceConnectorsOut.UserAliases
             get { return "RemoteUserAliasServicesConnector"; }
         }
 
-        public override void Initialise(IConfigSource source)
+        public override void Initialise(IConfiguration source)
         {
             IConfig moduleConfig = source.Configs["Modules"];
             if (moduleConfig != null)

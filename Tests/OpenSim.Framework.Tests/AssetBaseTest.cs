@@ -25,19 +25,26 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-using NUnit.Framework;
+using Xunit;
+using OpenSim.Framework;
+
 using OpenMetaverse;
-using OpenSim.Tests.Common;
+using OpenMetaverse.StructuredData;
 
 namespace OpenSim.Framework.Tests
 {
-    [TestFixture]
-    public class AssetBaseTest : OpenSimTestCase
+    public class AssetBaseTest : IDisposable
     {
-        [Test]
+        public AssetBaseTest()
+        {
+        }
+
+        public void Dispose()
+        {
+            // throw new NotImplementedException();
+        }
+
+        [Fact]
         public void TestContainsReferences()
         {
             CheckContainsReferences(AssetType.Bodypart, true);
@@ -66,7 +73,7 @@ namespace OpenSim.Framework.Tests
         {
             AssetBase asset = new AssetBase(UUID.Zero, String.Empty, (sbyte)assetType, UUID.Zero.ToString());
             bool actual = asset.ContainsReferences;
-            Assert.AreEqual(expected, actual, "Expected "+assetType+".ContainsReferences to be "+expected+" but was "+actual+".");
+            Assert.True(expected == actual, $"Expected {assetType}.ContainsReferences to be {expected} but was {actual}.");
         }
     }
 }

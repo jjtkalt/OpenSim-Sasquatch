@@ -55,7 +55,7 @@ namespace OpenSim.Region.CoreModules.ServiceConnectorsOut.Grid
         {
         }
 
-        public RegionGridServicesConnector(IConfigSource source)
+        public RegionGridServicesConnector(IConfiguration source)
         {
             InitialiseServices(source);
         }
@@ -72,7 +72,7 @@ namespace OpenSim.Region.CoreModules.ServiceConnectorsOut.Grid
             get { return "RegionGridServicesConnector"; }
         }
 
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
             IConfig moduleConfig = source.Configs["Modules"];
             if (moduleConfig != null)
@@ -92,7 +92,7 @@ namespace OpenSim.Region.CoreModules.ServiceConnectorsOut.Grid
             }
         }
 
-        private bool InitialiseServices(IConfigSource source)
+        private bool InitialiseServices(IConfiguration source)
         {
             IConfig gridConfig = source.Configs["GridService"];
             if (gridConfig == null)

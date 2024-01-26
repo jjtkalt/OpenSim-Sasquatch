@@ -25,36 +25,19 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Reflection;
-using System.Threading;
-using System.Text;
 using System.Xml;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using OpenSim.Framework;
 using OpenSim.Framework.Console;
 using OpenSim.Framework.Monitoring;
 using OpenSim.Framework.Servers;
-using log4net;
-using log4net.Config;
-using log4net.Appender;
-using log4net.Core;
-using log4net.Repository;
-using Nini.Config;
 
 namespace OpenSim.Server.Base
 {
     public class ServicesServerBase : ServerBase
     {
-        // Logger
-        //
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
-        // Command line args
-        //
-        protected string[] m_Arguments;
-
         protected string m_configDirectory = ".";
 
         // Run flag
@@ -63,111 +46,13 @@ namespace OpenSim.Server.Base
 
         // Handle all the automagical stuff
         //
-        public ServicesServerBase(string prompt, string[] args) : base()
+        public ServicesServerBase(
+            IConfiguration configuration,
+            ILogger<ServicesServerBase> logger,
+            ServerStatsCollector statsCollector)
+            : base(configuration, logger, statsCollector)
         {
-            // Save raw arguments
-            m_Arguments = args;
-
-            // Read command line
-            ArgvConfigSource argvConfig = new ArgvConfigSource(args);
-
-            argvConfig.AddSwitch("Startup", "console", "c");
-            argvConfig.AddSwitch("Startup", "logfile", "l");
-            argvConfig.AddSwitch("Startup", "inifile", "i");
-            argvConfig.AddSwitch("Startup", "prompt",  "p");
-            argvConfig.AddSwitch("Startup", "logconfig", "g");
-
-            // Automagically create the ini file name
-            string fileName = "";
-            if (Assembly.GetEntryAssembly() != null)
-                fileName = Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location);
-            string iniFile = fileName + ".ini";
-            string logConfig = null;
-
-            IConfig startupConfig = argvConfig.Configs["Startup"];
-            if (startupConfig != null)
-            {
-                // Check if a file name was given on the command line
-                iniFile = startupConfig.GetString("inifile", iniFile);
-
-                // Check if a prompt was given on the command line
-                prompt = startupConfig.GetString("prompt", prompt);
-
-                // Check for a Log4Net config file on the command line
-                logConfig =startupConfig.GetString("logconfig", logConfig);
-            }
-
-            Config = ReadConfigSource(iniFile);
-
-            List<string> sources = new List<string>();
-            sources.Add(iniFile);
-
-            int sourceIndex = 1;
-
-            while (AddIncludes(Config, sources))
-            {
-                for ( ; sourceIndex < sources.Count ; ++sourceIndex)
-                {
-                    IConfigSource s = ReadConfigSource(sources[sourceIndex]);
-                    Config.Merge(s);
-                }
-            }
-
-            // Merge the configuration from the command line into the loaded file
-            Config.Merge(argvConfig);
-
-            Config.ReplaceKeyValues();
-
-            // Refresh the startupConfig post merge
-            if (Config.Configs["Startup"] != null)
-            {
-                startupConfig = Config.Configs["Startup"];
-            }
-
-            if (startupConfig != null)
-            {
-                m_configDirectory = startupConfig.GetString("ConfigDirectory", m_configDirectory);
-
-                prompt = startupConfig.GetString("Prompt", prompt);
-            }
-            // Allow derived classes to load config before the console is opened.
-            ReadConfig();
-
-            // Create main console
-            string consoleType = "local";
-            if (startupConfig != null)
-                consoleType = startupConfig.GetString("console", consoleType);
-
-            if (consoleType == "basic")
-                MainConsole.Instance = new CommandConsole(prompt);
-            else if (consoleType == "rest")
-                MainConsole.Instance = new RemoteConsole(null, prompt);     // XXX
-            else if (consoleType == "mock")
-                MainConsole.Instance = new MockConsole();
-            else if (consoleType == "local")
-                MainConsole.Instance = new LocalConsole(null, null, prompt);    // XXX
-
-            MainConsole.Instance.ReadConfig(/*Config*/);                        // XXX
-            m_console = MainConsole.Instance;
-
-            if (!string.IsNullOrEmpty(logConfig))
-            {
-                FileInfo cfg = new FileInfo(logConfig);
-                XmlConfigurator.Configure(cfg);
-            }
-            else
-            {
-                XmlConfigurator.Configure(new FileInfo("Robust.exe.config"));
-            }
-
-            RegisterCommonAppenders(startupConfig);
             LogEnvironmentInformation();
-
-            if (startupConfig.GetString("PIDFile", String.Empty) != String.Empty)
-            {
-                CreatePIDFile(startupConfig.GetString("PIDFile"));
-            }
-
             RegisterCommonCommands();
             RegisterCommonComponents(Config);
 
@@ -196,7 +81,7 @@ namespace OpenSim.Server.Base
                 }
                 catch (Exception e)
                 {
-                    m_log.ErrorFormat("Command error: {0}", e);
+                    Logger.LogError(e, "Command error");
                 }
             }
 
@@ -208,7 +93,6 @@ namespace OpenSim.Server.Base
                 MemoryWatchdog.Enabled = false;
                 Watchdog.Enabled = false;
                 WorkManager.Stop();
-                RemovePIDFile();
             }
             return 0;
         }
@@ -217,8 +101,9 @@ namespace OpenSim.Server.Base
         {
             if(!m_Running)
                 return;
+
             m_Running = false;
-            m_log.Info("[CONSOLE] Quitting");
+            Logger.LogInformation("Quitting");
 
             base.ShutdownSpecific();
 
@@ -230,86 +115,14 @@ namespace OpenSim.Server.Base
                 MemoryWatchdog.Enabled = false;
                 Watchdog.Enabled = false;
                 WorkManager.Stop();
-                RemovePIDFile();
-                Util.StopThreadPool();
 
+                Util.StopThreadPool();
                 Environment.Exit(0);
             }
         }
 
-        protected virtual void ReadConfig()
-        {
-        }
-
         protected virtual void Initialise()
         {
-        }
-
-        /// <summary>
-        /// Adds the included files as ini configuration files
-        /// </summary>
-        /// <param name="sources">List of URL strings or filename strings</param>
-        private bool AddIncludes(IConfigSource configSource, List<string> sources)
-        {
-            bool sourcesAdded = false;
-
-            //loop over config sources
-            foreach (IConfig config in configSource.Configs)
-            {
-                // Look for Include-* in the key name
-                string[] keys = config.GetKeys();
-                foreach (string k in keys)
-                {
-                    if (k.StartsWith("Include-"))
-                    {
-                        // read the config file to be included.
-                        string file = config.GetString(k);
-                        if (IsUri(file))
-                        {
-                            if (!sources.Contains(file))
-                            {
-                                sourcesAdded = true;
-                                sources.Add(file);
-                            }
-                        }
-                        else
-                        {
-                            string basepath = Path.GetFullPath(m_configDirectory);
-                            // Resolve relative paths with wildcards
-                            string chunkWithoutWildcards = file;
-                            string chunkWithWildcards = string.Empty;
-                            int wildcardIndex = file.IndexOfAny(new char[] { '*', '?' });
-                            if (wildcardIndex != -1)
-                            {
-                                chunkWithoutWildcards = file.Substring(0, wildcardIndex);
-                                chunkWithWildcards = file.Substring(wildcardIndex);
-                            }
-                            string path = Path.Combine(basepath, chunkWithoutWildcards);
-                            path = Path.GetFullPath(path) + chunkWithWildcards;
-                            string[] paths = Util.Glob(path);
-
-                            // If the include path contains no wildcards, then warn the user that it wasn't found.
-                            if (wildcardIndex == -1 && paths.Length == 0)
-                            {
-                                Console.Output($"[CONFIG]: Could not find include file {path}\n");
-                            }
-                            else
-                            {
-                                foreach (string p in paths)
-                                {
-                                    if (!sources.Contains(p))
-                                    {
-                                        sourcesAdded = true;
-                                        sources.Add(p);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            return sourcesAdded;
         }
 
         /// <summary>
@@ -321,37 +134,7 @@ namespace OpenSim.Server.Base
         {
             Uri configUri;
 
-            return Uri.TryCreate(file, UriKind.Absolute,
-                    out configUri) && configUri.Scheme == Uri.UriSchemeHttp;
-        }
-
-        IConfigSource ReadConfigSource(string iniFile)
-        {
-            // Find out of the file name is a URI and remote load it if possible.
-            // Load it as a local file otherwise.
-            Uri configUri;
-            IConfigSource s = null;
-
-            try
-            {
-                if (Uri.TryCreate(iniFile, UriKind.Absolute, out configUri) &&
-                    configUri.Scheme == Uri.UriSchemeHttp)
-                {
-                    XmlReader r = XmlReader.Create(iniFile);
-                    s = new XmlConfigSource(r);
-                }
-                else
-                {
-                    s = new IniConfigSource(iniFile);
-                }
-            }
-            catch (Exception e)
-            {
-                System.Console.WriteLine("Error reading from config source.  {0}", e.Message);
-                Environment.Exit(1);
-            }
-
-            return s;
+            return (Uri.TryCreate(file, UriKind.Absolute, out configUri) && configUri.Scheme == Uri.UriSchemeHttp);
         }
     }
 }

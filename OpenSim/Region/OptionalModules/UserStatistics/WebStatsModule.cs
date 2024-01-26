@@ -70,7 +70,7 @@ namespace OpenSim.Region.OptionalModules.UserStatistics
 
         #region ISharedRegionModule
 
-        public virtual void Initialise(IConfigSource config)
+        public virtual void Initialise(IConfiguration config)
         {
             IConfig cnfg = config.Configs["WebStats"];
 

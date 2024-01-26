@@ -104,7 +104,7 @@ namespace OpenSim.Region.OptionalModules.Avatar.Voice.VivoxVoice
 
         private object m_Lock;
 
-        public void Initialise(IConfigSource config)
+        public void Initialise(IConfiguration config)
         {
             MainConsole.Instance.Commands.AddCommand("vivox", false, "vivox debug", "vivox debug <on>|<off>", "Set vivox debugging", HandleDebug);
 

@@ -3,5 +3,41 @@
     // Hover to view descriptions of existing attributes.
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
-    "configurations": []
+    "configurations": [
+        {
+            "name": ".NET Core Attach",
+            "type": "coreclr",
+            "request": "attach"
+        },
+        {
+            "name": "C#: OpenSim.Server.MoneyServer Debug",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/Source/OpenSim.Server.MoneyServer/bin/Debug/net6.0/OpenSim.Server.MoneyServer.dll",
+            "args": ["--console","local","--inifile","${workspaceFolder}/../../Config/MoneyServer.ini"],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": true,
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "C#: OpenSim.Server.RobustServer Debug",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/Source/OpenSim.Server.RobustServer/bin/Debug/net6.0/OpenSim.Server.RobustServer.dll",
+            "args": ["--console","local","--inifile","${workspaceFolder}/../../Config/Robust.Grid.ini"],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": true,
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "C#: OpenSim.Server.RegionServer Debug",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/Source/OpenSim.Server.RegionServer/bin/Debug/net6.0/OpenSim.Server.RegionServer.dll",
+            "args": ["--console","local","--inifile","${workspaceFolder}/../../Config/OpenSim.ini.ini"],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": true,
+            "console": "integratedTerminal"
+        },
+    ]
 }

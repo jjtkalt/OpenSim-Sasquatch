@@ -46,7 +46,7 @@ namespace OpenSim.Region.ClientStack.Linden
 
         private List<Scene> m_scenes = new List<Scene>();
 
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
 
         }

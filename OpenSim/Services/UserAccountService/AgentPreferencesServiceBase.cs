@@ -25,11 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Reflection;
-using Nini.Config;
+using Microsoft.Extensions.Configuration;
 using OpenSim.Data;
-using OpenSim.Services.Interfaces;
 using OpenSim.Services.Base;
 
 namespace OpenSim.Services.UserAccountService
@@ -38,31 +35,29 @@ namespace OpenSim.Services.UserAccountService
     {
         protected IAgentPreferencesData m_Database = null;
 
-        public AgentPreferencesServiceBase(IConfigSource config) : base(config)
+        public AgentPreferencesServiceBase(IConfiguration config) : base(config)
         {
             string dllName = String.Empty;
             string connString = String.Empty;
             string realm = "AgentPrefs";
 
-            IConfig dbConfig = config.Configs["DatabaseService"];
-            if (dbConfig != null)
+            var dbConfig = config.GetSection("DatabaseService");
+            if (dbConfig.Exists())
             {
-                dllName = dbConfig.GetString("StorageProvider", String.Empty);
-                connString = dbConfig.GetString("ConnectionString", String.Empty);
+                dllName = dbConfig.GetValue("StorageProvider", String.Empty);
+                connString = dbConfig.GetValue("ConnectionString", String.Empty);
             }
 
-            IConfig userConfig = config.Configs["AgentPreferencesService"];
-            if (userConfig == null)
+            var userConfig = config.GetSection("AgentPreferencesService");
+            if (userConfig.Exists() is false)
                 throw new Exception("No AgentPreferencesService configuration");
 
-            dllName = userConfig.GetString("StorageProvider", dllName);
-
-            if (dllName.Length == 0)
+            dllName = userConfig.GetValue("StorageProvider", dllName);
+            if (string.IsNullOrEmpty(dllName))
                 throw new Exception("No StorageProvider configured");
 
-            connString = userConfig.GetString("ConnectionString", connString);
-
-            realm = userConfig.GetString("Realm", realm);
+            connString = userConfig.GetValue("ConnectionString", connString);
+            realm = userConfig.GetValue("Realm", realm);
 
             m_Database = LoadPlugin<IAgentPreferencesData>(dllName, new Object[] {connString, realm});
 

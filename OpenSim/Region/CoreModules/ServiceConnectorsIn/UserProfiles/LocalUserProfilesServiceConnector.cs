@@ -79,13 +79,13 @@ namespace OpenSim.Region.CoreModules.ServiceConnectorsOut.Profile
             //m_log.Debug("[LOCAL USERPROFILES SERVICE CONNECTOR]: LocalUserProfileServicesConnector no params");
         }
 
-        public LocalUserProfilesServicesConnector(IConfigSource source)
+        public LocalUserProfilesServicesConnector(IConfiguration source)
         {
             //m_log.Debug("[LOCAL USERPROFILES SERVICE CONNECTOR]: LocalUserProfileServicesConnector instantiated directly.");
             InitialiseService(source);
         }
 
-        public void InitialiseService(IConfigSource source)
+        public void InitialiseService(IConfiguration source)
         {
             ConfigName = "UserProfilesService";
 
@@ -161,7 +161,7 @@ namespace OpenSim.Region.CoreModules.ServiceConnectorsOut.Profile
 
         #region IRegionModuleBase implementation
 
-        public void Initialise(IConfigSource source)
+        public void Initialise(IConfiguration source)
         {
             IConfig moduleConfig = source.Configs["Modules"];
             if (moduleConfig != null)
