@@ -24,31 +24,25 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading;
+
 using OpenSim.Framework;
 using OpenSim.Framework.Monitoring;
 using OpenSim.Region.Framework.Scenes;
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.PhysicsModules.SharedBase;
-using Nini.Config;
-using log4net;
+
 using OpenMetaverse;
+
+using Microsoft.Extensions.Configuration;
+using log4net.Core;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Region.PhysicsModule.BulletS
 {
     public sealed class BSScene : PhysicsScene, IPhysicsParameters, INonSharedRegionModule
     {
-        internal static readonly ILog m_log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
-        internal static readonly string LogHeader = "[BULLETS SCENE]";
-
         private bool m_Enabled = false;
-        private IConfiguration m_Config;
 
         // The name of the region we're working for.
         public string RegionName { get; private set; }
@@ -78,9 +72,6 @@ namespace OpenSim.Region.PhysicsModule.BulletS
         //    every tick so OpenSim will update its animation.
         private HashSet<BSPhysObject> AvatarsInScene = new HashSet<BSPhysObject>();
         private Object AvatarsInSceneLock = new Object();
-
-        // let my minuions use my logger
-        public ILog Logger { get { return m_log; } }
 
         public IMesher mesher;
         public uint WorldID { get; private set; }
@@ -203,6 +194,18 @@ namespace OpenSim.Region.PhysicsModule.BulletS
         public bool VehicleLoggingEnabled { get; private set; }
         public bool VehiclePhysicalLoggingEnabled { get; private set; }
 
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<BSScene> m_logger;
+
+        public BSScene(
+            IConfiguration configuration,
+            ILogger<BSScene> logger
+            )
+        {
+            m_configuration = configuration;
+            m_logger = logger;
+        }
+
         #region INonSharedRegionModule
         public string Name
         {
@@ -214,24 +217,23 @@ namespace OpenSim.Region.PhysicsModule.BulletS
             get { return null; }
         }
 
-        public void Initialise(IConfiguration source)
+        public void Initialise()
         {
             // TODO: Move this out of Startup
-            IConfig config = source.Configs["Startup"];
-            if (config != null)
+            var config = m_configuration.GetSection("Startup");
+            if (config.Exists())
             {
-                string physics = config.GetString("physics", string.Empty);
+                string physics = config.GetValue("physics", string.Empty);
                 if (physics == Name)
                 {
-                    string mesher = config.GetString("meshing", string.Empty);
+                    string mesher = config.GetValue("meshing", string.Empty);
                     if (string.IsNullOrEmpty(mesher) || !mesher.Equals("Meshmerizer"))
                     {
-                        m_log.Error("[BulletSim] Opensim.ini meshing option must be set to \"Meshmerizer\"");
+                        m_logger.LogError("Opensim.ini meshing option must be set to \"Meshmerizer\"");
                         throw new Exception("Invalid physics meshing option");
                     }
 
                     m_Enabled = true;
-                    m_Config = source;
                 }
             }
 
@@ -1465,6 +1467,5 @@ namespace OpenSim.Region.PhysicsModule.BulletS
         }
         // Used to fill in the LocalID when there isn't one. It's the correct number of characters.
         public const string DetailLogZero = "0000000000";
-
     }
 }

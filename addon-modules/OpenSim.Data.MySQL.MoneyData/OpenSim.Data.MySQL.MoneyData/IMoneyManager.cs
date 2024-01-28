@@ -31,6 +31,8 @@ namespace OpenSim.Data.MySQL.MoneyData
 {
     public interface IMoneyManager
     {
+        void Initialize(string connectString);
+        
         int getBalance(string userID);
 
         //int getBalanceStatus(string userID);

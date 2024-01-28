@@ -33,7 +33,7 @@ namespace OpenSim.Server.MoneyServer
 {
     public interface IMoneyServiceCore
     {
-        BaseHttpServer HttpServer { get; }
+        IHttpServer HttpServer { get; }
 
         Dictionary<string, string> GetSessionDic();
         Dictionary<string, string> GetSecureSessionDic();

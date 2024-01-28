@@ -41,6 +41,7 @@ using OpenSim.Server.Base;
 using OpenSim.Framework.Console;
 using OpenSim.Framework;
 using ConfigurationSubstitution;
+using OpenSim.Framework.Servers.HttpServer;
 
 namespace OpenSim.Server.MoneyServer
 {
@@ -76,6 +77,7 @@ namespace OpenSim.Server.MoneyServer
                 .UseServiceProviderFactory(new AutofacServiceProviderFactory())
                 .ConfigureAppConfiguration(configuration =>
                 {
+                    configuration.AddJsonFile($"appsettings.json", optional: true, reloadOnChange: false);
                     configuration.AddIniFile("MoneyServer.ini", optional: true, reloadOnChange: false);
 
                     foreach (var item in inifile)
@@ -87,6 +89,8 @@ namespace OpenSim.Server.MoneyServer
                 })
                 .ConfigureContainer<ContainerBuilder>(builder =>
                 {
+                    builder.RegisterType<BaseHttpServer>().As<IHttpServer>();
+                    
                     builder.RegisterType<MoneyServer>().SingleInstance();
                     builder.RegisterType<MoneyXmlRpcModule>().SingleInstance();
                     builder.RegisterType<MoneyDBService>().SingleInstance();

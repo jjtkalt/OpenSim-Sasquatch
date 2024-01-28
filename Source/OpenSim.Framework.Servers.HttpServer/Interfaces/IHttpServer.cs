@@ -25,6 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+using System.Net;
+using System.Net.Security;
 using Nwc.XmlRpc;
 
 namespace OpenSim.Framework.Servers.HttpServer
@@ -35,13 +37,22 @@ namespace OpenSim.Framework.Servers.HttpServer
     /// </summary>
     public interface IHttpServer
     {
+        void Initialize(uint port, IPAddress ipaddr = null, bool ssl=false, string CN=null, string CPath=null, string CPass=null);
+
         uint SSLPort { get; }
         string SSLCommonName { get; }
 
         uint Port { get; }
         bool UseSSL { get; }
-       
+        IPAddress ListenIPAddress { get; set; }
+
+        void Start();
+        
+        void Stop(bool stop);
+
         bool HTTPDRunning {get;}
+
+        RemoteCertificateValidationCallback CertificateValidationCallback { set; }
 
 //        // Note that the agent string is provided simply to differentiate
 //        // the handlers - it is NOT required to be an actual agent header
@@ -93,7 +104,15 @@ namespace OpenSim.Framework.Servers.HttpServer
 
 
         void RemoveWebSocketHandler(string servicepath);
-
+     
+        /// <summary>
+        /// HandleXMLRpcRequests - This probably shouldn't be exposed in the interface but its needed in callers.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="response"></param>
+        /// <param name="rpcHandlers"></param>
+        void HandleXmlRpcRequests(OSHttpRequest request, OSHttpResponse response, Dictionary<string, XmlRpcMethod> rpcHandlers);
+ 
         /// <summary>
         /// Gets the XML RPC handler for given method name
         /// </summary>

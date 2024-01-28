@@ -38,6 +38,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using OpenSim.Server.Base;
+using OpenSim.Framework.Monitoring;
 
 /// <summary>
 /// OpenSim Server MoneyServer
@@ -233,9 +234,11 @@ namespace OpenSim.Server.MoneyServer
         {
             try
             {
-                if (m_certFilename != "")
+                m_baseServer.HttpServer = m_serviceProvider.GetService<IHttpServer> ();
+
+                if (string.IsNullOrEmpty(m_certFilename) is false)
                 {
-                    m_baseServer.HttpServer = new BaseHttpServer(m_moneyServerPort, true, m_certFilename, m_certPassword);
+                    m_baseServer.HttpServer.Initialize(m_moneyServerPort, ipaddr: null, true, m_certFilename, m_certPassword);
                     if (m_checkClientCert)
                     {
                         m_baseServer.HttpServer.CertificateValidationCallback = (RemoteCertificateValidationCallback)CertVerify.ValidateClientCertificate;
@@ -244,7 +247,7 @@ namespace OpenSim.Server.MoneyServer
                 }
                 else
                 {
-                    m_baseServer.HttpServer = new BaseHttpServer(m_moneyServerPort);
+                    m_baseServer.HttpServer.Initialize(m_moneyServerPort);
                 }
 
                 m_logger.LogInformation("Connecting to Money Storage Server");
@@ -266,7 +269,7 @@ namespace OpenSim.Server.MoneyServer
             }
         }
 
-        public BaseHttpServer HttpServer
+        public IHttpServer HttpServer
         {
             get { return m_baseServer.HttpServer; }
         }

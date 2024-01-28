@@ -25,35 +25,30 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Globalization;
-using System.IO;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
-using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Xml;
 using OSHttpServer;
 using tinyHTTPListener = OSHttpServer.OSHttpListener;
-using log4net;
 using Nwc.XmlRpc;
 using OpenSim.Framework.Monitoring;
 using OpenMetaverse.StructuredData;
-using OpenMetaverse;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Framework.Servers.HttpServer
 {
     public class BaseHttpServer : IHttpServer
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-        private readonly HttpServerLogWriter httpserverlog = new HttpServerLogWriter();
         private static readonly Encoding UTF8NoBOM = new System.Text.UTF8Encoding(false);
         public static PollServiceRequestManager m_pollServiceManager;
         private static readonly object m_generalLock = new object();
@@ -154,21 +149,39 @@ namespace OpenSim.Framework.Servers.HttpServer
             set { m_listenIPAddress = value; }
         }
 
-        public BaseHttpServer(uint port)
+        protected readonly IConfiguration m_configuration;
+        protected readonly ILogger<BaseHttpServer> m_logger;
+
+        public BaseHttpServer(IConfiguration configuration, ILogger<BaseHttpServer> logger)
         {
-            m_port = port;
-            SetHTTP404();
+            m_configuration = configuration;
+            m_logger = logger;
         }
 
-        public BaseHttpServer(uint port, bool ssl, string CN, string CPath, string CPass)
+        public void Initialize(
+            uint port, 
+            IPAddress ipaddr = null, 
+            bool ssl = false, 
+            string CN = null, 
+            string CPath = null, 
+            string CPass = null
+            )
         {
             m_port = port;
+            m_ssl = false;
+
+            if (ipaddr != null)
+                ListenIPAddress = ipaddr;
+
             if (ssl)
             {
                 if (string.IsNullOrEmpty(CPath))
                     throw new Exception("invalid main http server cert path");
 
                 if (Uri.CheckHostName(CN) == UriHostNameType.Unknown)
+                    throw new Exception("invalid main http server CN (ExternalHostName)");
+
+                if (!CheckSSLCertHost(CN))
                     throw new Exception("invalid main http server CN (ExternalHostName)");
 
                 m_certNames.Clear();
@@ -178,32 +191,13 @@ namespace OpenSim.Framework.Servers.HttpServer
                 m_ssl = true;
                 load_cert(CPath, CPass);
 
-                if (!CheckSSLCertHost(CN))
-                    throw new Exception("invalid main http server CN (ExternalHostName)");
-
                 m_SSLCommonName = CN;
 
                 if (m_cert.Issuer == m_cert.Subject)
-                    m_log.Warn("Self signed certificate. Clients need to allow this (some viewers debug option NoVerifySSLcert must be set to true");
+                {
+                    m_logger.LogWarning("Self signed certificate. Clients need to allow this (some viewers debug option NoVerifySSLcert must be set to true");
+                }
             }
-            else
-                m_ssl = false;
-
-            SetHTTP404();
-        }
-
-        public BaseHttpServer(uint port, bool ssl, string CPath, string CPass)
-        {
-            m_port = port;
-            if (ssl)
-            {
-                load_cert(CPath, CPass);
-                if (m_cert.Issuer == m_cert.Subject)
-                    m_log.Warn("Self signed certificate. Http clients need to allow this");
-                m_ssl = true;
-            }
-            else
-                m_ssl = false;
 
             SetHTTP404();
         }
@@ -344,7 +338,6 @@ namespace OpenSim.Framework.Servers.HttpServer
             }
 
             string handlerKey = GetHandlerKey(handler.HttpMethod, handler.Path);
-            // m_log.DebugFormat("[BASE HTTP SERVER]: Adding handler key {0}", handlerKey);
             m_streamHandlers.TryAdd(handlerKey, handler);
         }
 
@@ -353,7 +346,6 @@ namespace OpenSim.Framework.Servers.HttpServer
             if(string.IsNullOrWhiteSpace(handler.Path))
                 return;
 
-            // m_log.DebugFormat("[BASE HTTP SERVER]: Adding handler key {0}", handlerKey);
             m_streamHandlers.TryAdd(handler.Path, handler);
         }
 
@@ -464,7 +456,6 @@ namespace OpenSim.Framework.Servers.HttpServer
 
         public bool AddHTTPHandler(string methodName, GenericHTTPMethod handler)
         {
-            //m_log.DebugFormat("[BASE HTTP SERVER]: Registering {0}", methodName);
             lock (m_HTTPHandlers)
             {
                 return m_HTTPHandlers.TryAdd(methodName, handler);
@@ -593,7 +584,7 @@ namespace OpenSim.Framework.Servers.HttpServer
             }
             catch (Exception e)
             {
-                m_log.Error($"[BASE HTTP SERVER]: OnRequest() failed: {e.Message}");
+                m_logger.LogError(e, $"OnRequest() failed");
             }
         }
 
@@ -615,7 +606,6 @@ namespace OpenSim.Framework.Servers.HttpServer
                 // OpenSim.Framework.WebUtil.OSHeaderRequestID
                 // if (request.Headers["opensim-request-id"] != null)
                 //  reqnum = String.Format("{0}:{1}",request.RemoteIPEndPoint,request.Headers["opensim-request-id"]);
-                // m_log.DebugFormat("[BASE HTTP SERVER]: <{0}> handle request for {1}",reqnum,request.RawUrl);
 
                 Culture.SetCurrentCulture();
 
@@ -734,8 +724,6 @@ namespace OpenSim.Framework.Servers.HttpServer
                     }
                     else if (requestHandler is IGenericHTTPHandler HTTPRequestHandler)
                     {
-                        //m_log.Debug("[BASE HTTP SERVER]: Found Caps based HTTP Handler");
-
                         string requestBody;
                         Encoding encoding = Encoding.UTF8;
                         using(StreamReader reader = new StreamReader(request.InputStream, encoding))
@@ -872,22 +860,26 @@ namespace OpenSim.Framework.Servers.HttpServer
                 //
                 // An alternative may be to turn off all response write exceptions on the HttpListener, but let's go
                 // with the minimum first
-                m_log.Warn($"[BASE HTTP SERVER]: HandleRequest threw {e.Message}.\nNOTE: this may be spurious on Linux");
+                m_logger.LogWarning(e, $"HandleRequest threw exception.\nNOTE: this may be spurious on Linux");
             }
             catch (IOException e)
             {
-                m_log.Error("[BASE HTTP SERVER]: HandleRequest() threw exception ", e);
+                m_logger.LogError(e, "HandleRequest() threw IOException ");
             }
             catch (Exception e)
             {
-                m_log.Error("[BASE HTTP SERVER]: HandleRequest() threw exception ", e);
+                m_logger.LogError(e, "HandleRequest() threw Exception ");
+
                 try
                 {
                     response.StatusCode =(int)HttpStatusCode.InternalServerError;
                     responseData = response.RawBuffer;
                     response.Send();
                 }
-                catch {}
+                catch 
+                {
+
+                }
             }
             finally
             {
@@ -897,49 +889,36 @@ namespace OpenSim.Framework.Servers.HttpServer
                 int tickdiff = requestEndTick - requestStartTick;
                 if (tickdiff > 3000)
                 {
-                    m_log.InfoFormat(
-                        "[LOGHTTP] Slow handling of {0} {1} {2} {3} {4} from {5} took {6}ms",
-                        RequestNumber,
-                        request.HttpMethod,
-                        request.RawUrl,
-                        requestHandler is null ? "" : requestHandler.Name,
-                        requestHandler is null ? "" : requestHandler.Description,
-                        request.RemoteIPEndPoint,
-                        tickdiff);
+                    m_logger.LogInformation(
+                        $"[LOGHTTP] Slow handling of {RequestNumber} {request.HttpMethod} {request.RawUrl} "+
+                        $"{(requestHandler is null ? "" : requestHandler.Name)} {(requestHandler is null ? "" : requestHandler.Description)} "+
+                        $"from {request.RemoteIPEndPoint} took {tickdiff}ms");
                 }
                 else if (DebugLevel >= 4)
                 {
-                    m_log.DebugFormat(
-                        "[LOGHTTP] HTTP IN {0} :{1} took {2}ms",
-                        RequestNumber,
-                        Port,
-                        tickdiff);
+                    m_logger.LogDebug($"HTTP IN {RequestNumber} :{Port} took {tickdiff}ms");
                 }
 
                 if ((DebugLevel >= 5) && (responseData != null))
                 {
                     string output = Encoding.UTF8.GetString(responseData);
+
                     if (DebugLevel == 5)
                     {
                         if (output.Length > WebUtil.MaxRequestDiagLength)
                             output = string.Concat(output.AsSpan(0, WebUtil.MaxRequestDiagLength), "...");
                     }
-                    m_log.DebugFormat("[LOGHTTP] RESPONSE {0}: {1}", RequestNumber, output);
+
+                    m_logger.LogDebug($"RESPONSE {RequestNumber}: {output}");
                 }
             }
         }
 
         private void LogIncomingToStreamHandler(OSHttpRequest request, IRequestHandler requestHandler)
         {
-            m_log.DebugFormat(
-                "[LOGHTTP] HTTP IN {0} :{1} stream handler {2} {3} {4} {5} from {6}",
-                RequestNumber,
-                Port,
-                request.HttpMethod,
-                request.Url.PathAndQuery,
-                requestHandler.Name,
-                requestHandler.Description,
-                request.RemoteIPEndPoint);
+            m_logger.LogDebug(
+                $"HTTP IN {RequestNumber} :{Port} stream handler {request.HttpMethod} "+
+                $"{request.Url.PathAndQuery} {requestHandler.Name} {requestHandler.Description} from {request.RemoteIPEndPoint}");
 
             if (DebugLevel >= 5)
                 LogIncomingInDetail(request);
@@ -947,14 +926,9 @@ namespace OpenSim.Framework.Servers.HttpServer
 
         private void LogIncomingToStreamHandler(OSHttpRequest request, ISimpleStreamHandler requestHandler)
         {
-            m_log.DebugFormat(
-                "[LOGHTTP] HTTP IN {0} :{1} stream handler {2} {3} {4} from {5}",
-                RequestNumber,
-                Port,
-                request.HttpMethod,
-                request.Url.PathAndQuery,
-                requestHandler.Name,
-                request.RemoteIPEndPoint);
+            m_logger.LogDebug(
+                $"HTTP IN {RequestNumber} :{Port} stream handler "+
+                $"{request.HttpMethod} {request.Url.PathAndQuery} {requestHandler.Name} from {request.RemoteIPEndPoint}");
 
             if (DebugLevel >= 5)
                 LogIncomingInDetail(request);
@@ -962,14 +936,10 @@ namespace OpenSim.Framework.Servers.HttpServer
 
         private void LogIncomingToContentTypeHandler(OSHttpRequest request)
         {
-            m_log.DebugFormat(
-                "[LOGHTTP] HTTP IN {0} :{1} {2} content type handler {3} {4} from {5}",
-                RequestNumber,
-                Port,
-                string.IsNullOrEmpty(request.ContentType) ? "not set" : request.ContentType,
-                request.HttpMethod,
-                request.Url.PathAndQuery,
-                request.RemoteIPEndPoint);
+            m_logger.LogDebug(
+                $"HTTP IN {RequestNumber} :{Port} "+
+                $"{(string.IsNullOrEmpty(request.ContentType) ? "not set" : request.ContentType)} "+
+                $"content type handler {request.HttpMethod} {request.Url.PathAndQuery} from {request.RemoteIPEndPoint}");
 
             if (DebugLevel >= 5)
                 LogIncomingInDetail(request);
@@ -977,13 +947,9 @@ namespace OpenSim.Framework.Servers.HttpServer
 
         private void LogIncomingToXmlRpcHandler(OSHttpRequest request)
         {
-            m_log.DebugFormat(
-                "[LOGHTTP] HTTP IN {0} :{1} assumed generic XMLRPC request {2} {3} from {4}",
-                RequestNumber,
-                Port,
-                request.HttpMethod,
-                request.Url.PathAndQuery,
-                request.RemoteIPEndPoint);
+            m_logger.LogDebug(
+                $"HTTP IN {RequestNumber} :{Port} assumed generic XMLRPC request "+
+                $"{request.HttpMethod} {request.Url.PathAndQuery} from {request.RemoteIPEndPoint}");
 
             if (DebugLevel >= 5)
                 LogIncomingInDetail(request);
@@ -996,6 +962,7 @@ namespace OpenSim.Framework.Servers.HttpServer
 
             Stream inputStream = Util.Copy(request.InputStream);
             Stream innerStream = null;
+
             try
             {
                 if ((request.Headers["Content-Encoding"] == "gzip") || (request.Headers["X-Content-Encoding"] == "gzip"))
@@ -1021,13 +988,14 @@ namespace OpenSim.Framework.Servers.HttpServer
                         output = reader.ReadToEnd();
                     }
 
-                    m_log.DebugFormat("[LOGHTTP] {0}", Util.BinaryToASCII(output));
+                    m_logger.LogDebug($"{Util.BinaryToASCII(output)}");
                 }
             }
             finally
             {
                 if (innerStream != null)
                     innerStream.Dispose();
+
                 inputStream.Dispose();
             }
         }
@@ -1194,14 +1162,13 @@ namespace OpenSim.Framework.Servers.HttpServer
             }
             catch (Exception e)
             {
-                m_log.WarnFormat(
-                    "[BASE HTTP SERVER]: Fail to decode XMLRPC request {0}: {1}",
-                        request.RemoteIPEndPoint, e.Message);
+                m_logger.LogWarning(e, $"Fail to decode XMLRPC request {request.RemoteIPEndPoint}");
             }
             finally
             {
                 if (requestStream.CanRead)
                     requestStream.Dispose();
+
                 if (innerStream is not null && innerStream.CanRead)
                     innerStream.Dispose();
             }
@@ -1259,7 +1226,7 @@ namespace OpenSim.Framework.Servers.HttpServer
                 catch(Exception e)
                 {
                     string errorMessage = $"Requested method [{methodName}] from {request.RemoteIPEndPoint.Address} threw exception: {e.Message}";
-                    m_log.Error($"[BASE HTTP SERVER]: {errorMessage}");
+                    m_logger.LogError(e, errorMessage);
 
                     // if the registered XmlRpc method threw an exception, we pass a fault-code along
                     xmlRpcResponse = new XmlRpcResponse();
@@ -1273,6 +1240,7 @@ namespace OpenSim.Framework.Servers.HttpServer
             {
                 xmlRpcResponse = new XmlRpcResponse();
                 // Code set in accordance with http://xmlrpc-epi.sourceforge.net/specs/rfc.fault_codes.php
+
                 xmlRpcResponse.SetFault(
                     XmlRpcErrorCodes.SERVER_ERROR_METHOD,
                     String.Format("Requested method [{0}] not found", methodName));
@@ -1331,14 +1299,13 @@ namespace OpenSim.Framework.Servers.HttpServer
             }
             catch (Exception e)
             {
-                m_log.WarnFormat(
-                    "[BASE HTTP SERVER]: Fail to decode XMLRPC request {0}: {1}",
-                        request.RemoteIPEndPoint, e.Message);
+                m_logger.LogWarning(e, $"Fail to decode XMLRPC request {request.RemoteIPEndPoint}");
             }
             finally
             {
                 if (requestStream.CanRead)
                     requestStream.Dispose();
+
                 if (innerStream is not null && innerStream.CanRead)
                     innerStream.Dispose();
             }
@@ -1393,7 +1360,7 @@ namespace OpenSim.Framework.Servers.HttpServer
                             "Requested method [{0}] from {1} threw exception: {2}",
                             methodName, request.RemoteIPEndPoint.Address, e.Message);
 
-                    m_log.ErrorFormat("[BASE HTTP SERVER]: {0}", errorMessage);
+                    m_logger.LogError(e, errorMessage);
 
                     // if the registered XmlRpc method threw an exception, we pass a fault-code along
                     xmlRpcResponse = new XmlRpcResponse();
@@ -1407,6 +1374,7 @@ namespace OpenSim.Framework.Servers.HttpServer
             {
                 xmlRpcResponse = new XmlRpcResponse();
                 // Code set in accordance with http://xmlrpc-epi.sourceforge.net/specs/rfc.fault_codes.php
+
                 xmlRpcResponse.SetFault(
                     XmlRpcErrorCodes.SERVER_ERROR_METHOD,
                     String.Format("Requested method [{0}] not found", methodName));
@@ -1476,8 +1444,10 @@ namespace OpenSim.Framework.Servers.HttpServer
                         }
                         catch (Exception e)
                         {
-                            string ErrorMessage = string.Format("[BASE HTTP SERVER]: Json-Rpc Handler Error method {0} - {1}", methodname, e.Message);
-                            m_log.Error(ErrorMessage);
+                            string ErrorMessage = string.Format("Json-Rpc Handler Error method {0} - {1}", methodname, e.Message);
+
+                            m_logger.LogError(e, ErrorMessage);
+                            
                             jsonRpcResponse.Error.Code = ErrorCode.InternalError;
                             jsonRpcResponse.Error.Message = ErrorMessage;
                         }
@@ -1528,7 +1498,7 @@ namespace OpenSim.Framework.Servers.HttpServer
 
         private byte[] HandleLLSDRequests(OSHttpRequest request, OSHttpResponse response)
         {
-            //m_log.Warn("[BASE HTTP SERVER]: We've figured out it's a LLSD Request");
+            //m_logger.LogWarning($"We've figured out it's a LLSD Request");
             if (!TryGetLLSDHandler(request.RawUrl, out LLSDMethod llsdhandler))
             {
                 response.StatusCode = (int)HttpStatusCode.NotFound;
@@ -1536,16 +1506,16 @@ namespace OpenSim.Framework.Servers.HttpServer
                 return null;
             }
 
-            //m_log.DebugFormat("[OGP]: {0}:{1}", request.RawUrl, requestBody);
-
+            //m_logger.LogDebug($"{request.RawUrl}:{requestBody}");
             OSD llsdRequest = null;
+
             try
             {
                 llsdRequest = OSDParser.Deserialize(request.InputStream);
             }
             catch (Exception ex)
             {
-                m_log.Warn("[BASE HTTP SERVER]: Error - " + ex.Message);
+                m_logger.LogWarning(ex, "HandleLLSDRequests Error");
             }
 
             if (llsdRequest is null)
@@ -1744,15 +1714,10 @@ namespace OpenSim.Framework.Servers.HttpServer
         // legacy should go
         public byte[] HandleHTTPRequest(OSHttpRequest request, OSHttpResponse response)
         {
-            //            m_log.DebugFormat(
-            //                "[BASE HTTP SERVER]: HandleHTTPRequest for request to {0}, method {1}",
-            //                request.RawUrl, request.HttpMethod);
             if (!TryGetHTTPHandlerPathBased(request.RawUrl, out GenericHTTPMethod requestprocessor))
             {
                 return SendHTML404(response);
             }
-
-            //  m_log.DebugFormat("[BASE HTTP SERVER]: HandleContentVerbs for request to {0}", request.RawUrl);
 
             // This is a test.  There's a workable alternative..  as this way sucks.
             // We'd like to put this into a text file parhaps that's easily editable.
@@ -1787,8 +1752,6 @@ namespace OpenSim.Framework.Servers.HttpServer
 
             foreach (string queryname in querystringkeys)
             {
-                //m_log.DebugFormat(
-                //    "[BASE HTTP SERVER]: Got query paremeter {0}={1}", queryname, request.QueryString[queryname]);
                 if(!string.IsNullOrEmpty(queryname))
                 {
                     keysvals.Add(queryname, request.QueryString[queryname]);
@@ -1798,7 +1761,6 @@ namespace OpenSim.Framework.Servers.HttpServer
 
             foreach (string headername in rHeaders)
             {
-                //m_log.Debug("[BASE HTTP SERVER]: " + headername + "=" + request.Headers[headername]);
                 headervals[headername] = request.Headers[headername];
             }
 
@@ -1875,9 +1837,9 @@ namespace OpenSim.Framework.Servers.HttpServer
             {
                 try
                 {
-                    //m_log.Info("[BASE HTTP SERVER]: Doing HTTP Grunt work with response");
                     responsecode = (int)responsedata["int_response_code"];
                     contentType = (string)responsedata["content_type"];
+                    
                     if (responsedata["bin_response_data"] is byte[] b)
                         responseData = b;
                     else
@@ -1992,23 +1954,16 @@ namespace OpenSim.Framework.Servers.HttpServer
         /// </param>
         public void Start(bool performPollResponsesAsync, bool runPool)
         {
-            m_log.Info($"[BASE HTTP SERVER]: Starting HTTP{(UseSSL ? "S" : "")} server on port {Port}");
+            m_logger.LogInformation($"Starting HTTP{(UseSSL ? "S" : "")} server on port {Port}");
 
             try
             {
                 //m_httpListener = new HttpListener();
+
                 if (!m_ssl)
                 {
                     m_httpListener = tinyHTTPListener.Create(m_listenIPAddress, (int)m_port);
                     m_httpListener.ExceptionThrown += httpServerException;
-                    if (DebugLevel > 0)
-                    {
-                        m_httpListener.LogWriter = httpserverlog;
-                        httpserverlog.DebugLevel = 1;
-                    }
-                    // Uncomment this line in addition to those in HttpServerLogWriter
-                    // if you want more detailed trace information from the HttpServer
-                    //m_httpListener2.DisconnectHandler = httpServerDisconnectMonitor;
                 }
                 else
                 {
@@ -2016,11 +1971,6 @@ namespace OpenSim.Framework.Servers.HttpServer
                     if(m_certificateValidationCallback is not null)
                         m_httpListener.CertificateValidationCallback = m_certificateValidationCallback;
                     m_httpListener.ExceptionThrown += httpServerException;
-                    if (DebugLevel > 0)
-                    {
-                        m_httpListener.LogWriter = httpserverlog;
-                        httpserverlog.DebugLevel = 1;
-                    }
                 }
 
                 m_httpListener.RequestReceived += OnRequest;
@@ -2039,8 +1989,7 @@ namespace OpenSim.Framework.Servers.HttpServer
             }
             catch (Exception e)
             {
-                m_log.Error("[BASE HTTP SERVER]: Error - " + e.Message);
-                m_log.Error("[BASE HTTP SERVER]: Tip: Do you have permission to listen on port " + m_port + "?");
+                m_logger.LogError(e, $"Tip: Do you have permission to listen on port {m_port}?");
 
                 // We want this exception to halt the entire server since in current configurations we aren't too
                 // useful without inbound HTTP.
@@ -2062,11 +2011,9 @@ namespace OpenSim.Framework.Servers.HttpServer
             StatsManager.RegisterStat(m_requestsProcessedStat);
         }
 
-        public static void httpServerException(object source, Exception exception)
+        public void httpServerException(object source, Exception exception)
         {
-            if (source.ToString().Equals("HttpServer.HttpListener") && exception.ToString().StartsWith("Mono.Security.Protocol.Tls.TlsException"))
-                return;
-            m_log.ErrorFormat("[BASE HTTP SERVER]: {0} had an exception {1}", source.ToString(), exception.ToString());
+            m_logger.LogError(exception, $"{source} had an exception");
         }
 
         public void Stop(bool stopPool = false)
@@ -2092,7 +2039,7 @@ namespace OpenSim.Framework.Servers.HttpServer
             }
             catch (NullReferenceException)
             {
-                m_log.Warn("[BASE HTTP SERVER]: Null Reference when stopping HttpServer.");
+                m_logger.LogWarning($"Null Reference when stopping HttpServer.");
             }
         }
 
@@ -2102,9 +2049,6 @@ namespace OpenSim.Framework.Servers.HttpServer
                 return;
 
             string handlerKey = GetHandlerKey(httpMethod, path);
-
-            //m_log.DebugFormat("[BASE HTTP SERVER]: Removing handler key {0}", handlerKey);
-
             m_streamHandlers.TryRemove(handlerKey, out _);
         }
 
@@ -2236,51 +2180,6 @@ namespace OpenSim.Framework.Servers.HttpServer
         {
             oreq = osreq;
             oresp = osresp;
-        }
-    }
-
-    /// <summary>
-    /// Relays HttpServer log messages to our own logging mechanism.
-    /// </summary>
-    /// To use this you must uncomment the switch section
-    ///
-    /// You may also be able to get additional trace information from HttpServer if you uncomment the UseTraceLogs
-    /// property in StartHttp() for the HttpListener
-    /// 
-    public class HttpServerLogWriter : ILogWriter
-    {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-        public int DebugLevel {get; set;} = (int)LogPrio.Error;
-
-        public void Write(object source, LogPrio priority, string message)
-        {
-            if((int)priority < DebugLevel)
-                return;
-
-            switch (priority)
-            {
-                case LogPrio.Trace:
-                    m_log.DebugFormat("[{0}]: {1}", source, message);
-                    break;
-                case LogPrio.Debug:
-                    m_log.DebugFormat("[{0}]: {1}", source, message);
-                    break;
-                case LogPrio.Error:
-                    m_log.ErrorFormat("[{0}]: {1}", source, message);
-                    break;
-                case LogPrio.Info:
-                    m_log.InfoFormat("[{0}]: {1}", source, message);
-                    break;
-                case LogPrio.Warning:
-                    m_log.WarnFormat("[{0}]: {1}", source, message);
-                    break;
-                case LogPrio.Fatal:
-                    m_log.ErrorFormat("[{0}]: FATAL! - {1}", source, message);
-                    break;
-                default:
-                    break;
-            }
-            return;
         }
     }
 

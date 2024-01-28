@@ -61,8 +61,8 @@ namespace OpenSim.Server.Base
 
         protected ICommandConsole m_console;
 
-        protected BaseHttpServer m_httpServer; // XXX Should be DI instantiated
-
+        protected IHttpServer m_httpServer;
+        
         protected ServerStatsCollector m_serverStatsCollector;      // XXX Should be DI instantiated
 
         /// <summary>
@@ -114,7 +114,7 @@ namespace OpenSim.Server.Base
 
         public ICommandConsole Console { get => m_console; set => m_console = value; }
 
-        public BaseHttpServer HttpServer { get => m_httpServer; set => m_httpServer = value; }
+        public IHttpServer HttpServer { get => m_httpServer; set => m_httpServer = value; }
 
         public string osSecret { get => m_osSecret; }            // Secret uuid for the simulator
 

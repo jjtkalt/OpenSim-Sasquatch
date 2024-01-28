@@ -24,13 +24,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-using System;
-using System.Collections.Generic;
-using System.Reflection;
-using Nini.Config;
-using OpenSim.Framework;
+
+using Microsoft.Extensions.Configuration;
 using OpenSim.Data;
-using OpenSim.Services.Interfaces;
 using OpenSim.Services.Base;
 
 namespace OpenSim.OfflineIM
@@ -49,24 +45,24 @@ namespace OpenSim.OfflineIM
             //
             // Try reading the [DatabaseService] section, if it exists
             //
-            IConfig dbConfig = config.Configs["DatabaseService"];
-            if (dbConfig != null)
+            var dbConfig = config.GetSection("DatabaseService");
+            if (dbConfig.Exists())
             {
                 if (dllName.Length == 0)
-                    dllName = dbConfig.GetString("StorageProvider", String.Empty);
+                    dllName = dbConfig.GetValue("StorageProvider", String.Empty);
                 if (connString.Length == 0)
-                    connString = dbConfig.GetString("ConnectionString", String.Empty);
+                    connString = dbConfig.GetValue("ConnectionString", String.Empty);
             }
 
             //
             // [Messaging] section overrides [DatabaseService], if it exists
             //
-            IConfig imConfig = config.Configs["Messaging"];
-            if (imConfig != null)
+            var imConfig = config.GetSection("Messaging");
+            if (imConfig.Exists())
             {
-                dllName = imConfig.GetString("StorageProvider", dllName);
-                connString = imConfig.GetString("ConnectionString", connString);
-                realm = imConfig.GetString("Realm", realm);
+                dllName = imConfig.GetValue("StorageProvider", dllName);
+                connString = imConfig.GetValue("ConnectionString", connString);
+                realm = imConfig.GetValue("Realm", realm);
             }
 
             //

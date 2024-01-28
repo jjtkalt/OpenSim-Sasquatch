@@ -29,9 +29,11 @@ using System.Reflection;
 using OpenSim.Framework;
 using OpenSim.Framework.Servers;
 using OpenSim.Framework.Servers.HttpServer;
-using Microsoft.Extensions.Configuration;
 using OpenSim.Framework.Monitoring;
+
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Net;
 
 namespace OpenSim.Server.Base
 {
@@ -74,7 +76,7 @@ namespace OpenSim.Server.Base
 
             m_consolePort = networkConfig.GetValue<uint>("ConsolePort", 0);
 
-            BaseHttpServer httpServer = null;
+            IHttpServer httpServer = null;
 
             //
             // This is where to make the servers:
@@ -87,7 +89,7 @@ namespace OpenSim.Server.Base
             //
             if (!ssl_main)
             {
-                httpServer = new BaseHttpServer(port);
+                httpServer = MainServer.GetHttpServer(port);
             }
             else
             {
@@ -105,11 +107,8 @@ namespace OpenSim.Server.Base
                     Environment.Exit(1);
                 }
 
-                httpServer = new BaseHttpServer(port, ssl_main, cert_path, cert_pass);
+                httpServer = MainServer.GetHttpServer(port, ipaddr: null, ssl_main, cert_path, cert_pass);
             }
-
-            MainServer.AddHttpServer(httpServer);
-            MainServer.Instance = httpServer;
 
             // If https_listener = true, then add an ssl listener on the https_port...
             if (ssl_listener == true)
@@ -132,12 +131,12 @@ namespace OpenSim.Server.Base
                         //Thread.CurrentThread.Abort();
                     }
 
-                    MainServer.AddHttpServer(new BaseHttpServer(https_port, ssl_listener, cert_path, cert_pass));
+                    MainServer.GetHttpServer(https_port, ipaddr: null, ssl_listener, cert_path, cert_pass);
                 }
                 else
                 {
                     m_logger.LogWarning($"SSL port is active but no SSL is used because external SSL was requested.");
-                    MainServer.AddHttpServer(new BaseHttpServer(https_port));
+                    MainServer.GetHttpServer(https_port);
                 }
             }
         }

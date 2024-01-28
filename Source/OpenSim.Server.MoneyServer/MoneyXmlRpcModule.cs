@@ -114,7 +114,7 @@ namespace OpenSim.Server.MoneyServer
         private Dictionary<string, string> m_secureSessionDic;
         private Dictionary<string, string> m_webSessionDic;
 
-        protected BaseHttpServer m_httpServer;
+        protected IHttpServer m_httpServer;
 
         private readonly IConfiguration _configuration;
         private readonly ILogger<MoneyXmlRpcModule> _logger;

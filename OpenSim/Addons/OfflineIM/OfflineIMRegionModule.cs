@@ -25,8 +25,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 using System.Reflection;
-using log4net;
-using Nini.Config;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+
 using OpenMetaverse;
 using OpenSim.Framework;
 using OpenSim.Region.Framework.Interfaces;
@@ -37,8 +38,6 @@ namespace OpenSim.OfflineIM
 {
     public class OfflineIMRegionModule : ISharedRegionModule, IOfflineIMService
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         private bool m_Enabled = false;
         private List<Scene> m_SceneList = new List<Scene>();
         IMessageTransferModule m_TransferModule = null;
@@ -46,24 +45,37 @@ namespace OpenSim.OfflineIM
 
         private IOfflineIMService m_OfflineIMService;
 
-        public void Initialise(IConfiguration config)
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<OfflineIMRegionModule> m_logger;
+
+        public OfflineIMRegionModule(
+            IConfiguration configuration,
+            ILogger<OfflineIMRegionModule> logger
+            )
         {
-            IConfig cnf = config.Configs["Messaging"];
-            if (cnf == null)
+            m_configuration = configuration;
+            m_logger = logger;
+        }
+
+        public void Initialise()
+        {
+            var cnf = m_configuration.GetSection("Messaging");
+            if (cnf.Exists() is false)
                 return;
-            if (cnf != null && cnf.GetString("OfflineMessageModule", string.Empty) != Name)
+            else if (cnf.GetValue("OfflineMessageModule", string.Empty) != Name)
                 return;
 
             m_Enabled = true;
 
-            string serviceLocation = cnf.GetString("OfflineMessageURL", string.Empty);
-            if (serviceLocation.Length == 0)
-                m_OfflineIMService = new OfflineIMService(config);
+            string serviceLocation = cnf.GetValue("OfflineMessageURL", string.Empty);
+            if (string.IsNullOrEmpty(serviceLocation))
+                m_OfflineIMService = new OfflineIMService(m_configuration);
             else
-                m_OfflineIMService = new OfflineIMServiceRemoteConnector(config);
+                m_OfflineIMService = new OfflineIMServiceRemoteConnector(m_configuration);
 
-            m_ForwardOfflineGroupMessages = cnf.GetBoolean("ForwardOfflineGroupMessages", m_ForwardOfflineGroupMessages);
-            m_log.DebugFormat("[OfflineIM.V2]: Offline messages enabled by {0}", Name);
+            m_ForwardOfflineGroupMessages = cnf.GetValue<bool>("ForwardOfflineGroupMessages", m_ForwardOfflineGroupMessages);
+
+            m_logger.LogDebug($"Offline messages enabled by {Name}");
         }
 
         public void AddRegion(Scene scene)
@@ -90,8 +102,9 @@ namespace OpenSim.OfflineIM
 
                     m_SceneList.Clear();
 
-                    m_log.Error("[OfflineIM.V2]: No message transfer module is enabled. Disabling offline messages");
+                    m_logger.LogError($"No message transfer module is enabled. Disabling offline messages");
                 }
+
                 m_TransferModule.OnUndeliveredMessage += UndeliveredMessage;
             }
         }
@@ -159,12 +172,12 @@ namespace OpenSim.OfflineIM
 
         private void RetrieveInstantMessages(IClientAPI client)
         {
-            m_log.DebugFormat("[OfflineIM.V2]: Retrieving stored messages for {0}", client.AgentId);
+            m_logger.LogDebug($"Retrieving stored messages for {client.AgentId}");
 
             List<GridInstantMessage> msglist = m_OfflineIMService.GetMessages(client.AgentId);
 
             if (msglist == null)
-                m_log.DebugFormat("[OfflineIM.V2]: WARNING null message list.");
+                m_logger.LogDebug($"WARNING null message list.");
 
             foreach (GridInstantMessage im in msglist)
             {

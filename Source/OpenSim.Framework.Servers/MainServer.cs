@@ -29,13 +29,21 @@ using System.Net;
 using System.Text;
 using OpenSim.Framework.Servers.HttpServer;
 
+using Microsoft.Extensions.DependencyInjection;
+
 namespace OpenSim.Framework.Servers
 {
-    public class MainServer
+    public static class MainServer
     {
-        private static BaseHttpServer instance = null;
-        private static BaseHttpServer unsecureinstance = null;
-        private static Dictionary<uint, BaseHttpServer> m_Servers = new Dictionary<uint, BaseHttpServer>();
+        private static IHttpServer instance = null;
+        private static IHttpServer unsecureinstance = null;
+        private static Dictionary<uint, IHttpServer> m_Servers = new Dictionary<uint, IHttpServer>();
+
+        /// <summary>
+        /// Service Provider to Allow instantiation of services.  Since this is a static class
+        /// we must initialize and store this when we initialize this class.
+        /// </summary>
+        public static IServiceProvider ServiceProvider { get; set; }
 
         /// <summary>
         /// Control the printing of certain debug messages.
@@ -48,6 +56,7 @@ namespace OpenSim.Framework.Servers
         /// If DebugLevel >= 5 then the start of the body of incoming non-poll HTTP requests will be logged.
         /// If DebugLevel >= 6 then the entire body of incoming non-poll HTTP requests will be logged.
         /// </remarks>
+        private static int s_debugLevel;
         public static int DebugLevel
         {
             get { return s_debugLevel; }
@@ -56,12 +65,12 @@ namespace OpenSim.Framework.Servers
                 s_debugLevel = value;
 
                 lock (m_Servers)
+                {
                     foreach (BaseHttpServer server in m_Servers.Values)
                         server.DebugLevel = s_debugLevel;
+                }
             }
         }
-
-        private static int s_debugLevel;
 
         /// <summary>
         /// Set the main HTTP server instance.
@@ -72,7 +81,7 @@ namespace OpenSim.Framework.Servers
         /// <exception cref='Exception'>
         /// Thrown if the HTTP server has not already been registered via AddHttpServer()
         /// </exception>
-        public static BaseHttpServer Instance
+        public static IHttpServer Instance
         {
             get { return instance; }
 
@@ -88,15 +97,17 @@ namespace OpenSim.Framework.Servers
             }
         }
 
-        public static BaseHttpServer UnSecureInstance
+        public static IHttpServer UnSecureInstance
         {
             get { return unsecureinstance; }
 
             set
             {
                 lock (m_Servers)
+                {
                     if (!m_Servers.ContainsValue(value))
                         throw new Exception("HTTP server must already have been registered to be set as the main instance");
+                }
 
                 unsecureinstance = value;
             }
@@ -109,9 +120,9 @@ namespace OpenSim.Framework.Servers
         /// Returns a copy of the dictionary so this can be iterated through without locking.
         /// </remarks>
         /// <value></value>
-        public static Dictionary<uint, BaseHttpServer> Servers
+        public static Dictionary<uint, IHttpServer> Servers
         {
-            get { return new Dictionary<uint, BaseHttpServer>(m_Servers); }
+            get { return new Dictionary<uint, IHttpServer>(m_Servers); }
         }
 
         public static void RegisterHttpConsoleCommands(ICommandConsole console)
@@ -361,19 +372,6 @@ namespace OpenSim.Framework.Servers
         }
 
         /// <summary>
-        /// Get the default http server or an http server for a specific port.
-        /// </summary>
-        /// <remarks>
-        /// If the requested HTTP server doesn't already exist then a new one is instantiated and started.
-        /// </remarks>
-        /// <returns></returns>
-        /// <param name='port'>If 0 then the default HTTP server is returned.</param>
-        public static IHttpServer GetHttpServer(uint port)
-        {
-            return GetHttpServer(port, null);
-        }
-
-        /// <summary>
         /// Get the default http server, an http server for a specific port
         /// and/or an http server bound to a specific address
         /// </summary>
@@ -383,7 +381,14 @@ namespace OpenSim.Framework.Servers
         /// <returns></returns>
         /// <param name='port'>If 0 then the default HTTP server is returned.</param>
         /// <param name='ipaddr'>A specific IP address to bind to.  If null then the default IP address is used.</param>
-        public static IHttpServer GetHttpServer(uint port, IPAddress ipaddr)
+        public static IHttpServer GetHttpServer(
+            uint port, 
+            IPAddress ipaddr = null,
+            bool ssl = false, 
+            string CN = null, 
+            string CPath = null, 
+            string CPass = null
+            )
         {
             if (port == 0)
                 return Instance;
@@ -395,12 +400,22 @@ namespace OpenSim.Framework.Servers
             {
                 if (m_Servers.ContainsKey(port))
                     return m_Servers[port];
+                
+                using (var scope = ServiceProvider.CreateScope())
+                {
+                    var httpServer = scope.ServiceProvider.GetService<IHttpServer>();
 
-                m_Servers[port] = new BaseHttpServer(port);
+                    if (ipaddr != null)
+                        httpServer.ListenIPAddress = ipaddr;
 
-                if (ipaddr != null)
-                    m_Servers[port].ListenIPAddress = ipaddr;
+                    httpServer.Initialize(port, ipaddr, ssl, CN, CPath, CPass);
 
+                    m_Servers[port] = httpServer;
+                }
+
+                if (Instance == null)
+                    Instance = m_Servers[port];
+                    
                 m_Servers[port].Start();
 
                 return m_Servers[port];
@@ -411,7 +426,7 @@ namespace OpenSim.Framework.Servers
         {
             lock (m_Servers)
             {
-                foreach (BaseHttpServer httpServer in m_Servers.Values)
+                foreach (var httpServer in m_Servers.Values)
                 {
                     httpServer.Stop(true);
                 }

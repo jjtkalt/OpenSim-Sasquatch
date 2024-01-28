@@ -34,9 +34,7 @@ using System.Text;
 using System.Timers;
 using System.Xml;
 using System.Xml.Serialization;
-using log4net;
-using Nini.Config;
-
+using Microsoft.Extensions.Configuration;
 using OpenMetaverse;
 using OpenSim.Data;
 using OpenSim.Framework;

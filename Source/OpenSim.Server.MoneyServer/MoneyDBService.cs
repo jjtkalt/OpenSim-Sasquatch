@@ -49,23 +49,15 @@ namespace OpenSim.Server.MoneyServer
         public int m_lastConnect = 0;
 
         private readonly IConfiguration _configuration;
+        private readonly ILoggerFactory _loggerFactory;
         private readonly ILogger<MoneyDBService> _logger;
 
-        public MoneyDBService(
-            IConfiguration configuration,
-            ILogger<MoneyDBService> logger,
-            string connect)
+        public MoneyDBService(IConfiguration configuration, ILoggerFactory loggerFactory)
         {
             _configuration = configuration;
-            _logger = logger;
+            _loggerFactory = loggerFactory;
 
-            m_connect = connect;
-            Initialise(m_connect, 10);
-        }
-
-
-        public MoneyDBService()
-        {
+            _logger = _loggerFactory.CreateLogger<MoneyDBService>();
         }
 
         public void Initialise(string connectionString, int maxDBConnections)
@@ -76,13 +68,17 @@ namespace OpenSim.Server.MoneyServer
             if (connectionString != string.Empty)
             {
                 //m_moneyManager = new MySQLMoneyManager(connectionString);
+                _logger.LogInformation($"Creating {m_maxConnections} DB connections...");
 
-                //m_log.Info("Creating " + m_maxConnections + " DB connections...");
                 for (int i = 0; i < m_maxConnections; i++)
                 {
                     //m_log.Info("Connecting to DB... [" + i + "]");
                     MySQLSuperManager msm = new MySQLSuperManager();
-                    msm.Manager = new MySQLMoneyManager(connectionString);
+
+                    var managerLogger = _loggerFactory.CreateLogger<MySQLMoneyManager>();
+                    msm.Manager = new MySQLMoneyManager(_configuration, managerLogger);
+                    msm.Manager.Initialize(connectionString);
+
                     m_dbconnections.Add(i, msm);
                 }
             }

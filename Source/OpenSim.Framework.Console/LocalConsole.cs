@@ -78,7 +78,7 @@ namespace OpenSim.Framework.Console
 
             if (!m_historyEnable)
             {
-                logger.LogInformation("[LOCAL CONSOLE]: Persistent command line history from file is Disabled");
+                logger.LogInformation("Persistent command line history from file is Disabled");
                 return;
             }
 
@@ -88,7 +88,7 @@ namespace OpenSim.Framework.Console
             m_historytimestamps = startupConfig.GetValue<bool>("ConsoleHistoryTimeStamp", false);
             m_historyPath = Path.GetFullPath(Path.Combine(Util.configDir(), m_historyFile));
 
-            logger.LogInformation($"[LOCAL CONSOLE]: Persistent command line history is Enabled, up to {m_historySize} " +
+            logger.LogInformation($"Persistent command line history is Enabled, up to {m_historySize} " +
                 $"lines from file {m_historyPath} {(m_historytimestamps ? "with" : "without")} timestamps");
 
             if (File.Exists(m_historyPath))
@@ -132,11 +132,11 @@ namespace OpenSim.Framework.Console
                     }
                 }
 
-                logger.LogInformation($"[LOCAL CONSOLE]: Read {m_history.Count} lines of command line history from file {m_historyPath}");
+                logger.LogInformation($"Read {m_history.Count} lines of command line history from file {m_historyPath}");
             }
             else
             {
-                logger.LogInformation($"[LOCAL CONSOLE]: Creating new empty command line history file {m_historyPath}");
+                logger.LogInformation($"Creating new empty command line history file {m_historyPath}");
                 File.Create(m_historyPath).Dispose();
             }
 

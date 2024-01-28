@@ -88,7 +88,6 @@ namespace OpenSim.Framework.Servers.HttpServer
 
             try
             {
-                //m_log.Info("[BASE HTTP SERVER]: Doing HTTP Grunt work with response");
                 if(responsedata["int_response_code"] != null)
                     responsecode = (int)responsedata["int_response_code"];
 
