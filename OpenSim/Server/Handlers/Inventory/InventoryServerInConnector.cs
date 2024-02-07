@@ -25,28 +25,23 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Net;
-using System.Reflection;
-using log4net;
-using Nini.Config;
-using Nwc.XmlRpc;
+
 using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+
 using OpenMetaverse;
+
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Server.Handlers.Inventory
 {
-    public class InventoryServiceInConnector : ServiceConnector, IServiceConnector
+    public class InventoryServiceInConnector : IServiceConnector
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         protected IInventoryService m_InventoryService;
 
         private bool m_doLookup = false;
@@ -56,107 +51,119 @@ namespace OpenSim.Server.Handlers.Inventory
 
         private string m_userserver_url;
         protected static string _configName = "InventoryService";
-        
-        public InventoryServiceInConnector(IConfiguration config, IHttpServer server) :
-                this(config, server, _configName)
+
+        public string ConfigName { get; private set; } = _configName;
+
+        public IConfiguration Config { get; private set; }
+
+        public ILogger Logger { get; private set; }
+
+        public IHttpServer HttpServer { get; private set; }
+
+
+        public InventoryServiceInConnector(
+            IConfiguration config, 
+            ILogger<InventoryServiceInConnector> logger)
         {
+            Config = config;
+            Logger = logger;
         }
 
-        public InventoryServiceInConnector(IConfiguration config, IHttpServer server, string configName) :
-                base(config, server, configName)
+        public void Initialize(IHttpServer httpServer)
         {
-            var serverConfig = config.GetSection(configName);
+            HttpServer = httpServer;
+
+            var serverConfig = Config.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
-                throw new Exception($"No section '{configName}' in config file");
+                throw new Exception($"No section '{ConfigName}' in config file");
 
             string inventoryService = serverConfig.GetValue("LocalServiceModule", String.Empty);
 
             if (string.IsNullOrEmpty(inventoryService))
                 throw new Exception("No LocalServiceModule in config file");
 
-            Object[] args = new Object[] { config };
-            m_InventoryService =
-                    ServerUtils.LoadPlugin<IInventoryService>(inventoryService, args);
+            Object[] args = new Object[] { Config };
+            m_InventoryService = ServerUtils.LoadPlugin<IInventoryService>(inventoryService, args);
 
             m_userserver_url = serverConfig.GetValue("UserServerURI", String.Empty);
             m_doLookup = serverConfig.GetValue<bool>("SessionAuthentication", false);
 
-            AddHttpHandlers(server);
+            AddHttpHandlers(HttpServer);
             
-            m_log.Debug("[INVENTORY HANDLER]: handlers initialized");
+            Logger.LogDebug("Handlers initialized");
         }
 
-        protected virtual void AddHttpHandlers(IHttpServer m_httpServer)
+        protected virtual void AddHttpHandlers(IHttpServer HttpServer)
         {
-            m_httpServer.AddStreamHandler(
+            HttpServer.AddStreamHandler(
                 new RestDeserialiseSecureHandler<Guid, List<InventoryFolderBase>>(
                 "POST", "/SystemFolders/", GetSystemFolders, CheckAuthSession));
 
-            m_httpServer.AddStreamHandler(
+            HttpServer.AddStreamHandler(
                 new RestDeserialiseSecureHandler<Guid, InventoryCollection>(
                 "POST", "/GetFolderContent/", GetFolderContent, CheckAuthSession));
 
-            m_httpServer.AddStreamHandler(
+            HttpServer.AddStreamHandler(
                 new RestDeserialiseSecureHandler<InventoryFolderBase, bool>(
                     "POST", "/UpdateFolder/", m_InventoryService.UpdateFolder, CheckAuthSession));
 
-            m_httpServer.AddStreamHandler(
+            HttpServer.AddStreamHandler(
                 new RestDeserialiseSecureHandler<InventoryFolderBase, bool>(
                     "POST", "/MoveFolder/", m_InventoryService.MoveFolder, CheckAuthSession));
 
-            m_httpServer.AddStreamHandler(
+            HttpServer.AddStreamHandler(
                 new RestDeserialiseSecureHandler<InventoryFolderBase, bool>(
                     "POST", "/PurgeFolder/", m_InventoryService.PurgeFolder, CheckAuthSession));
 
-            m_httpServer.AddStreamHandler(
+            HttpServer.AddStreamHandler(
                 new RestDeserialiseSecureHandler<List<Guid>, bool>(
                     "POST", "/DeleteFolders/", DeleteFolders, CheckAuthSession));
 
-            m_httpServer.AddStreamHandler(
+            HttpServer.AddStreamHandler(
                 new RestDeserialiseSecureHandler<List<Guid>, bool>(
                     "POST", "/DeleteItem/", DeleteItems, CheckAuthSession));
 
-            m_httpServer.AddStreamHandler(
+            HttpServer.AddStreamHandler(
                 new RestDeserialiseSecureHandler<Guid, InventoryItemBase>(
                     "POST", "/QueryItem/", GetItem, CheckAuthSession));
 
-            m_httpServer.AddStreamHandler(
+            HttpServer.AddStreamHandler(
                 new RestDeserialiseSecureHandler<Guid, InventoryFolderBase>(
                     "POST", "/QueryFolder/", GetFolder, CheckAuthSession));
 
-            m_httpServer.AddStreamHandler(
+            HttpServer.AddStreamHandler(
                 new RestDeserialiseTrustedHandler<Guid, bool>(
                     "POST", "/CreateInventory/", CreateUsersInventory, CheckTrustSource));
 
-            m_httpServer.AddStreamHandler(
+            HttpServer.AddStreamHandler(
                 new RestDeserialiseSecureHandler<InventoryFolderBase, bool>(
                     "POST", "/NewFolder/", m_InventoryService.AddFolder, CheckAuthSession));
 
-            m_httpServer.AddStreamHandler(
+            HttpServer.AddStreamHandler(
                 new RestDeserialiseSecureHandler<InventoryFolderBase, bool>(
                     "POST", "/CreateFolder/", m_InventoryService.AddFolder, CheckAuthSession));
 
-            m_httpServer.AddStreamHandler(
+            HttpServer.AddStreamHandler(
                 new RestDeserialiseSecureHandler<InventoryItemBase, bool>(
                     "POST", "/NewItem/", m_InventoryService.AddItem, CheckAuthSession));
 
-            m_httpServer.AddStreamHandler(
+            HttpServer.AddStreamHandler(
              new RestDeserialiseTrustedHandler<InventoryItemBase, bool>(
                  "POST", "/AddNewItem/", m_InventoryService.AddItem, CheckTrustSource));
 
-            m_httpServer.AddStreamHandler(
+            HttpServer.AddStreamHandler(
                 new RestDeserialiseSecureHandler<Guid, List<InventoryItemBase>>(
                     "POST", "/GetItems/", GetFolderItems, CheckAuthSession));
 
-            m_httpServer.AddStreamHandler(
+            HttpServer.AddStreamHandler(
                 new RestDeserialiseSecureHandler<List<InventoryItemBase>, bool>(
                     "POST", "/MoveItems/", MoveItems, CheckAuthSession));
 
-            m_httpServer.AddStreamHandler(new InventoryServerMoveItemsHandler(m_InventoryService));
+            HttpServer.AddStreamHandler(new InventoryServerMoveItemsHandler(m_InventoryService));
 
 
             // for persistent active gestures
-            m_httpServer.AddStreamHandler(
+            HttpServer.AddStreamHandler(
                 new RestDeserialiseTrustedHandler<Guid, List<InventoryItemBase>>
                     ("POST", "/ActiveGestures/", GetActiveGestures, CheckTrustSource));
 
@@ -165,11 +172,11 @@ namespace OpenSim.Server.Handlers.Inventory
             // It would have been better to rename this request, but complexities in the BaseHttpServer
             // (e.g. any http request not found is automatically treated as an xmlrpc request) make it easier
             // to do this for now.
-            m_httpServer.AddStreamHandler(
+            HttpServer.AddStreamHandler(
                 new RestDeserialiseTrustedHandler<Guid, List<InventoryFolderBase>>
                     ("POST", "/RootFolders/", GetInventorySkeleton, CheckTrustSource));
 
-            m_httpServer.AddStreamHandler(
+            HttpServer.AddStreamHandler(
                 new RestDeserialiseTrustedHandler<InventoryItemBase, int>
                 ("POST", "/AssetPermissions/", GetAssetPermissions, CheckTrustSource));
 
@@ -204,7 +211,8 @@ namespace OpenSim.Server.Handlers.Inventory
                     return folders;
                 }
             }
-            m_log.WarnFormat("[INVENTORY SERVICE]: System folders for {0} not found", userID);
+
+            Logger.LogWarning($"System folders for {userID} not found");
             return new Dictionary<AssetType, InventoryFolderBase>();
         }
 
@@ -304,7 +312,8 @@ namespace OpenSim.Server.Handlers.Inventory
         {
             if (m_doLookup)
             {
-                m_log.InfoFormat("[INVENTORY IN CONNECTOR]: Checking trusted source {0}", peer);
+                Logger.LogInformation($"Checking trusted source {peer}");
+
                 UriBuilder ub = new UriBuilder(m_userserver_url);
                 IPAddress[] uaddrs = Dns.GetHostAddresses(ub.Host);
                 foreach (IPAddress uaddr in uaddrs)
@@ -315,10 +324,8 @@ namespace OpenSim.Server.Handlers.Inventory
                     }
                 }
 
-                m_log.WarnFormat(
-                    "[INVENTORY IN CONNECTOR]: Rejecting request since source {0} was not in the list of trusted sources",
-                    peer);
-
+                Logger.LogWarning($"Rejecting request since source {peer} was not in the list of trusted sources");
+                
                 return false;
             }
             else

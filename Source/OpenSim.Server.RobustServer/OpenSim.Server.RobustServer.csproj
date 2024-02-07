@@ -28,16 +28,12 @@
     <ProjectReference Include="..\OpenSim.Server.Common\OpenSim.Server.Common.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="ConfigurationSubstitutor" Version="1.5.1" />
-    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
     <PackageReference Include="Autofac" Version="7.1.0" />
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="8.0.0" />
-    <PackageReference Include="log4net" Version="2.0.15" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Ini" Version="6.0.0" />
+    <PackageReference Include="ConfigurationSubstitutor" Version="1.5.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.4" />
-	  <PackageReference Include="NDesk.Options.Core" Version="1.2.5" />
-	  <PackageReference Include="RawScape.Nini" Version="1.0.0" />
   </ItemGroup>
 </Project>

@@ -25,59 +25,68 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Reflection;
-using log4net;
-using Nini.Config;
 using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Server.Handlers.Login
 {
-    public class LLLoginServiceInConnector : ServiceConnector, IServiceConnector
+    public class LLLoginServiceInConnector : IServiceConnector
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         private ILoginService m_LoginService;
+        private IScene m_Scene;
         private bool m_Proxy;
         private BasicDosProtectorOptions m_DosProtectionOptions;
+
         private static string _configName = "LoginService";
 
-        public LLLoginServiceInConnector(IConfiguration config, IHttpServer server, IScene scene) :
-                base(config, server, _configName)
+        public LLLoginServiceInConnector(
+            IConfiguration configuration,
+            ILogger<LLLoginServiceInConnector> logger,
+            IScene scene
+            )
         {
-            m_log.Debug("[LLLOGIN IN CONNECTOR]: Starting...");
-            string loginService = ReadLocalServiceFromConfig(config, _configName);
-
-            ISimulationService simService = scene.RequestModuleInterface<ISimulationService>();
-            ILibraryService libService = scene.RequestModuleInterface<ILibraryService>();
-
-            Object[] args = new Object[] { config, simService, libService };
-            m_LoginService = ServerUtils.LoadPlugin<ILoginService>(loginService, args);
-
-            InitializeHandlers(server);
+            Config = configuration;
+            Logger = logger;
+            m_Scene = scene;
         }
 
-        public LLLoginServiceInConnector(IConfiguration config, IHttpServer server, string configName) :
-            base(config, server, configName)
-        {
-            string loginService = ReadLocalServiceFromConfig(config, configName);
+        public string ConfigName { get; private set; } = _configName;
+        public IConfiguration Config  { get; private set; } 
+        public ILogger Logger { get; private set; } 
+        public IHttpServer HttpServer { get; private set; } 
 
-            Object[] args = new Object[] { config };
+        public void Initialize(IHttpServer httpServer)
+        {
+            HttpServer = httpServer;
+
+            Logger.LogDebug($"Starting...");
+            string loginService = ReadLocalServiceFromConfig(Config, ConfigName);
+
+            ISimulationService simService = null;
+            ILibraryService libService  = null;
+            Object[] args = null;
+
+            if (m_Scene != null)
+            {
+                simService = m_Scene.RequestModuleInterface<ISimulationService>();
+                libService = m_Scene.RequestModuleInterface<ILibraryService>();
+                args = new Object[] { Config, simService, libService };
+            }
+            else
+            {
+                args = new Object[] { Config };
+            }
 
             m_LoginService = ServerUtils.LoadPlugin<ILoginService>(loginService, args);
 
-            InitializeHandlers(server);
+            InitializeHandlers(HttpServer);
         }
-
-        public LLLoginServiceInConnector(IConfiguration config, IHttpServer server) :
-            this(config, server, _configName)
-        { }
 
         private string ReadLocalServiceFromConfig(IConfiguration config, string configName)
         {
@@ -115,5 +124,6 @@ namespace OpenSim.Server.Handlers.Login
             server.SetDefaultLLSDHandler(loginHandlers.HandleLLSDLogin);
             //server.AddWebSocketHandler("/WebSocket/GridLogin", loginHandlers.HandleWebSocketLoginEvents);
         }
+
     }
 }

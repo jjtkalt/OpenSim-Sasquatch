@@ -25,43 +25,58 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Reflection;
-using log4net;
-using Nini.Config;
-using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Server.Handlers.Land
 {
-    public class LandServiceInConnector : ServiceConnector, IServiceConnector
+    public class LandServiceInConnector : IServiceConnector
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         private ILandService m_LandService;
+        private IScene m_Scene;
         // TODO : private IAuthenticationService m_AuthenticationService;
 
-        public LandServiceInConnector(IConfiguration source, IHttpServer server, ILandService service, IScene scene) :
-                base(source, server, String.Empty)
+        public LandServiceInConnector(
+            IConfiguration configuration,
+            ILogger<LandServiceInConnector> logger,
+            ILandService service, 
+            IScene scene)
         {
+            Config = configuration;
+            Logger = logger;
             m_LandService = service;
+            m_Scene = scene;
+        }
+
+        public string ConfigName { get; private set; } = "LamdService";
+
+        public IConfiguration Config { get; private set; }
+
+        public ILogger Logger { get; private set; }
+
+        public IHttpServer HttpServer { get; private set; }
+
+        public void Initialize(IHttpServer httpServer)
+        {
+            HttpServer = httpServer;
+
             if (m_LandService == null)
             {
-                m_log.Error("[LAND IN CONNECTOR]: Land service was not provided");
+                Logger.LogError("Land service was not provided");
                 return;
             }
 
             //bool authentication = neighbourConfig.GetBoolean("RequireAuthentication", false);
             //if (authentication)
-            //    m_AuthenticationService = scene.RequestModuleInterface<IAuthenticationService>();
+            //    m_AuthenticationService = m_scene.RequestModuleInterface<IAuthenticationService>();
 
             LandHandlers landHandlers = new LandHandlers(m_LandService);
-            server.AddXmlRPCHandler("land_data", landHandlers.GetLandData, false);
+            HttpServer.AddXmlRPCHandler("land_data", landHandlers.GetLandData, false);
         }
     }
 }

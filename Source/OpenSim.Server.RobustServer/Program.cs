@@ -25,19 +25,23 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
 
 using System.CommandLine;
-using log4net.Config;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
-using Autofac.Extensions.DependencyInjection;
-using Autofac;
-using OpenSim.Framework.Console;
-using OpenSim.Framework;
-using OpenSim.Server.Common;
-using OpenSim.Server.Base;
 using ConfigurationSubstitution;
+
+using OpenSim.Framework;
+using OpenSim.Framework.Console;
+using OpenSim.Framework.Servers.HttpServer;
+
+using OpenSim.Server.Base;
+using OpenSim.Server.Common;
+using OpenSim.Server.Handlers;
 
 namespace OpenSim.Server.RobustServer
 {
@@ -62,23 +66,21 @@ namespace OpenSim.Server.RobustServer
 
             rootCommand.SetHandler((console, inifile, prompt) =>
             {
-                StartRobust(console, inifile, prompt);
+                StartGrid(console, inifile, prompt);
             },
             consoleOption, inifileOption, promptOption);
 
             return await rootCommand.InvokeAsync(args);
         }
 
-        private static void StartRobust(string console, List<string> inifile, string prompt)
+        private static void StartGrid(string console, List<string> inifile, string prompt)
         {
-            XmlConfigurator.Configure();
-
             IHostBuilder builder = Host.CreateDefaultBuilder()
                 .UseServiceProviderFactory(new AutofacServiceProviderFactory())
                 .ConfigureAppConfiguration(configuration =>
                 {
                     //configuration.AddCommandLine(args, switchMappings);
-                    configuration.AddIniFile("RobustServer.ini", optional: true, reloadOnChange: true);
+                    configuration.AddIniFile("GridServer.ini", optional: true, reloadOnChange: false);
                     foreach (var item in inifile)
                     {
                         configuration.AddIniFile(item, optional: true, reloadOnChange: true);
@@ -87,11 +89,10 @@ namespace OpenSim.Server.RobustServer
                 })
                 .ConfigureContainer<ContainerBuilder>(builder =>
                 {
-                    // Declare your services with proper lifetime
-                    //builder.RegisterType<AppLogger>().As<IAppLogger>().SingleInstance();
-                    //builder.RegisterType<DataAccess>().As<IDataAccess>().InstancePerLifetimeScope();
                     builder.RegisterType<OpenSimServer>().SingleInstance();
                     builder.RegisterType<RobustServer>().SingleInstance();
+
+                    builder.RegisterType<BaseHttpServer>().As<IHttpServer>();
 
                     if (console == "basic")
                         builder.RegisterType<MainConsole>().As<ICommandConsole>().SingleInstance();
@@ -101,6 +102,9 @@ namespace OpenSim.Server.RobustServer
                         builder.RegisterType<MockConsole>().As<ICommandConsole>().SingleInstance();
                     else
                         builder.RegisterType<LocalConsole>().As<ICommandConsole>().SingleInstance();
+
+                    // Register Grid Modules
+                    builder.RegisterModule(new OpenSimServerHandlersModule());
                 })
                 .ConfigureServices(services =>
                 {

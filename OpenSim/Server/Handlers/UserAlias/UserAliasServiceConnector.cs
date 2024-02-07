@@ -29,22 +29,40 @@ using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Framework.ServiceAuth;
-using OpenSim.Server.Handlers.Base;
+
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using OpenSim.Server.Handlers.Base;
 
 namespace OpenSim.Server.Handlers.UserAlias
 {
-    public class UserAliasServiceConnector : ServiceConnector
+    public class UserAliasServiceConnector : IServiceConnector
     {
         private IUserAliasService m_UserAliasService;
-        private string m_ConfigName = "UserAliasService";
+        private static string _ConfigName = "UserAliasService";
 
-        public UserAliasServiceConnector(IConfiguration config, IHttpServer server, string configName) :
-                base(config, server, configName)
+        public UserAliasServiceConnector(
+            IConfiguration config, 
+            ILogger<UserAliasServiceConnector> logger
+            )
         {
-            var serverConfig = config.GetSection(m_ConfigName);
+            Config = config;
+            Logger = logger;
+        }
+
+        public string ConfigName {get; private set; } = _ConfigName;
+
+        public IConfiguration Config {get; private set; }
+        public ILogger Logger {get; private set; }
+        public IHttpServer HttpServer {get; private set; }
+
+        public void Initialize(IHttpServer httpServer)
+        {
+            HttpServer = httpServer;
+
+            var serverConfig = Config.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
-                throw new Exception(String.Format("No section {0} in config file", m_ConfigName));
+                throw new Exception(String.Format("No section {0} in config file", ConfigName));
 
             string service = serverConfig.GetValue("LocalServiceModule", String.Empty);
             if (string.IsNullOrEmpty(service))
@@ -52,11 +70,11 @@ namespace OpenSim.Server.Handlers.UserAlias
                 throw new Exception("No LocalServiceModule in config file");
             }
 
-            Object[] args = new Object[] { config };
+            Object[] args = new Object[] { Config };
             m_UserAliasService = ServerUtils.LoadPlugin<IUserAliasService>(service, args);
 
-            IServiceAuth auth = ServiceAuth.Create(config, m_ConfigName);
-            server.AddStreamHandler(new UserAliasServerPostHandler(m_UserAliasService, auth));
+            IServiceAuth auth = ServiceAuth.Create(Config, ConfigName);
+            HttpServer.AddStreamHandler(new UserAliasServerPostHandler(m_UserAliasService, auth));
         }
     }
 }

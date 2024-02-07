@@ -25,39 +25,50 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using Nini.Config;
 using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Server.Handlers.Authorization
 {
-    public class AuthorizationServerConnector : ServiceConnector, IServiceConnector
+    public class AuthorizationServerConnector : IServiceConnector
     {
         private IAuthorizationService m_AuthorizationService;
 
-        public AuthorizationServerConnector(IConfiguration config, IHttpServer server) :
-                this(config, server, "AuthorizationService")
-        { }
-
-        public AuthorizationServerConnector(IConfiguration config, IHttpServer server, string configName) :
-                base(config, server, configName)
+        public AuthorizationServerConnector(
+            IConfiguration configuration, 
+            ILogger<AuthorizationServerConnector> logger)
         {
-            var serverConfig = config.GetSection(configName);
+            Config = configuration;
+            Logger = logger;
+        }
+
+        public string ConfigName => "AuthorizationService";
+
+        public IConfiguration Config { get; private set; }
+        public ILogger Logger { get; private set; }
+        public IHttpServer HttpServer { get; private set; }
+
+        public void Initialize(IHttpServer httpServer)
+        {
+            HttpServer = httpServer;
+
+            var serverConfig = Config.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
-                throw new Exception($"No section {configName} in config file");
+                throw new Exception($"No section {ConfigName} in config file");
 
             string authorizationService = serverConfig.GetValue<string>("LocalServiceModule", String.Empty);
             if (string.IsNullOrEmpty(authorizationService))
                 throw new Exception("No AuthorizationService in config file");
 
-            Object[] args = new Object[] { config };
+            Object[] args = new Object[] { Config };
             m_AuthorizationService = ServerUtils.LoadPlugin<IAuthorizationService>(authorizationService, args);
 
-            server.AddStreamHandler(new AuthorizationServerPostHandler(m_AuthorizationService));
+            HttpServer.AddStreamHandler(new AuthorizationServerPostHandler(m_AuthorizationService));
         }
     }
 }

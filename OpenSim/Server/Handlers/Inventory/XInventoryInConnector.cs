@@ -25,7 +25,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System.Reflection;
 using System.Xml;
 using OpenSim.Framework;
 using OpenSim.Framework.ServiceAuth;
@@ -33,54 +32,64 @@ using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
-using log4net;
+
 using OpenMetaverse;
+
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Server.Handlers.Inventory
 {
-    public class XInventoryInConnector : ServiceConnector, IServiceConnector
+    public class XInventoryInConnector : IServiceConnector
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         private IInventoryService m_InventoryService;
         private static string _configName = "InventoryService";
 
-        public XInventoryInConnector(IConfiguration config, IHttpServer server) :
-            this(config, server, _configName)
-        { }
+        public string ConfigName { get; private set; } = _configName;
+        public IConfiguration Config { get; private set; }
+        public ILogger Logger { get; private set; }
+        public IHttpServer HttpServer { get; private set; }
 
-        public XInventoryInConnector(IConfiguration config, IHttpServer server, string configName) :
-                base(config, server, configName)
+        public XInventoryInConnector(
+            IConfiguration config, 
+            ILogger<XInventoryInConnector> logger)
+        { 
+            Config = config;
+            Logger = logger;
+        }
+
+        public void Initialize(IHttpServer httpServer)
         {
-            m_log.DebugFormat("[XInventoryInConnector]: Starting with config name {0}", configName);
+            HttpServer = httpServer;
 
-            var serverConfig = config.GetSection(_configName);
+            Logger.LogDebug($"Starting with config name {ConfigName}");
+
+            var serverConfig = Config.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
-                throw new Exception($"No section '{configName}' in config file");
+                throw new Exception($"No section '{ConfigName}' in config file");
 
             string inventoryService = serverConfig.GetValue("LocalServiceModule", String.Empty);
             if (string.IsNullOrEmpty(inventoryService))
                 throw new Exception("No InventoryService in config file");
 
-            Object[] args = new Object[] { config, configName };
+            Object[] args = new Object[] { Config, ConfigName };
             m_InventoryService = ServerUtils.LoadPlugin<IInventoryService>(inventoryService, args);
 
-            IServiceAuth auth = ServiceAuth.Create(config, configName);
+            IServiceAuth auth = ServiceAuth.Create(Config, ConfigName);
 
-            server.AddStreamHandler(new XInventoryConnectorPostHandler(m_InventoryService, auth));
+            HttpServer.AddStreamHandler(new XInventoryConnectorPostHandler(Logger, m_InventoryService, auth));
         }
     }
 
     public class XInventoryConnectorPostHandler : BaseStreamHandler
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         private IInventoryService m_InventoryService;
+        private ILogger Logger { get; }
 
-        public XInventoryConnectorPostHandler(IInventoryService service, IServiceAuth auth) :
+        public XInventoryConnectorPostHandler(ILogger logger, IInventoryService service, IServiceAuth auth) :
                 base("POST", "/xinventory", auth)
         {
+            Logger = logger;
             m_InventoryService = service;
         }
 
@@ -150,11 +159,12 @@ namespace OpenSim.Server.Handlers.Inventory
                     case "GETASSETPERMISSIONS":
                         return HandleGetAssetPermissions(request);
                 }
-                m_log.DebugFormat("[XINVENTORY HANDLER]: unknown method request: {0}", method);
+
+                Logger.LogDebug($"Unknown method request: {method}");
             }
             catch (Exception e)
             {
-                m_log.Error(string.Format("[XINVENTORY HANDLER]: Exception {0} ", e.Message), e);
+                Logger.LogError(e, $"Exception while handling request");
             }
 
             return FailureResult();
@@ -174,13 +184,11 @@ namespace OpenSim.Server.Handlers.Inventory
         {
             XmlDocument doc = new XmlDocument();
 
-            XmlNode xmlnode = doc.CreateNode(XmlNodeType.XmlDeclaration,
-                    "", "");
+            XmlNode xmlnode = doc.CreateNode(XmlNodeType.XmlDeclaration, "", "");
 
             doc.AppendChild(xmlnode);
 
-            XmlElement rootElement = doc.CreateElement("", "ServerResponse",
-                    "");
+            XmlElement rootElement = doc.CreateElement("", "ServerResponse", "");
 
             doc.AppendChild(rootElement);
 
@@ -216,7 +224,6 @@ namespace OpenSim.Server.Handlers.Inventory
 
             if (!request.ContainsKey("PRINCIPAL"))
                 return FailureResult();
-
 
             List<InventoryFolderBase> folders = m_InventoryService.GetInventorySkeleton(new UUID(request["PRINCIPAL"].ToString()));
 
@@ -523,7 +530,7 @@ namespace OpenSim.Server.Handlers.Inventory
             }
             catch (Exception e)
             {
-                m_log.DebugFormat("[XINVENTORY IN CONNECTOR]: Exception in HandleMoveItems: {0}", e.Message);
+                Logger.LogDebug(e, $"Exception in HandleMoveItems");
                 return FailureResult();
             }
 

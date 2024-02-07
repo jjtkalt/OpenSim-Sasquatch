@@ -25,8 +25,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System.Reflection;
-
 using OpenSim.Framework;
 using OpenSim.Framework.Monitoring;
 using OpenSim.Framework.Servers;
@@ -35,15 +33,14 @@ using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Services.Interfaces;
 
 using OpenMetaverse;
-using log4net;
-using Nini.Config;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Groups
 {
     public class GroupsServiceHGConnectorModule : ISharedRegionModule, IGroupsServicesConnector
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         private bool m_Enabled = false;
         private IGroupsServicesConnector m_LocalGroupsConnector;
         private string m_LocalGroupsServiceLocation;
@@ -53,33 +50,42 @@ namespace OpenSim.Groups
         private List<Scene> m_Scenes;
         private ForeignImporter m_ForeignImporter;
         private string m_ServiceLocation;
-        private IConfiguration m_Config;
 
         private Dictionary<string, GroupsServiceHGConnector> m_NetworkConnectors = new Dictionary<string, GroupsServiceHGConnector>();
         private RemoteConnectorCacheWrapper m_CacheWrapper; // for caching info of external group services
 
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<GroupsServiceHGConnectorModule> m_logger;
+
+        public GroupsServiceHGConnectorModule(
+            IConfiguration configuration,
+            ILogger<GroupsServiceHGConnectorModule> logger
+            )
+        {
+            m_configuration = configuration;
+            m_logger = logger;
+        }
+
         #region ISharedRegionModule
 
-        public void Initialise(IConfiguration config)
+        public void Initialise()
         {
-            IConfig groupsConfig = config.Configs["Groups"];
-            if (groupsConfig == null)
+            var groupsConfig = m_configuration.GetSection("Groups");
+            if (groupsConfig.Exists() is false)
                 return;
 
-            if ((groupsConfig.GetBoolean("Enabled", false) == false)
-                    || (groupsConfig.GetString("ServicesConnectorModule", string.Empty) != Name))
-            {
+            if ((groupsConfig.GetValue<bool>("Enabled", false) is false) ||
+                (groupsConfig.GetValue("ServicesConnectorModule", string.Empty) != Name))
                 return;
-            }
 
-            m_Config = config;
-            m_ServiceLocation = groupsConfig.GetString("LocalService", "local"); // local or remote
-            m_LocalGroupsServiceLocation = groupsConfig.GetString("GroupsExternalURI", "http://127.0.0.1");
+            m_ServiceLocation = groupsConfig.GetValue("LocalService", "local"); // local or remote
+            m_LocalGroupsServiceLocation = groupsConfig.GetValue("GroupsExternalURI", "http://127.0.0.1");
+
             m_Scenes = new List<Scene>();
 
             m_Enabled = true;
 
-            m_log.DebugFormat("[Groups]: Initializing {0} with LocalService {1}", this.Name, m_ServiceLocation);
+            m_logger.LogDebug($"Initializing {this.Name} with LocalService {m_ServiceLocation}");
         }
 
         public string Name
@@ -97,7 +103,7 @@ namespace OpenSim.Groups
             if (!m_Enabled)
                 return;
 
-            m_log.DebugFormat("[Groups]: Registering {0} with {1}", this.Name, scene.RegionInfo.RegionName);
+            m_logger.LogDebug($"Registering {this.Name} with {scene.RegionInfo.RegionName}");
             scene.RegisterModuleInterface<IGroupsServicesConnector>(this);
             m_Scenes.Add(scene);
 
@@ -127,14 +133,14 @@ namespace OpenSim.Groups
 
                 if (m_ServiceLocation.Equals("local"))
                 {
-                    m_LocalGroupsConnector = new GroupsServiceLocalConnectorModule(m_Config, m_UserManagement);
+                    m_LocalGroupsConnector = new GroupsServiceLocalConnectorModule(m_configuration, m_UserManagement);
                     // Also, if local, create the endpoint for the HGGroupsService
-                    new HGGroupsServiceRobustConnector(m_Config, MainServer.Instance, string.Empty,
+                    new HGGroupsServiceRobustConnector(m_configuration, MainServer.Instance, string.Empty,
                         scene.RequestModuleInterface<IOfflineIMService>(), scene.RequestModuleInterface<IUserAccountService>());
 
                 }
                 else
-                    m_LocalGroupsConnector = new GroupsServiceRemoteConnectorModule(m_Config, m_UserManagement);
+                    m_LocalGroupsConnector = new GroupsServiceRemoteConnectorModule(m_configuration, m_UserManagement);
 
                 m_CacheWrapper = new RemoteConnectorCacheWrapper(m_UserManagement);
             }

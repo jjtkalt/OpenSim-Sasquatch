@@ -25,48 +25,54 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Reflection;
-using Nini.Config;
-using OpenSim.Framework;
 using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
 
-using log4net;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Server.Handlers.Hypergrid
 {
-    public class GatekeeperServiceInConnector : ServiceConnector, IServiceConnector
+    public class GatekeeperServiceInConnector : IServiceConnector
     {
         private IGatekeeperService m_GatekeeperService = null;
+        private bool m_Proxy = false;
+
+        public GatekeeperServiceInConnector(
+            IConfiguration config,
+            ILogger<GatekeeperServiceInConnector> logger)
+        {
+            Config = config;
+            Logger = logger;
+        }
 
         public IGatekeeperService GateKeeper
         {
             get { return m_GatekeeperService; }
         }
 
-        bool m_Proxy = false;
-        
-        public GatekeeperServiceInConnector(IConfiguration config, IHttpServer server)
-            : this(config, server, (ISimulationService)null)
-        {
-        }
+        public string ConfigName { get; private set; } = "GatekeeperService";
 
-        public GatekeeperServiceInConnector(IConfiguration config, IHttpServer server, ISimulationService simService) :
-                base(config, server, String.Empty)
+        public IConfiguration Config { get; private set; }
+        public ILogger Logger { get; private set; }
+        public IHttpServer HttpServer { get; private set; }
+
+//        public GatekeeperServiceInConnector(IConfigSource config, IHttpServer server, ISimulationService simService) :
+
+        public void Initialize(IHttpServer httpServer)
         {
-            var gridConfig = config.GetSection("GatekeeperService");
+            HttpServer = httpServer;
+
+            var gridConfig = Config.GetSection(ConfigName);
             if (gridConfig.Exists() is false)
             {
                 string serviceDll = gridConfig.GetValue("LocalServiceModule", string.Empty);
                 if (string.IsNullOrWhiteSpace(serviceDll))
                     throw new Exception("No LocalServiceModule in config file");
 
-                Object[] args = new Object[] { config, simService };
+                Object[] args = new Object[] { Config, "XXX" /*simService*/ };
                 m_GatekeeperService = ServerUtils.LoadPlugin<IGatekeeperService>(serviceDll, args);
             }
 
@@ -77,10 +83,11 @@ namespace OpenSim.Server.Handlers.Hypergrid
 
             HypergridHandlers hghandlers = new HypergridHandlers(m_GatekeeperService);
 
-            server.AddXmlRPCHandler("link_region", hghandlers.LinkRegionRequest, false);
-            server.AddXmlRPCHandler("get_region", hghandlers.GetRegion, false);
+            HttpServer.AddXmlRPCHandler("link_region", hghandlers.LinkRegionRequest, false);
+            HttpServer.AddXmlRPCHandler("get_region", hghandlers.GetRegion, false);
 
-            server.AddSimpleStreamHandler(new GatekeeperAgentHandler(m_GatekeeperService, m_Proxy),true);
+            HttpServer.AddSimpleStreamHandler(new GatekeeperAgentHandler(m_GatekeeperService, m_Proxy),true);
         }
+
     }
 }

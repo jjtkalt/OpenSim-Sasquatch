@@ -25,14 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Reflection;
 using System.Net;
-
-using Nini.Config;
-using log4net;
 using OpenMetaverse;
 
 using OpenSim.Framework;
@@ -44,33 +38,44 @@ using OpenSim.Server.Handlers.Base;
 
 using GridRegion = OpenSim.Services.Interfaces.GridRegion;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Server.Handlers.MapImage
 {
-    public class MapAddServiceConnector : ServiceConnector, IServiceConnector
+    public class MapAddServiceConnector : IServiceConnector
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         private IMapImageService m_MapService;
         private IGridService m_GridService;
         private static string _configName = "MapImageService";
-        
-        public MapAddServiceConnector(IConfiguration config, IHttpServer server) :
-                base(config, server, _configName)
-        { }
 
-        public MapAddServiceConnector(IConfiguration config, IHttpServer server, string configName) :
-                base(config, server, configName)
+        public MapAddServiceConnector(
+            IConfiguration config, 
+            ILogger<MapAddServiceConnector> logger)
         {
-            var serverConfig = config.GetSection(configName);
+            Config = config;
+            Logger = logger;
+         }
+
+        public string ConfigName { get; private set; } = _configName;
+
+        public IConfiguration Config { get; private set; }
+        public ILogger Logger { get; private set; }
+        public IHttpServer HttpServer { get; private set; }
+
+
+        public void Initialize(IHttpServer httpServer)
+        {
+            HttpServer = httpServer;
+
+            var serverConfig = Config.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
-                throw new Exception($"No section {configName} in config file");
+                throw new Exception($"No section {ConfigName} in config file");
 
             string mapService = serverConfig.GetValue("LocalServiceModule", string.Empty);
             if (string.IsNullOrWhiteSpace(mapService))
                 throw new Exception("No LocalServiceModule in config file");
 
-            object[] args = new object[] { config };
+            object[] args = new object[] { Config };
             m_MapService = ServerUtils.LoadPlugin<IMapImageService>(mapService, args);
 
             string gridService = serverConfig.GetValue("GridService", string.Empty);
@@ -78,28 +83,31 @@ namespace OpenSim.Server.Handlers.MapImage
                 m_GridService = ServerUtils.LoadPlugin<IGridService>(gridService, args);
 
             if (m_GridService != null)
-                m_log.InfoFormat("[MAP IMAGE HANDLER]: GridService check is ON");
+                Logger.LogInformation($"GridService check is ON");
             else
-                m_log.InfoFormat("[MAP IMAGE HANDLER]: GridService check is OFF");
+                Logger.LogInformation($"GridService check is OFF");
 
             bool proxy = serverConfig.GetValue<bool>("HasProxy", false);
             
-            IServiceAuth auth = ServiceAuth.Create(config, configName);
+            IServiceAuth auth = ServiceAuth.Create(Config, ConfigName);
 
-            server.AddSimpleStreamHandler(new MapServerPostHandler(m_MapService, m_GridService, proxy, auth));
+            HttpServer.AddSimpleStreamHandler(
+                new MapServerPostHandler(Logger, m_MapService, m_GridService, proxy, auth));
         }
+
     }
 
     class MapServerPostHandler : SimpleStreamHandler
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private ILogger m_logger;
         private IMapImageService m_MapService;
         private IGridService m_GridService;
         bool m_Proxy;
 
-        public MapServerPostHandler(IMapImageService service, IGridService grid, bool proxy, IServiceAuth auth) :
+        public MapServerPostHandler(ILogger logger, IMapImageService service, IGridService grid, bool proxy, IServiceAuth auth) :
             base("/map", auth)
         {
+            m_logger = logger;
             m_MapService = service;
             m_GridService = grid;
             m_Proxy = proxy;
@@ -107,7 +115,7 @@ namespace OpenSim.Server.Handlers.MapImage
 
         protected override void ProcessRequest(IOSHttpRequest httpRequest, IOSHttpResponse httpResponse)
         {
-            //m_log.DebugFormat("[MAP SERVICE IMAGE HANDLER]: Received {0}", path);
+            //m_logger.LogDebug($"Handler received {path}");
 
             int x = 0, y = 0;
             UUID scopeID = UUID.Zero;
@@ -120,6 +128,7 @@ namespace OpenSim.Server.Handlers.MapImage
                 string body;
                 using (StreamReader sr = new StreamReader(httpRequest.InputStream))
                     body = sr.ReadToEnd();
+
                 body = body.Trim();
 
                 Dictionary<string, object> request = ServerUtils.ParseQueryString(body);
@@ -128,6 +137,7 @@ namespace OpenSim.Server.Handlers.MapImage
                 y = Int32.Parse(request["Y"].ToString());
                 if (request.TryGetValue("SCOPE", out object o))
                     UUID.TryParse(o.ToString(), out scopeID);
+
                 if(request.TryGetValue("DATA", out object od))
                 {
                     data = Convert.FromBase64String(od.ToString());
@@ -146,7 +156,7 @@ namespace OpenSim.Server.Handlers.MapImage
 
             try
             {
-                m_log.DebugFormat("[MAP ADD SERVER CONNECTOR]: Received map data for region at {0}-{1}", x, y);
+                m_logger.LogDebug($"Received map data for region at {x}-{y}");
 
                 //string type = "image/jpeg";
                 //if (request.ContainsKey("TYPE"))
@@ -160,15 +170,14 @@ namespace OpenSim.Server.Handlers.MapImage
                     {
                         if (r.ExternalEndPoint.Address.ToString() != ipAddr.ToString())
                         {
-                            m_log.WarnFormat("[MAP IMAGE HANDLER]: IP address {0} may be trying to impersonate region in IP {1}", ipAddr, r.ExternalEndPoint.Address);
+                            m_logger.LogWarning($"IP address {ipAddr} may be trying to impersonate region in IP {r.ExternalEndPoint.Address}");
                             httpResponse.RawBuffer = Util.ResultFailureMessage("IP address of caller does not match IP address of registered region");
                             //return;
                         }
                     }
                     else
                     {
-                        m_log.WarnFormat("[MAP IMAGE HANDLER]: IP address {0} may be rogue. Region not found at coordinates {1}-{2}",
-                            ipAddr, x, y);
+                        m_logger.LogWarning($"IP address {ipAddr} may be rogue. Region not found at coordinates {x}-{y}");
                         httpResponse.RawBuffer = Util.ResultFailureMessage("Region not found at given coordinates");
                         //return;
                     }
@@ -176,16 +185,18 @@ namespace OpenSim.Server.Handlers.MapImage
 
                 bool result;
                 string reason;
+
                 if (data == null)
                     result = m_MapService.RemoveMapTile(x, y, scopeID, out reason);
                 else
                     result = m_MapService.AddMapTile(x, y, data, scopeID, out reason);
+
                 httpResponse.RawBuffer = result ? Util.sucessResultSuccess : Util.ResultFailureMessage(reason);
                 return;
             }
             catch (Exception e)
             {
-                m_log.ErrorFormat("[MAP SERVICE IMAGE HANDLER]: Exception {0} {1}", e.Message, e.StackTrace);
+                m_logger.LogError(e, e.Message);
             }
 
             httpResponse.RawBuffer = Util.ResultFailureMessage("Unexpected server error");

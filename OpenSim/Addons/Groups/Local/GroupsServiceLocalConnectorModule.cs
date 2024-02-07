@@ -34,6 +34,7 @@ using OpenSim.Region.Framework.Interfaces;
 using OpenMetaverse;
 using log4net;
 using Nini.Config;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Groups
 {

@@ -327,7 +327,7 @@ namespace OpenSim.Framework.Servers
         /// Register an already started HTTP server to the collection of known servers.
         /// </summary>
         /// <param name='server'></param>
-        public static void AddHttpServer(BaseHttpServer server)
+        public static void AddHttpServer(IHttpServer server)
         {
             lock (m_Servers)
             {

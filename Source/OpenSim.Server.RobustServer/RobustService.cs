@@ -29,8 +29,9 @@ namespace OpenSim.Server.RobustServer
         {
             _logger.LogInformation("{Service} is running.", nameof(Server.RobustServer));
 
-            m_res = _openSimServer.Startup();
-
+            _openSimServer.Startup();
+            _openSimServer.Work();
+            
             return _completedTask;
         }
 

@@ -41,15 +41,20 @@ namespace OpenSim.Server.Base
     {
         private uint m_consolePort;
 
+        private IServiceProvider m_provider;
         private IConfiguration m_configuration;
         private ILogger<HttpServerBase> m_logger;
 
+        public IServiceProvider Provider { get => m_provider; set => m_provider = value; }
+
         public HttpServerBase(
+            IServiceProvider provider,
             IConfiguration configuration,
             ILogger<HttpServerBase> logger,
             ServerStatsCollector statsCollector) 
             : base(configuration, logger, statsCollector)
         {
+            Provider = provider;
             m_configuration = configuration;
             m_logger = logger;
         }

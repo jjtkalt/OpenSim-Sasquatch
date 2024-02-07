@@ -95,15 +95,20 @@ namespace OpenSim.Server.Base
             IServiceProvider provider,
             IConfiguration configuration, 
             ILogger<OpenSimServer> logger,
-            ICommandConsole console
+            ICommandConsole console, 
+            IHttpServer httpServer
             )
         {
             m_serviceProvider = provider;
             m_configuration = configuration;
             m_logger = logger;
             m_console = console;
+            m_httpServer = httpServer;
 
             MainConsole.Instance = m_console;
+
+            MainServer.AddHttpServer(m_httpServer);
+            MainServer.Instance = m_httpServer;
 
             m_osSecret = UUID.Random().ToString();
 

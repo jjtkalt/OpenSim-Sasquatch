@@ -26,28 +26,41 @@
  */
 
 using System.Net;
-using System.Reflection;
-using Nini.Config;
-using log4net;
+
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Server.Handlers.Hypergrid
 {
-    public class HeloServiceInConnector : ServiceConnector, IServiceConnector
-    {
-        public HeloServiceInConnector(IConfiguration config, IHttpServer server) :
-                base(config, server, string.Empty)
+    public class HeloServiceInConnector : IServiceConnector
+    {       
+        public HeloServiceInConnector(
+            IConfiguration config,
+            ILogger<HeloServiceInConnector> logger)
         {
-            server.AddSimpleStreamHandler(new HeloServerGetAndHeadHandler("opensim-robust"));
+            Config = config;
+            Logger = logger;
+        }
+
+        public string ConfigName {get; private set; } = "HeloService";
+
+        public IConfiguration Config { get; private set; }
+        public ILogger Logger { get; private set; }
+        public IHttpServer HttpServer {get; private set; }
+
+        public void Initialize(IHttpServer httpServer)
+        {
+            HttpServer = httpServer;
+
+            HttpServer.AddSimpleStreamHandler(new HeloServerGetAndHeadHandler("opensim-robust"));
         }
     }
 
     public class HeloServerGetAndHeadHandler : SimpleStreamHandler
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         private string m_HandlersType;
 
         public HeloServerGetAndHeadHandler(string handlersType) : base("/helo")
@@ -60,17 +73,18 @@ namespace OpenSim.Server.Handlers.Hypergrid
             if (httpRequest.HttpMethod == "GET")
             {
                 //Obsolete
-                m_log.Debug("[HELO]: hi, GET was called");
+                //m_log.Debug("[HELO]: hi, GET was called");
             }
             else if (httpRequest.HttpMethod == "HEAD")
             {
-                m_log.Debug("[HELO]: hi, HEAD was called");
+                //m_log.Debug("[HELO]: hi, HEAD was called");
             }
             else
             {
                 httpResponse.StatusCode = (int)HttpStatusCode.MethodNotAllowed;
                 return;
             }
+
             httpResponse.AddHeader("X-Handlers-Provided", m_HandlersType);
             httpResponse.StatusCode = (int)HttpStatusCode.OK;
         }

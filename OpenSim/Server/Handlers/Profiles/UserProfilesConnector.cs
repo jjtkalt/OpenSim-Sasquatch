@@ -30,36 +30,37 @@ using OpenSim.Services.Interfaces;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Server.Handlers.Profiles
 {
-    public class UserProfilesConnector: ServiceConnector
+    public class UserProfilesConnector: IServiceConnector
     {
-        // Our Local Module
-        public IUserProfilesService ServiceModule
+        private const string _ConfigName = "UserProfilesService";
+
+        public IUserProfilesService ServiceModule { get; private set; }
+
+        public bool Enabled { get; private set; }
+
+        public string ConfigName { get; private set; } = _ConfigName;
+
+        public IConfiguration Config { get; private set; }
+        public ILogger Logger { get; private set; }
+        public IHttpServer HttpServer { get; private set; }
+
+        public UserProfilesConnector(
+            IConfiguration config, 
+            ILogger<UserProfilesConnector> logger)
         {
-            get; private set;
+            Config = config;
+            Logger = logger;
         }
 
-        // The HTTP server.
-        public IHttpServer Server
+        public void Initialize(IHttpServer httpServer)
         {
-            get; private set;
-        }
+            HttpServer = httpServer;
 
-        public bool Enabled
-        {
-            get; private set;
-        }
-
-        public UserProfilesConnector(IConfiguration config, IHttpServer server, string configName) :
-            base(config, server, configName)
-        {
-            ConfigName = "UserProfilesService";
-            if(!string.IsNullOrEmpty(configName))
-                ConfigName = configName;
-
-            var serverConfig = config.GetSection(ConfigName);
+            var serverConfig = Config.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
                 throw new Exception(String.Format("No section {0} in config file", ConfigName));
 
@@ -70,33 +71,32 @@ namespace OpenSim.Server.Handlers.Profiles
             }
 
             Enabled = true;
-            Server = server;
 
             string service = serverConfig.GetValue("LocalServiceModule", String.Empty);
 
-            Object[] args = new Object[] { config, ConfigName };
+            Object[] args = new Object[] { Config, ConfigName };
             ServiceModule = ServerUtils.LoadPlugin<IUserProfilesService>(service, args);
 
             JsonRpcProfileHandlers handler = new JsonRpcProfileHandlers(ServiceModule);
 
-            Server.AddJsonRPCHandler("avatarclassifiedsrequest", handler.AvatarClassifiedsRequest);
-            Server.AddJsonRPCHandler("classified_update", handler.ClassifiedUpdate);
-            Server.AddJsonRPCHandler("classifieds_info_query", handler.ClassifiedInfoRequest);
-            Server.AddJsonRPCHandler("classified_delete", handler.ClassifiedDelete);
-            Server.AddJsonRPCHandler("avatarpicksrequest", handler.AvatarPicksRequest);
-            Server.AddJsonRPCHandler("pickinforequest", handler.PickInfoRequest);
-            Server.AddJsonRPCHandler("picks_update", handler.PicksUpdate);
-            Server.AddJsonRPCHandler("picks_delete", handler.PicksDelete);
-            Server.AddJsonRPCHandler("avatarnotesrequest", handler.AvatarNotesRequest);
-            Server.AddJsonRPCHandler("avatar_notes_update", handler.NotesUpdate);
-            Server.AddJsonRPCHandler("avatar_properties_request", handler.AvatarPropertiesRequest);
-            Server.AddJsonRPCHandler("avatar_properties_update", handler.AvatarPropertiesUpdate);
-            Server.AddJsonRPCHandler("avatar_interests_update", handler.AvatarInterestsUpdate);
-            Server.AddJsonRPCHandler("user_preferences_update", handler.UserPreferenecesUpdate);
-            Server.AddJsonRPCHandler("user_preferences_request", handler.UserPreferencesRequest);
-            Server.AddJsonRPCHandler("image_assets_request", handler.AvatarImageAssetsRequest);
-            Server.AddJsonRPCHandler("user_data_request", handler.RequestUserAppData);
-            Server.AddJsonRPCHandler("user_data_update", handler.UpdateUserAppData);
+            HttpServer.AddJsonRPCHandler("avatarclassifiedsrequest", handler.AvatarClassifiedsRequest);
+            HttpServer.AddJsonRPCHandler("classified_update", handler.ClassifiedUpdate);
+            HttpServer.AddJsonRPCHandler("classifieds_info_query", handler.ClassifiedInfoRequest);
+            HttpServer.AddJsonRPCHandler("classified_delete", handler.ClassifiedDelete);
+            HttpServer.AddJsonRPCHandler("avatarpicksrequest", handler.AvatarPicksRequest);
+            HttpServer.AddJsonRPCHandler("pickinforequest", handler.PickInfoRequest);
+            HttpServer.AddJsonRPCHandler("picks_update", handler.PicksUpdate);
+            HttpServer.AddJsonRPCHandler("picks_delete", handler.PicksDelete);
+            HttpServer.AddJsonRPCHandler("avatarnotesrequest", handler.AvatarNotesRequest);
+            HttpServer.AddJsonRPCHandler("avatar_notes_update", handler.NotesUpdate);
+            HttpServer.AddJsonRPCHandler("avatar_properties_request", handler.AvatarPropertiesRequest);
+            HttpServer.AddJsonRPCHandler("avatar_properties_update", handler.AvatarPropertiesUpdate);
+            HttpServer.AddJsonRPCHandler("avatar_interests_update", handler.AvatarInterestsUpdate);
+            HttpServer.AddJsonRPCHandler("user_preferences_update", handler.UserPreferenecesUpdate);
+            HttpServer.AddJsonRPCHandler("user_preferences_request", handler.UserPreferencesRequest);
+            HttpServer.AddJsonRPCHandler("image_assets_request", handler.AvatarImageAssetsRequest);
+            HttpServer.AddJsonRPCHandler("user_data_request", handler.RequestUserAppData);
+            HttpServer.AddJsonRPCHandler("user_data_update", handler.UpdateUserAppData);
         }
     }
 }

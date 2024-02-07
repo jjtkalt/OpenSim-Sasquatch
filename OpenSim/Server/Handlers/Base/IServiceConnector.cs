@@ -26,7 +26,9 @@
  */
 
 using OpenSim.Framework.Servers.HttpServer;
+
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Server.Handlers.Base
 {
@@ -34,22 +36,9 @@ namespace OpenSim.Server.Handlers.Base
     {
         string ConfigName { get; }
         IConfiguration Config { get; }
+        ILogger Logger { get; }
         IHttpServer HttpServer { get; }
-    }
 
-    public class ServiceConnector : IServiceConnector
-    {
-        public virtual string ConfigName { get; protected set; }
-
-        public virtual IConfiguration Config { get; protected set; }
-
-        public virtual IHttpServer HttpServer { get; protected set; }
-
-        public ServiceConnector(IConfiguration config, IHttpServer server, string configName)
-        {
-            Config = config;
-            HttpServer = server;
-            ConfigName = configName;
-        }
+        void Initialize(IHttpServer httpServer);
     }
 }

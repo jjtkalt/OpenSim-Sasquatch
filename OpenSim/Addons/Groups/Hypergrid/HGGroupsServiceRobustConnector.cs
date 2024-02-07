@@ -25,29 +25,26 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
 using System.Reflection;
-using System.Text;
-using System.Xml;
-using System.Collections.Generic;
-using System.IO;
-using Nini.Config;
 using OpenSim.Framework;
 using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
-using log4net;
 using OpenMetaverse;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Groups
 {
     public class HGGroupsServiceRobustConnector : ServiceConnector
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         private HGGroupsService m_GroupsService;
         private string m_ConfigName = "Groups";
+
+        protected readonly IConfiguration m_configuration;
+        protected readonly ILogger<HGGroupsServiceRobustConnector> m_logger;
 
         // Called by Robust shell
         public HGGroupsServiceRobustConnector(IConfiguration config, IHttpServer server, string configName) :

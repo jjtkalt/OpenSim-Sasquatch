@@ -26,6 +26,7 @@
  */
 
 using OpenMetaverse;
+
 using OpenSim.Framework;
 using OpenSim.Framework.ServiceAuth;
 using OpenSim.Framework.Console;
@@ -33,30 +34,45 @@ using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Server.Handlers.Asset
 {
-    public class AssetServiceConnector : ServiceConnector, IServiceConnector
+    public class AssetServiceConnector : IServiceConnector
     {
         private IAssetService m_AssetService;
-        
-        public AssetServiceConnector(IConfiguration config, IHttpServer server) 
-            : this(config, server, "AssetService")
-        {}
-
-        public AssetServiceConnector(IConfiguration config, IHttpServer server, string configName) 
-            : base(config, server, configName)
+       
+        public AssetServiceConnector(
+            IConfiguration configuration,
+            ILogger<AssetServiceConnector> logger)
         {
-            var serverConfig = config.GetSection(configName);
+            Config = configuration;
+            Logger = logger;
+        }
+
+        public string ConfigName { get; } = "AssetService";
+
+        public IConfiguration Config { get; private set; }
+
+        public ILogger Logger { get; private set; }
+
+        public IHttpServer HttpServer { get; private set; }
+
+        public void Initialize(IHttpServer httpServer)
+        {
+            HttpServer = httpServer;
+
+            var serverConfig = Config.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
-                throw new Exception($"No section {configName} in config file");
+                throw new Exception($"No section {ConfigName} in config file");
 
             string assetService = serverConfig.GetValue<string>("LocalServiceModule", String.Empty);
             if (string.IsNullOrEmpty(assetService))
                 throw new Exception("No LocalServiceModule in config file");
 
-            object[] args = new object[] { config, ConfigName };
+            object[] args = new object[] { Config, ConfigName };
             m_AssetService = ServerUtils.LoadPlugin<IAssetService>(assetService, args);
 
             if (m_AssetService == null)
@@ -81,12 +97,12 @@ namespace OpenSim.Server.Handlers.Asset
                     allowedRemoteDeleteTypes = AllowedRemoteDeleteTypes.MapTile;
             }
 
-            IServiceAuth auth = ServiceAuth.Create(config, ConfigName);
+            IServiceAuth auth = ServiceAuth.Create(Config, ConfigName);
 
-            server.AddStreamHandler(new AssetServerGetHandler(m_AssetService, auth, redirectURL));
-            server.AddStreamHandler(new AssetServerPostHandler(m_AssetService, auth));
-            server.AddStreamHandler(new AssetServerDeleteHandler(m_AssetService, allowedRemoteDeleteTypes, auth));
-            server.AddStreamHandler(new AssetsExistHandler(m_AssetService));
+            HttpServer.AddStreamHandler(new AssetServerGetHandler(m_AssetService, auth, redirectURL));
+            HttpServer.AddStreamHandler(new AssetServerPostHandler(m_AssetService, auth));
+            HttpServer.AddStreamHandler(new AssetServerDeleteHandler(m_AssetService, allowedRemoteDeleteTypes, auth));
+            HttpServer.AddStreamHandler(new AssetsExistHandler(m_AssetService));
 
             MainConsole.Instance.Commands.AddCommand("Assets", false,
                     "show asset",

@@ -25,31 +25,50 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System.Reflection;
-using log4net;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Server.Handlers.Neighbour
 {
-    public class NeighbourServiceInConnector : ServiceConnector
+    public class NeighbourServiceInConnector : IServiceConnector
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         private INeighbourService m_NeighbourService;
+        private IScene m_Scene;
         private IAuthenticationService m_AuthenticationService = null;
+        private static string _ConfigName = "NeighbourService";
 
-        public NeighbourServiceInConnector(IConfiguration source, IHttpServer server, INeighbourService nService, IScene scene) :
-                base(source, server, String.Empty)
+        public string ConfigName { get; private set; } = _ConfigName;
+
+        public IConfiguration Config { get; private set; }
+        public ILogger Logger { get; private set; }
+        public IHttpServer HttpServer { get; private set; }
+
+        public NeighbourServiceInConnector(
+            IConfiguration config, 
+            ILogger<NeighbourServiceInConnector> logger,
+            INeighbourService nService, 
+            IScene scene
+            )
         {
-
+            Config = config;
+            Logger = Logger;
             m_NeighbourService = nService;
+            m_Scene = scene;
+        }
+
+//      XXX  public NeighbourServiceInConnector(IConfiguration source, IHttpServer server, INeighbourService nService, IScene scene)
+        public void Initialize(IHttpServer httpServer)
+        {
+            HttpServer = httpServer;
+
             if (m_NeighbourService == null)
             {
-                m_log.Error("[NEIGHBOUR IN CONNECTOR]: neighbour service was not provided");
+                Logger.LogError("Neighbour service was not provided");
                 return;
             }
 
@@ -57,7 +76,7 @@ namespace OpenSim.Server.Handlers.Neighbour
             //if (authentication)
             //    m_AuthenticationService = scene.RequestModuleInterface<IAuthenticationService>();
 
-            server.AddSimpleStreamHandler(new NeighbourSimpleHandler(m_NeighbourService, m_AuthenticationService), true);
+            HttpServer.AddSimpleStreamHandler(new NeighbourSimpleHandler(m_NeighbourService, m_AuthenticationService), true);
         }
     }
 }

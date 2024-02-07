@@ -27,27 +27,42 @@
 
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Server.Handlers.Grid
 {
-    public class GridInfoServerInConnector : ServiceConnector, IServiceConnector
-    {
-        public GridInfoServerInConnector(IConfiguration config, IHttpServer server) :
-            this(config, server, "GridInfoService")
+    public class GridInfoServerInConnector : IServiceConnector
+    {   
+        public GridInfoServerInConnector(
+            IConfiguration config, 
+            ILogger<GridInfoServerInConnector> logger)
         {
+            Config = config;
+            Logger = logger;
         }
 
-        public GridInfoServerInConnector(IConfiguration config, IHttpServer server, string configName) :
-            base(config, server, configName)
-        {
-            GridInfoHandlers handlers = new GridInfoHandlers(config);
+        public string ConfigName { get; private set; } = "GridInfoService";
 
-            server.AddSimpleStreamHandler(
+        public IConfiguration Config {get; private set; }
+        public ILogger Logger { get; private set; }
+        public IHttpServer HttpServer { get; private set; }
+
+        public void Initialize(IHttpServer httpServer)
+        {
+            HttpServer = httpServer;
+
+            GridInfoHandlers handlers = new GridInfoHandlers(Config);
+
+            HttpServer.AddSimpleStreamHandler(
                 new SimpleStreamHandler("/get_grid_info", handlers.RestGetGridInfoMethod));
-            server.AddSimpleStreamHandler(
+
+            HttpServer.AddSimpleStreamHandler(
                 new SimpleStreamHandler("/json_grid_info", handlers.JsonGetGridInfoMethod));
-            server.AddXmlRPCHandler("get_grid_info", handlers.XmlRpcGridInfoMethod, false);
+
+            HttpServer.AddXmlRPCHandler("get_grid_info", handlers.XmlRpcGridInfoMethod, false);
         }
+
     }
 }

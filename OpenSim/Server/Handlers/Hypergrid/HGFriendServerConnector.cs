@@ -25,39 +25,47 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using Nini.Config;
 using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Server.Handlers.Hypergrid
 {
-    public class HGFriendsServerConnector : ServiceConnector, IServiceConnector
+    public class HGFriendsServerConnector : IServiceConnector
     {
         private IUserAgentService m_UserAgentService;
         private IHGFriendsService m_TheService;
 
         // Called from Robust
-        public HGFriendsServerConnector(IConfiguration config, IHttpServer server) :
-                this(config, server, "HGFriendsService", null)
+        public HGFriendsServerConnector(
+            IConfiguration config, 
+            ILogger<HGFriendsServerConnector> logger)
         {
+            Config = config;
+            Logger = logger;
         }
+        
+        public string ConfigName { get; private set; } = "HGFriendsService";
 
-        // Called from standalone configurations
-        public HGFriendsServerConnector(IConfiguration config, IHttpServer server, string configName, IFriendsSimConnector localConn)
-            : base(config, server, configName)
+        public IConfiguration Config { get; private set; } 
+        public ILogger Logger { get; private set; }
+        public IHttpServer HttpServer { get; private set; } 
+
+//        public HGFriendsServerConnector(IConfiguration config, IHttpServer server, string configName, IFriendsSimConnector localConn)
+
+        public void Initialize(IHttpServer httpServer)
         {
-            if (string.IsNullOrEmpty(configName))
-                configName = "HGFriendsService";
+            HttpServer = httpServer;
 
-            Object[] args = new Object[] { config, configName, localConn };
+            Object[] args = new Object[] { Config, ConfigName, null /*localConn*/ };
 
-            var serverConfig = config.GetSection(configName);
+            var serverConfig = Config.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
-                throw new Exception($"No section {configName} in config file");
+                throw new Exception($"No section {ConfigName} in config file");
 
             string theService = serverConfig.GetValue("LocalServiceModule", String.Empty);
             if (string.IsNullOrEmpty(theService))
@@ -67,11 +75,13 @@ namespace OpenSim.Server.Handlers.Hypergrid
 
             theService = serverConfig.GetValue("UserAgentService", string.Empty);
             if (string.IsNullOrEmpty(theService))
-                throw new Exception($"No UserAgentService in {configName}");
+                throw new Exception($"No UserAgentService in {ConfigName}");
                 
-            m_UserAgentService = ServerUtils.LoadPlugin<IUserAgentService>(theService, new Object[] { config, localConn });
+            m_UserAgentService = ServerUtils.LoadPlugin<IUserAgentService>(theService, new Object[] { Config, null /*localConn*/ });
 
-            server.AddStreamHandler(new HGFriendsServerPostHandler(m_TheService, m_UserAgentService, localConn));
+            HttpServer.AddStreamHandler(new HGFriendsServerPostHandler(m_TheService, m_UserAgentService, null /*localConn*/));
         }
+
+
     }
 }

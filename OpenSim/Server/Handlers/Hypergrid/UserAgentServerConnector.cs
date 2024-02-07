@@ -25,57 +25,71 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Net;
-using System.Reflection;
 
-using Nini.Config;
-using OpenSim.Framework;
 using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+
 using GridRegion = OpenSim.Services.Interfaces.GridRegion;
 
-using log4net;
 using Nwc.XmlRpc;
 using OpenMetaverse;
+
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Server.Handlers.Hypergrid
 {
-    public class UserAgentServerConnector : ServiceConnector, IServiceConnector
+    public class UserAgentServerConnector : IServiceConnector
     {
-//        private static readonly ILog m_log =
-//                LogManager.GetLogger(
-//                MethodBase.GetCurrentMethod().DeclaringType);
+        private string[] m_AuthorizedCallers;
+        private bool m_VerifyCallers = false;
+
+        private readonly ILogger<UserAgentServerConnector> m_logger;
+        
+        public UserAgentServerConnector(
+            IConfiguration config, 
+            ILogger<UserAgentServerConnector> logger)
+        {
+            Config = config;
+            Logger = logger;
+            m_logger = logger;
+        }
 
         private IUserAgentService m_HomeUsersService;
+        
         public IUserAgentService HomeUsersService
         {
             get { return m_HomeUsersService; }
         }
 
-        private string[] m_AuthorizedCallers;
+        public string ConfigName { get; private set; } = "UserAgentService";
 
-        private bool m_VerifyCallers = false;
+        public IConfiguration Config { get; private set; }
 
-        public UserAgentServerConnector(IConfiguration config, IHttpServer server) :
-            this(config, server, null)
+        public ILogger Logger { get; private set; }
+
+        public IHttpServer HttpServer { get; private set; }
+
+        // XXX
+        // public UserAgentServerConnector(IConfiguration config, IHttpServer server, IFriendsSimConnector friendsConnector) :
+        //         base(config, server, "UserAgentService")
+
+        public void Initialize(IHttpServer httpServer)
         {
-        }
+            HttpServer = httpServer;
+            IFriendsSimConnector friendsConnector = null;
 
-        public UserAgentServerConnector(IConfiguration config, IHttpServer server, IFriendsSimConnector friendsConnector) :
-                base(config, server, "UserAgentService")
-        {
-            var gridConfig = config.GetSection("UserAgentService");
+            var gridConfig = Config.GetSection("UserAgentService");
             if (gridConfig.Exists())
             {
                 string serviceDll = gridConfig.GetValue("LocalServiceModule", string.Empty);
 
-                Object[] args = new Object[] { config, friendsConnector };
+                Object[] args = new Object[] { Config, friendsConnector };
+
                 m_HomeUsersService = ServerUtils.LoadPlugin<IUserAgentService>(serviceDll, args);
             }
 
@@ -91,21 +105,21 @@ namespace OpenSim.Server.Handlers.Hypergrid
             csv = csv.Replace(" ", "");
             m_AuthorizedCallers = csv.Split(',');
 
-            server.AddXmlRPCHandler("agent_is_coming_home", AgentIsComingHome, false);
-            server.AddXmlRPCHandler("get_home_region", GetHomeRegion, false);
-            server.AddXmlRPCHandler("verify_agent", VerifyAgent, false);
-            server.AddXmlRPCHandler("verify_client", VerifyClient, false);
-            server.AddXmlRPCHandler("logout_agent", LogoutAgent, false);
-            server.AddXmlRPCHandler("status_notification", StatusNotification, false);
-            server.AddXmlRPCHandler("get_online_friends", GetOnlineFriends, false);
-            server.AddXmlRPCHandler("get_user_info", GetUserInfo, false);
-            server.AddXmlRPCHandler("get_server_urls", GetServerURLs, false);
+            HttpServer.AddXmlRPCHandler("agent_is_coming_home", AgentIsComingHome, false);
+            HttpServer.AddXmlRPCHandler("get_home_region", GetHomeRegion, false);
+            HttpServer.AddXmlRPCHandler("verify_agent", VerifyAgent, false);
+            HttpServer.AddXmlRPCHandler("verify_client", VerifyClient, false);
+            HttpServer.AddXmlRPCHandler("logout_agent", LogoutAgent, false);
+            HttpServer.AddXmlRPCHandler("status_notification", StatusNotification, false);
+            HttpServer.AddXmlRPCHandler("get_online_friends", GetOnlineFriends, false);
+            HttpServer.AddXmlRPCHandler("get_user_info", GetUserInfo, false);
+            HttpServer.AddXmlRPCHandler("get_server_urls", GetServerURLs, false);
 
-            server.AddXmlRPCHandler("locate_user", LocateUser, false);
-            server.AddXmlRPCHandler("get_uui", GetUUI, false);
-            server.AddXmlRPCHandler("get_uuid", GetUUID, false);
+            HttpServer.AddXmlRPCHandler("locate_user", LocateUser, false);
+            HttpServer.AddXmlRPCHandler("get_uui", GetUUI, false);
+            HttpServer.AddXmlRPCHandler("get_uuid", GetUUID, false);
 
-            server.AddSimpleStreamHandler(new HomeAgentHandler(m_HomeUsersService, loginServerIP, proxy), true);
+            HttpServer.AddSimpleStreamHandler(new HomeAgentHandler(m_HomeUsersService, loginServerIP, proxy), true);
         }
 
         public XmlRpcResponse GetHomeRegion(XmlRpcRequest request, IPEndPoint remoteClient)

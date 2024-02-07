@@ -25,50 +25,65 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System.Reflection;
 using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Server.Handlers.Authentication
 {
-    public class OpenIdServerConnector : ServiceConnector, IServiceConnector
+    public class OpenIdServerConnector : IServiceConnector
     {
         private IAuthenticationService m_AuthenticationService;
         private IUserAccountService m_UserAccountService;
-        
-        public OpenIdServerConnector(IConfiguration config, IHttpServer server)
-            : this(config, server, "OpenIdService")
-        { }
 
-        public OpenIdServerConnector(IConfiguration config, IHttpServer server, string configName) 
-            : base(config, server, configName)
+        public OpenIdServerConnector(
+            IConfiguration configuration,
+            ILogger<OpenIdServerConnector> logger
+            )
         {
-            var serverConfig = config.GetSection(configName);
+            Config = configuration;
+            Logger = Logger;
+        }
+
+        public string ConfigName => "OpenIdService";
+
+        public IConfiguration Config { get; private set; }
+        public ILogger Logger { get; private set; }
+        public IHttpServer HttpServer { get; private set; }
+
+        public void Initialize(IHttpServer httpServer)
+        {
+            HttpServer = httpServer;
+
+            var serverConfig = Config.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
-                throw new Exception($"No section {configName} in config file");
+                throw new Exception($"No section {ConfigName} in config file");
 
             string authService = serverConfig.GetValue<string>("AuthenticationServiceModule", String.Empty);
             string userService = serverConfig.GetValue<string>("UserAccountServiceModule", String.Empty);
 
             if (string.IsNullOrEmpty(authService))
                 throw new Exception("No AuthenticationServiceModule in config file for OpenId authentication");
+
             if (string.IsNullOrEmpty(userService))
                 throw new Exception("No UserAccountServiceModule in config file for OpenId authentication");
 
-            Object[] args = new Object[] { config };
+            Object[] args = new Object[] { Config };
 
             m_AuthenticationService = ServerUtils.LoadPlugin<IAuthenticationService>(authService, args);
             m_UserAccountService = ServerUtils.LoadPlugin<IUserAccountService>(userService, args);
 
             // Handler for OpenID user identity pages
-            server.AddStreamHandler(new OpenIdStreamHandler("GET", "/users", m_UserAccountService, m_AuthenticationService));
+            HttpServer.AddStreamHandler(new OpenIdStreamHandler("GET", "/users", m_UserAccountService, m_AuthenticationService));
             
             // Handlers for the OpenID endpoint server
-            server.AddStreamHandler(new OpenIdStreamHandler("POST", "/openid/server", m_UserAccountService, m_AuthenticationService));
-            server.AddStreamHandler(new OpenIdStreamHandler("GET", "/openid/server", m_UserAccountService, m_AuthenticationService));
+            HttpServer.AddStreamHandler(new OpenIdStreamHandler("POST", "/openid/server", m_UserAccountService, m_AuthenticationService));
+            HttpServer.AddStreamHandler(new OpenIdStreamHandler("GET", "/openid/server", m_UserAccountService, m_AuthenticationService));
         }
+
     }
 }

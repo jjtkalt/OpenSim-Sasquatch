@@ -30,35 +30,55 @@ using OpenSim.Services.Interfaces;
 using OpenSim.Framework.ServiceAuth;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Server.Handlers.Authentication
 {
-    public class AuthenticationServiceConnector : ServiceConnector, IServiceConnector
+    public class AuthenticationServiceConnector : IServiceConnector
     {
         private IAuthenticationService m_AuthenticationService;
-        
-        public AuthenticationServiceConnector(IConfiguration config, IHttpServer server)
-            : this(config, server, "AuthenticationService")
-        { }
+        private IHttpServer m_httpServer;
 
-        public AuthenticationServiceConnector(IConfiguration config, IHttpServer server, string configName) 
-            : base(config, server, configName)
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<AuthenticationServiceConnector> m_logger;
+
+        public AuthenticationServiceConnector(
+            IConfiguration configuraion,
+            ILogger<AuthenticationServiceConnector> logger
+            )
         {
-            var serverConfig = config.GetSection(configName);
+            Config = configuraion;
+            Logger = logger;
+        }
+
+        public string ConfigName => "AuthenticationService";
+
+        public IConfiguration Config { get; private set; }
+        
+        public ILogger Logger { get; private set; }
+
+        public IHttpServer HttpServer => m_httpServer;
+
+        public void Initialize(IHttpServer httpServer)
+        {
+            m_httpServer = httpServer;
+
+            var serverConfig = Config.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
-                throw new Exception($"No section {configName} in config file");
+                throw new Exception($"No section {ConfigName} in config file");
 
             string authenticationService = serverConfig.GetValue<string>("LocalServiceModule", String.Empty);
             if (string.IsNullOrEmpty(authenticationService))
                 throw new Exception("No LocalServiceModule in config file");
 
-            Object[] args = new Object[] { config };
+            Object[] args = new Object[] { Config };
             m_AuthenticationService = ServerUtils.LoadPlugin<IAuthenticationService>(authenticationService, args);
 
-            IServiceAuth auth = ServiceAuth.Create(config, configName);
+            IServiceAuth auth = ServiceAuth.Create(Config, ConfigName);
 
-            server.AddStreamHandler(new AuthenticationServerPostHandler(m_AuthenticationService, Config, auth));
+            HttpServer.AddStreamHandler(new AuthenticationServerPostHandler(m_AuthenticationService, Config, auth));
         }
     }
 }

@@ -162,7 +162,7 @@ namespace OpenSim.Groups
 
             if (m_debugEnabled) 
             {
-                m_logger.LogDebug($"{this.Name} called");
+                m_logger.LogDebug($"{System.Reflection.MethodBase.GetCurrentMethod().Name} called");
             }
 
             // No groups module, no groups messaging
@@ -206,7 +206,7 @@ namespace OpenSim.Groups
 
             if (m_debugEnabled)
             {
-                m_logger.LogDebug($"{this.Name} called");
+                m_logger.LogDebug($"{System.Reflection.MethodBase.GetCurrentMethod().Name} called");
             }
 
             m_sceneList.Remove(scene);
@@ -276,7 +276,7 @@ namespace OpenSim.Groups
         {
             if (m_debugEnabled)
             {
-                m_logger.LogDebug($"{this.Name} called");
+                m_logger.LogDebug($"{System.Reflection.MethodBase.GetCurrentMethod().Name} called");
             }
 
             GroupRecord groupInfo = m_groupData.GetGroupRecord(agentID.ToString(), groupID, null);
@@ -469,7 +469,7 @@ namespace OpenSim.Groups
             UUID regionID = new UUID(msg.RegionID);
             if (m_debugEnabled)
             {
-                m_logger.LogDebug($"{this.Name} called, IM from region {regionID}");
+                m_logger.LogDebug($"{System.Reflection.MethodBase.GetCurrentMethod().Name} called, IM from region {regionID}");
 
                 DebugGridInstantMessage(msg);
             }
@@ -657,7 +657,7 @@ namespace OpenSim.Groups
         {
             if (m_debugEnabled)
             {
-                m_logger.LogDebug($"{this.Name} called");
+                m_logger.LogDebug($"{System.Reflection.MethodBase.GetCurrentMethod().Name} called");
 
                 DebugGridInstantMessage(im);
             }
@@ -708,7 +708,7 @@ namespace OpenSim.Groups
 
         void ChatterBoxSessionStartReplyViaCaps(IClientAPI remoteClient, string groupName, UUID groupID)
         {
-            if (m_debugEnabled) m_logger.LogDebug($"{this.Name} called");
+            if (m_debugEnabled) m_logger.LogDebug($"{System.Reflection.MethodBase.GetCurrentMethod().Name} called");
 
             OSDMap moderatedMap = new OSDMap(4);
             moderatedMap.Add("voice", OSD.FromBoolean(false));

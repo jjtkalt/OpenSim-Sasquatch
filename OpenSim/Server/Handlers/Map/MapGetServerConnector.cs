@@ -32,35 +32,49 @@ using OpenSim.Services.Interfaces;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
 using OpenMetaverse;
+
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+
 
 namespace OpenSim.Server.Handlers.MapImage
 {
-    public class MapGetServiceConnector : ServiceConnector, IServiceConnector
+    public class MapGetServiceConnector : IServiceConnector
     {
         private IMapImageService m_MapService;
 
         private static string _configName = "MapImageService";
 
-        public MapGetServiceConnector(IConfiguration config, IHttpServer server) :
-            this(config, server, _configName)
-        { }
+        public string ConfigName { get; private set; } = _configName;
 
-        public MapGetServiceConnector(IConfiguration config, IHttpServer server, string configName) :
-            base(config, server, configName)
+        public IConfiguration Config { get; private set; }
+        public ILogger Logger { get; private set; }
+        public IHttpServer HttpServer { get; private set; }
+
+        public MapGetServiceConnector(
+            IConfiguration config, 
+            ILogger<MapGetServiceConnector> logger)
         {
-            var serverConfig = config.GetSection(configName);
+            Config = config;
+            Logger = logger;
+        }
+
+        public void Initialize(IHttpServer httpServer)
+        {
+            HttpServer = httpServer;
+
+            var serverConfig = Config.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
-                throw new Exception($"No section {configName} in config file");
+                throw new Exception($"No section {ConfigName} in config file");
 
             string gridService = serverConfig.GetValue("LocalServiceModule", string.Empty);
             if (string.IsNullOrWhiteSpace(gridService))
                 throw new Exception("No LocalServiceModule in config file");
 
-            object[] args = new object[] { config };
+            object[] args = new object[] { Config };
             m_MapService = ServerUtils.LoadPlugin<IMapImageService>(gridService, args);
 
-            server.AddStreamHandler(new MapServerGetHandler(m_MapService));
+            HttpServer.AddStreamHandler(new MapServerGetHandler(Logger, m_MapService));
         }
     }
 
@@ -71,10 +85,12 @@ namespace OpenSim.Server.Handlers.MapImage
         //private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         private IMapImageService m_MapService;
+        private ILogger m_logger;
 
-        public MapServerGetHandler(IMapImageService service) :
+        public MapServerGetHandler(ILogger logger, IMapImageService service) :
                 base("GET", "/map")
         {
+            m_logger = logger;
             m_MapService = service;
         }
 

@@ -30,34 +30,53 @@ using OpenSim.Services.Interfaces;
 using OpenSim.Framework.ServiceAuth;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Server.Handlers.Friends
 {
-    public class FriendsServiceConnector : ServiceConnector, IServiceConnector
+    public class FriendsServiceConnector : IServiceConnector
     {
+        private const string ServiceName = "FriendsService";
+
         private IFriendsService m_FriendsService;
+        
+        public FriendsServiceConnector(
+            IConfiguration config, 
+            ILogger<FriendsServiceConnector> logger)
+        { 
+            Config = config;
+            Logger = logger;
+        }
 
-        public FriendsServiceConnector(IConfiguration config, IHttpServer server) :
-                this(config, server, "FriendsService")
-        { }
+        public string ConfigName { get; private set; } = ServiceName;
 
-        public FriendsServiceConnector(IConfiguration config, IHttpServer server, string configName) :
-                base(config, server, configName)
+        public IConfiguration Config { get; private set; }
+        public ILogger Logger { get; private set; }
+        public IHttpServer HttpServer { get; private set; }
+
+
+        public void Initialize(IHttpServer httpServer)
         {
-            var serverConfig = config.GetSection(configName);
+            HttpServer = httpServer;
+
+            var serverConfig = Config.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
-                throw new Exception($"No section {configName} in config file");
+                throw new Exception($"No section {ConfigName} in config file");
 
             string theService = serverConfig.GetValue<string>("LocalServiceModule", String.Empty);
             if (string.IsNullOrEmpty(theService))
                 throw new Exception("No LocalServiceModule in config file");
 
-            Object[] args = new Object[] { config };
+            Object[] args = new Object[] { Config };
             m_FriendsService = ServerUtils.LoadPlugin<IFriendsService>(theService, args);
 
-            IServiceAuth auth = ServiceAuth.Create(config, ConfigName);
-            server.AddStreamHandler(new FriendsServerPostHandler(m_FriendsService, auth));
+            IServiceAuth auth = ServiceAuth.Create(Config, ConfigName);
+            
+            HttpServer.AddStreamHandler(new FriendsServerPostHandler(m_FriendsService, auth));
         }
+
+
     }
 }

@@ -31,33 +31,46 @@ using OpenSim.Services.Interfaces;
 using OpenSim.Framework.ServiceAuth;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Server.Handlers.AgentPreferences
 {
-    public class AgentPreferencesServiceConnector : ServiceConnector, IServiceConnector
+    public class AgentPreferencesServiceConnector : IServiceConnector
     {
         private IAgentPreferencesService m_AgentPreferencesService;
 
-        public AgentPreferencesServiceConnector(IConfiguration config, IHttpServer server)
-            : this(config, server, "AgentPreferencesService")
-        { }
+        public AgentPreferencesServiceConnector(
+            IConfiguration configuration,
+            ILogger<AgentPreferencesServiceConnector> logger)
+        { 
+            Config = configuration;
+            Logger = logger;
+        }
+        
+        public string ConfigName { get; } = "AgentPreferencesService";
 
-        public AgentPreferencesServiceConnector(IConfiguration config, IHttpServer server, string configName)
-            : base(config, server, configName)
+        public IConfiguration Config { get; private set;}
+
+        public ILogger Logger { get; private set; }
+
+        public IHttpServer HttpServer { get; private set; }
+
+        public void Initialize(IHttpServer server)
         {
-            var serverConfig = config.GetSection(configName);
+            var serverConfig = Config.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
-                throw new Exception($"No section {configName} in config file");
+                throw new Exception($"No section {ConfigName} in config file");
 
             string service = serverConfig.GetValue<string>("LocalServiceModule", String.Empty);
             if (String.IsNullOrWhiteSpace(service))
                 throw new Exception("No LocalServiceModule in config file");
 
-            Object[] args = new Object[] { config };
+            Object[] args = new Object[] { Config };
             m_AgentPreferencesService = ServerUtils.LoadPlugin<IAgentPreferencesService>(service, args);
 
-            IServiceAuth auth = ServiceAuth.Create(config, ConfigName);
+            IServiceAuth auth = ServiceAuth.Create(Config, ConfigName);
 
             server.AddStreamHandler(new AgentPreferencesServerPostHandler(m_AgentPreferencesService, auth));
         }

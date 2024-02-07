@@ -30,35 +30,49 @@ using OpenSim.Services.Interfaces;
 using OpenSim.Framework.ServiceAuth;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Server.Handlers.Avatar
 {
-    public class AvatarServiceConnector : ServiceConnector, IServiceConnector
+    public class AvatarServiceConnector : IServiceConnector
     {
         private IAvatarService m_AvatarService;
 
-        public AvatarServiceConnector(IConfiguration config, IHttpServer server) :
-                this(config, server, "AvatarService")
-        { }
+        public AvatarServiceConnector(
+            IConfiguration config, 
+            ILogger<AvatarServiceConnector> logger)
+        { 
+            Config = config;
+            Logger = logger;
+        }
 
-        public AvatarServiceConnector(IConfiguration config, IHttpServer server, string configName) :
-                base(config, server, configName)
+        public string ConfigName => "AvatarService";
+
+        public IConfiguration Config { get; private set; }
+        public ILogger Logger { get; private set; }
+        
+        public IHttpServer HttpServer { get; private set; }
+
+        public void Initialize(IHttpServer httpServer)
         {
-            var serverConfig = config.GetSection(configName);
+            HttpServer = httpServer;
+
+            var serverConfig = Config.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
-                throw new Exception($"No section {configName} in config file");
+                throw new Exception($"No section {ConfigName} in config file");
 
             string avatarService = serverConfig.GetValue<string>("LocalServiceModule", String.Empty);
             if (string.IsNullOrEmpty(avatarService))
                 throw new Exception("No LocalServiceModule in config file");
 
-            Object[] args = new Object[] { config };
+            Object[] args = new Object[] { Config };
             m_AvatarService = ServerUtils.LoadPlugin<IAvatarService>(avatarService, args);
 
-            IServiceAuth auth = ServiceAuth.Create(config, ConfigName);
+            IServiceAuth auth = ServiceAuth.Create(Config, ConfigName);
 
-            server.AddStreamHandler(new AvatarServerPostHandler(m_AvatarService, auth));
+            HttpServer.AddStreamHandler(new AvatarServerPostHandler(m_AvatarService, auth));
         }
     }
 }

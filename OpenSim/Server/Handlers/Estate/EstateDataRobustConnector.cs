@@ -24,14 +24,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Reflection;
 using System.Net;
-
-using Nini.Config;
-using log4net;
 using OpenMetaverse;
 
 using OpenSim.Server.Base;
@@ -40,34 +34,48 @@ using OpenSim.Framework;
 using OpenSim.Framework.ServiceAuth;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Server.Handlers
 {
-    public class EstateDataRobustConnector : ServiceConnector, IServiceConnector
-    {
-        public EstateDataRobustConnector(IConfiguration config, IHttpServer server) :
-            this(config, server, "EstateService")
-        { }
+    public class EstateDataRobustConnector : IServiceConnector
+    {        
+        public EstateDataRobustConnector(
+            IConfiguration config, 
+            ILogger<EstateDataRobustConnector> logger)
+        { 
+            Config = config;
+            Logger = logger;
+        }
 
-        public EstateDataRobustConnector(IConfiguration config, IHttpServer server, string configName) :
-            base(config, server, configName)
+        public string ConfigName => "EstateService";
+
+        public IConfiguration Config { get; private set; }
+        public ILogger Logger { get; private set; }
+
+        public IHttpServer HttpServer { get; private set; }
+
+        public void Initialize(IHttpServer httpServer)
         {
-            var serverConfig = config.GetSection(configName);
+            HttpServer = httpServer;
+
+            var serverConfig = Config.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
-                throw new Exception($"No section {configName} in config file");
+                throw new Exception($"No section {ConfigName} in config file");
 
             string service = serverConfig.GetValue<string>("LocalServiceModule", String.Empty);
             if (String.IsNullOrWhiteSpace(service))
                 throw new Exception("No LocalServiceModule in config file");
 
-            Object[] args = new Object[] { config };
+            Object[] args = new Object[] { Config };
             IEstateDataService e_service = ServerUtils.LoadPlugin<IEstateDataService>(service, args);
 
-            IServiceAuth auth = ServiceAuth.Create(config, ConfigName);
+            IServiceAuth auth = ServiceAuth.Create(Config, ConfigName);
 
-            server.AddStreamHandler(new EstateServerGetHandler(e_service, auth));
-            server.AddStreamHandler(new EstateServerPostHandler(e_service, auth));
+            HttpServer.AddStreamHandler(new EstateServerGetHandler(e_service, auth));
+            HttpServer.AddStreamHandler(new EstateServerPostHandler(e_service, auth));
         }
     }
 
@@ -251,9 +259,7 @@ namespace OpenSim.Server.Handlers
 
     public class EstateServerPostHandler : BaseStreamHandler
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
-        IEstateDataService m_EstateService;
+         IEstateDataService m_EstateService;
 
         // Possibilities
         // /estates/estate/ (post an estate)
@@ -327,13 +333,14 @@ namespace OpenSim.Server.Handlers
                 UUID regionID = UUID.Zero;
                 if (UUID.TryParse(region, out regionID) && Int32.TryParse(eid, out id))
                 {
-                    m_log.DebugFormat("[EstateServerPostHandler]: Link region {0} to estate {1}", regionID, id);
                     httpResponse.StatusCode = (int)HttpStatusCode.OK;
                     result["Result"] = m_EstateService.LinkRegion(regionID, id);
                 }
             }
             else
-                m_log.WarnFormat("[EstateServerPostHandler]: something wrong with POST request {0}", httpRequest.RawUrl);
+            {
+                //m_log.WarnFormat("[EstateServerPostHandler]: something wrong with POST request {0}", httpRequest.RawUrl);
+            }
 
             return result;
         }

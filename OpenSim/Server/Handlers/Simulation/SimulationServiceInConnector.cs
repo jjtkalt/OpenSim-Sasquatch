@@ -30,25 +30,46 @@ using OpenSim.Framework;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Server.Handlers.Simulation
 {
-    public class SimulationServiceInConnector : ServiceConnector
+    public class SimulationServiceInConnector : IServiceConnector
     {
+        private const string _ConfigName = "SimulationService";
+        private IScene m_Scene;
         private ISimulationService m_LocalSimulationService;
 //        private IAuthenticationService m_AuthenticationService;
 
-        public SimulationServiceInConnector(IConfiguration config, IHttpServer server, IScene scene) :
-                base(config, server, String.Empty)
+        public SimulationServiceInConnector(
+            IConfiguration config, 
+            ILogger<SimulationServiceInConnector> logger,
+            IScene scene)
+            {
+                Config = config;
+                Logger = logger;
+                m_Scene = scene;
+            }
+
+        public string ConfigName { get; private set; } = _ConfigName;
+
+        public IConfiguration Config { get; private set; }
+        public ILogger Logger { get; private set; }
+        public IHttpServer HttpServer { get; private set; }
+
+        public void Initialize(IHttpServer httpServer)
         {
-            m_LocalSimulationService = scene.RequestModuleInterface<ISimulationService>();
+            HttpServer = httpServer;
+
+            m_LocalSimulationService = m_Scene.RequestModuleInterface<ISimulationService>();
             m_LocalSimulationService = m_LocalSimulationService.GetInnerService();
 
             // This one MUST be a stream handler because compressed fatpacks
             // are pure binary and shoehorning that into a string with UTF-8
             // encoding breaks it
-            server.AddSimpleStreamHandler(new AgentSimpleHandler(m_LocalSimulationService), true);
-            server.AddSimpleStreamHandler(new ObjectSimpleHandler(m_LocalSimulationService), true);
+
+            HttpServer.AddSimpleStreamHandler(new AgentSimpleHandler(m_LocalSimulationService), true);
+            HttpServer.AddSimpleStreamHandler(new ObjectSimpleHandler(m_LocalSimulationService), true);
         }
     }
 }
