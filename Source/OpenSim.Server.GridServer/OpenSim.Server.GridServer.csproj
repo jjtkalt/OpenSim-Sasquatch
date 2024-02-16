@@ -30,12 +30,12 @@
     <ProjectReference Include="..\OpenSim.Data.MySQL\OpenSim.Data.MySQL.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Autofac" Version="7.1.0" />
-    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="Autofac" Version="8.0.0" />
+    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="9.0.0" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Ini" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Ini" Version="8.0.0" />
     <PackageReference Include="ConfigurationSubstitutor" Version="1.5.1" />
-    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
   </ItemGroup>
 </Project>

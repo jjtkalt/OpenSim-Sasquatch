@@ -31,7 +31,7 @@
     <ProjectReference Include="..\..\ThirdParty\SmartThreadPool\SmartThreadPool.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Autofac" Version="7.1.0" />
+    <PackageReference Include="Autofac" Version="8.0.0" />
     <PackageReference Include="log4net" Version="2.0.15" />
     <PackageReference Include="RawScape.Nini" Version="1.0.0" />
   </ItemGroup>

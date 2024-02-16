@@ -36,6 +36,6 @@
     <ProjectReference Include="..\..\Services\UserAccountService\OpenSim.Services.UserAccountService.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Autofac" Version="7.1.0" />
+    <PackageReference Include="Autofac" Version="8.0.0" />
   </ItemGroup>
 </Project>

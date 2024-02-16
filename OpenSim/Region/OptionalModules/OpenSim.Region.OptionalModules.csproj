@@ -50,12 +50,12 @@
     <EmbeddedResource Include="Resources\OpenSim.Region.OptionalModules.addin.xml" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Autofac" Version="7.1.0" />
+    <PackageReference Include="Autofac" Version="8.0.0" />
     <PackageReference Include="Ionic.Zlib.Core" Version="1.0.0" />
     <PackageReference Include="log4net" Version="2.0.15" />
     <PackageReference Include="RawScape.Nini" Version="1.0.0" />
-    <PackageReference Include="NDesk.Options.Core" Version="1.2.5" />
+    <PackageReference Include="NDesk.Options.Core" Version="1.2.6" />
     <PackageReference Include="System.Data.SQLite" Version="1.0.118" />
-    <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
+    <PackageReference Include="System.Drawing.Common" Version="8.0.2" />
   </ItemGroup>
 </Project>
