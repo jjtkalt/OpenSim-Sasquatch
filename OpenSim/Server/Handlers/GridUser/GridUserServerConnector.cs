@@ -39,7 +39,7 @@ namespace OpenSim.Server.Handlers.GridUser
     public class GridUserServiceConnector : IServiceConnector
     {
         private IGridUserService m_GridUserService;
-
+        private static string _ConfigName = "GridUserService";
         public GridUserServiceConnector(
             IConfiguration config, 
             ILogger<GridUserServiceConnector> logger) 
@@ -48,7 +48,7 @@ namespace OpenSim.Server.Handlers.GridUser
             Logger = logger;
         }
 
-        public string ConfigName { get; private set; }
+        public string ConfigName { get; private set; } = _ConfigName;
 
         public IConfiguration Config { get; private set; }
         public ILogger Logger { get; private set; }

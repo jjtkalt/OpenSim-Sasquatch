@@ -25,30 +25,33 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Data;
 using OpenMetaverse;
-using OpenSim.Framework;
 
 namespace OpenSim.Data.MySQL
 {
-    public class MySQLAgentPreferencesData : MySQLGenericTableHandler<AgentPreferencesData>, IAgentPreferencesData
+    public class MySQLAgentPreferencesData : IAgentPreferencesData
     {
-        public MySQLAgentPreferencesData(string connectionString, string realm)
-            : base(connectionString, realm, "AgentPrefs")
+        protected MySQLGenericTableHandler<AgentPreferencesData> tableHandler = null;
+  
+        public void Initialize(string connectionString, string realm)
         {
+            tableHandler = new();
+            tableHandler.Initialize(connectionString, realm, "AgentPrefs");
         }
 
         public AgentPreferencesData GetPrefs(UUID agentID)
         {
-            AgentPreferencesData[] ret = Get("PrincipalID", agentID.ToString());
+            AgentPreferencesData[] ret = tableHandler.Get("PrincipalID", agentID.ToString());
 
             if (ret.Length == 0)
                 return null;
 
             return ret[0];
+        }
+
+        public bool Store(AgentPreferencesData data)
+        {
+            return tableHandler.Store(data);
         }
     }
 }

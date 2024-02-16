@@ -34,19 +34,19 @@ namespace OpenSim.Data.MySQL
     /// <summary>
     /// A MySQL Interface for the Grid Server
     /// </summary>
-    public class MySQLPresenceData : MySQLGenericTableHandler<PresenceData>,
-            IPresenceData
+    public class MySQLPresenceData : IPresenceData
     {
-//        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        protected MySQLGenericTableHandler<PresenceData> tableHandler = null;
 
-        public MySQLPresenceData(string connectionString, string realm) :
-                base(connectionString, realm, "Presence")
+        public void Initialize(string connectionString, string realm)
         {
+            tableHandler = new();
+            tableHandler.Initialize(connectionString, realm, "Presence");
         }
 
         public PresenceData Get(UUID sessionID)
         {
-            PresenceData[] ret = Get("SessionID", sessionID.ToString());
+            PresenceData[] ret = tableHandler.Get("SessionID", sessionID.ToString());
 
             if (ret.Length == 0)
                 return null;
@@ -58,17 +58,17 @@ namespace OpenSim.Data.MySQL
         {
             using (MySqlCommand cmd = new MySqlCommand())
             {
-                cmd.CommandText = String.Format("delete from {0} where `RegionID`=?RegionID", m_Realm);
+                cmd.CommandText = String.Format("delete from {0} where `RegionID`=?RegionID", tableHandler.Realm);
 
                 cmd.Parameters.AddWithValue("?RegionID", regionID.ToString());
 
-                ExecuteNonQuery(cmd);
+                tableHandler.ExecuteNonQuery(cmd);
             }
         }
 
         public bool ReportAgent(UUID sessionID, UUID regionID)
         {
-            PresenceData[] pd = Get("SessionID", sessionID.ToString());
+            PresenceData[] pd = tableHandler.Get("SessionID", sessionID.ToString());
             if (pd.Length == 0)
                 return false;
 
@@ -77,12 +77,12 @@ namespace OpenSim.Data.MySQL
 
             using (MySqlCommand cmd = new MySqlCommand())
             {
-                cmd.CommandText = String.Format("update {0} set RegionID=?RegionID, LastSeen=NOW() where `SessionID`=?SessionID", m_Realm);
+                cmd.CommandText = String.Format("update {0} set RegionID=?RegionID, LastSeen=NOW() where `SessionID`=?SessionID", tableHandler.Realm);
 
                 cmd.Parameters.AddWithValue("?SessionID", sessionID.ToString());
                 cmd.Parameters.AddWithValue("?RegionID", regionID.ToString());
 
-                if (ExecuteNonQuery(cmd) == 0)
+                if (tableHandler.ExecuteNonQuery(cmd) == 0)
                     return false;
             }
 
@@ -91,8 +91,7 @@ namespace OpenSim.Data.MySQL
 
         public bool VerifyAgent(UUID agentId, UUID secureSessionID)
         {
-            PresenceData[] ret = Get("SecureSessionID",
-                    secureSessionID.ToString());
+            PresenceData[] ret = tableHandler.Get("SecureSessionID", secureSessionID.ToString());
 
             if (ret.Length == 0)
                 return false;
@@ -101,6 +100,21 @@ namespace OpenSim.Data.MySQL
                 return false;
 
             return true;
+        }
+
+        public bool Store(PresenceData data)
+        {
+            return tableHandler.Store(data);
+        }
+
+        public PresenceData[] Get(string field, string data)
+        {
+            return tableHandler.Get(field, data);
+        }
+
+        public bool Delete(string field, string val)
+        {
+            return tableHandler.Delete(field, val);
         }
     }
 }

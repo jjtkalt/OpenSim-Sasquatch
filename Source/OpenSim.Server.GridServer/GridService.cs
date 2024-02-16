@@ -2,22 +2,22 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace OpenSim.Server.RobustServer
+namespace OpenSim.Server.GridServer
 {
-    public sealed class RobustService : IHostedService
+    public sealed class GridService : IHostedService
     {
         private readonly Task _completedTask = Task.CompletedTask;
 
-        private readonly ILogger<RobustService> _logger;
+        private readonly ILogger<GridService> _logger;
         private readonly IConfiguration _configuration;
-        private readonly RobustServer _openSimServer;
+        private readonly GridServer _openSimServer;
 
         private int m_res;
 
-        public RobustService(
+        public GridService(
             IConfiguration configuration, 
-            ILogger<RobustService> logger,
-            RobustServer openSimServer
+            ILogger<GridService> logger,
+            GridServer openSimServer
             )
         {
             _configuration = configuration;
@@ -27,7 +27,7 @@ namespace OpenSim.Server.RobustServer
 
         public Task StartAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("{Service} is running.", nameof(Server.RobustServer));
+            _logger.LogInformation("{Service} is running.", nameof(Server.GridServer));
 
             _openSimServer.Startup();
             _openSimServer.Work();
@@ -37,7 +37,7 @@ namespace OpenSim.Server.RobustServer
 
         public Task StopAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("{Service} is stopping.", nameof(Server.RobustServer));
+            _logger.LogInformation("{Service} is stopping.", nameof(Server.GridServer));
 
             _openSimServer.Shutdown(m_res);
 

@@ -25,14 +25,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Reflection;
 using System.Data;
 using OpenMetaverse;
-using OpenSim.Framework;
 using MySqlConnector;
+
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Data.MySQL
 {
@@ -42,15 +40,16 @@ namespace OpenSim.Data.MySQL
         private List<string> m_ColumnNames;
         private int m_LastExpire;
         // private string m_connectionString;
-
+        
         protected virtual Assembly Assembly
         {
             get { return GetType().Assembly; }
         }
 
-        public MySqlAuthenticationData(string connectionString, string realm)
-                : base(connectionString)
+        public void Initialize(string connectionString, string realm)
         {
+            base.Initialize(connectionString);
+
             m_Realm = realm;
             m_connectionString = connectionString;
 

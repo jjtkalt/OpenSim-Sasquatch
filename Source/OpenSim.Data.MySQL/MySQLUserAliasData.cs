@@ -25,28 +25,26 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
 using OpenMetaverse;
-using OpenSim.Framework;
-using OpenSim.Data;
 
 namespace OpenSim.Data.MySQL
 {
     /// <summary>
     /// A MySQL Interface for the User Server - User Aliases
     /// </summary>
-    public class MySQLUserAliasData : MySQLGenericTableHandler<UserAliasData>,
-        IUserAliasData
+    public class MySQLUserAliasData : IUserAliasData
     {
-        public MySQLUserAliasData(string connectionString, string realm) :
-                base(connectionString, realm, "UserAlias")
+        protected MySQLGenericTableHandler<UserAliasData> tableHandler = null;
+
+        public void Initialize(string connectionString, string realm)
         {
+            tableHandler = new();
+            tableHandler.Initialize(connectionString, realm, "UserAlias");
         }
 
         public UserAliasData Get(int Id)
         {
-            UserAliasData[] ret = Get("Id", Id.ToString());
+            UserAliasData[] ret = tableHandler.Get("Id", Id.ToString());
 
             if (ret.Length == 0)
                 return null;
@@ -56,7 +54,7 @@ namespace OpenSim.Data.MySQL
 
         public UserAliasData GetUserForAlias(UUID aliasID)
         {
-            UserAliasData[] ret = Get("AliasID", aliasID.ToString());
+            UserAliasData[] ret = tableHandler.Get("AliasID", aliasID.ToString());
 
             if (ret.Length == 0)
                 return null;
@@ -66,12 +64,22 @@ namespace OpenSim.Data.MySQL
 
         public List<UserAliasData> GetUserAliases(UUID userID)
         {
-            var aliases = Get("UserID", userID.ToString());
+            var aliases = tableHandler.Get("UserID", userID.ToString());
 
             if (aliases.Length == 0)
                 return null;
 
             return new List<UserAliasData>(aliases);
+        }
+
+        public bool Store(UserAliasData data)
+        {
+            return tableHandler.Store(data);
+        }
+
+        public bool Delete(string field, string val)
+        {
+            return tableHandler.Delete(field, val);
         }
     }
 }

@@ -45,13 +45,26 @@ namespace OpenSim.Data.MySQL
 
         public MySQLGroupsData(string connectionString, string realm)
         {
-            m_Groups = new MySqlGroupsGroupsHandler(connectionString, realm + "_groups", realm + "_Store");
-            m_Membership = new MySqlGroupsMembershipHandler(connectionString, realm + "_membership");
-            m_Roles = new MySqlGroupsRolesHandler(connectionString, realm + "_roles");
-            m_RoleMembership = new MySqlGroupsRoleMembershipHandler(connectionString, realm + "_rolemembership");
-            m_Invites = new MySqlGroupsInvitesHandler(connectionString, realm + "_invites");
-            m_Notices = new MySqlGroupsNoticesHandler(connectionString, realm + "_notices");
-            m_Principals = new MySqlGroupsPrincipalsHandler(connectionString, realm + "_principals");
+            m_Groups = new MySqlGroupsGroupsHandler();
+            m_Groups.Initialize(connectionString, realm + "_groups", realm + "_Store");
+            
+            m_Membership = new MySqlGroupsMembershipHandler();
+            m_Membership.Initialize(connectionString, realm + "_membership");
+
+            m_Roles = new MySqlGroupsRolesHandler();
+            m_Roles.Initialize(connectionString, realm + "_roles");
+
+            m_RoleMembership = new MySqlGroupsRoleMembershipHandler();
+            m_RoleMembership.Initialize(connectionString, realm + "_rolemembership");
+
+            m_Invites = new MySqlGroupsInvitesHandler();
+            m_Invites.Initialize(connectionString, realm + "_invites");
+
+            m_Notices = new MySqlGroupsNoticesHandler();
+            m_Notices.Initialize(connectionString, realm + "_notices");
+
+            m_Principals = new MySqlGroupsPrincipalsHandler();
+            m_Principals.Initialize(connectionString, realm + "_principals");
         }
 
         #region groups table
@@ -355,11 +368,10 @@ namespace OpenSim.Data.MySQL
             get { return GetType().Assembly; }
         }
 
-        public MySqlGroupsGroupsHandler(string connectionString, string realm, string store)
-            : base(connectionString, realm, store)
+        public new void Initialize(string connectionString, string realm, string store)
         {
+            base.Initialize(connectionString, realm, store);
         }
-
     }
 
     public class MySqlGroupsMembershipHandler : MySQLGenericTableHandler<MembershipData>
@@ -370,11 +382,10 @@ namespace OpenSim.Data.MySQL
             get { return GetType().Assembly; }
         }
 
-        public MySqlGroupsMembershipHandler(string connectionString, string realm)
-            : base(connectionString, realm, string.Empty)
+        public void Initialize(string connectionString, string realm)
         {
+            base.Initialize(connectionString, realm, string.Empty);
         }
-
     }
 
     public class MySqlGroupsRolesHandler : MySQLGenericTableHandler<RoleData>
@@ -385,11 +396,10 @@ namespace OpenSim.Data.MySQL
             get { return GetType().Assembly; }
         }
 
-        public MySqlGroupsRolesHandler(string connectionString, string realm)
-            : base(connectionString, realm, string.Empty)
+        public void Initialize(string connectionString, string realm)
         {
+            base.Initialize(connectionString, realm, string.Empty);
         }
-
     }
 
     public class MySqlGroupsRoleMembershipHandler : MySQLGenericTableHandler<RoleMembershipData>
@@ -400,9 +410,9 @@ namespace OpenSim.Data.MySQL
             get { return GetType().Assembly; }
         }
 
-        public MySqlGroupsRoleMembershipHandler(string connectionString, string realm)
-            : base(connectionString, realm, string.Empty)
+        public void Initialize(string connectionString, string realm)
         {
+            base.Initialize(connectionString, realm, string.Empty);
         }
 
     }
@@ -415,9 +425,9 @@ namespace OpenSim.Data.MySQL
             get { return GetType().Assembly; }
         }
 
-        public MySqlGroupsInvitesHandler(string connectionString, string realm)
-            : base(connectionString, realm, string.Empty)
+        public void Initialize(string connectionString, string realm)
         {
+            base.Initialize(connectionString, realm, string.Empty);
         }
 
         public void DeleteOld()
@@ -442,9 +452,9 @@ namespace OpenSim.Data.MySQL
             get { return GetType().Assembly; }
         }
 
-        public MySqlGroupsNoticesHandler(string connectionString, string realm)
-            : base(connectionString, realm, string.Empty)
+        public void Initialize(string connectionString, string realm)
         {
+            base.Initialize(connectionString, realm, string.Empty);
         }
 
         public void DeleteOld()
@@ -470,9 +480,9 @@ namespace OpenSim.Data.MySQL
             get { return GetType().Assembly; }
         }
 
-        public MySqlGroupsPrincipalsHandler(string connectionString, string realm)
-            : base(connectionString, realm, string.Empty)
+        public void Initialize(string connectionString, string realm)
         {
+            base.Initialize(connectionString, realm, string.Empty);
         }
     }
 }

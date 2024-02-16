@@ -25,26 +25,59 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System.Reflection;
 using OpenSim.Data;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework;
 using OpenSim.Framework.Console;
 
 using OpenMetaverse;
-using log4net;
+
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Services.UserAccountService
 {
-    public class GridUserService : GridUserServiceBase, IGridUserService
+    public class GridUserService : IGridUserService
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<GridUserService> m_logger;
+        private readonly IGridUserData m_Database;
+        
         private static bool m_Initialized;
 
-        public GridUserService(IConfiguration config) : base(config)
+        public GridUserService(
+            IConfiguration config,
+            ILogger<GridUserService> logger,
+            IGridUserData gridUserData
+            )
         {
-            m_log.Debug("[GRID USER SERVICE]: Starting user grid service");
+            m_configuration = config;
+            m_logger = logger;
+            m_Database = gridUserData;
+
+            string connString = String.Empty;
+            string realm = "GridUser";
+
+            //
+            // Try reading the [DatabaseService] section, if it exists
+            //
+            var dbConfig = config.GetSection("DatabaseService");
+            if (dbConfig.Exists())
+                connString = dbConfig.GetValue("ConnectionString", String.Empty);
+
+            //
+            // [GridUserService] section overrides [DatabaseService], if it exists
+            //
+            var usersConfig = config.GetSection("GridUserService");
+            if (usersConfig.Exists())
+            {
+                connString = usersConfig.GetValue("ConnectionString", connString);
+                realm = usersConfig.GetValue("Realm", realm);
+            }
+
+            m_Database.Initialize(connectionString: connString, realm: realm);
+
+            m_logger.LogDebug("[GRID USER SERVICE]: Starting user grid service");
 
             if (!m_Initialized)
             {
@@ -232,7 +265,7 @@ namespace OpenSim.Services.UserAccountService
 
         public GridUserInfo LoggedIn(string userID)
         {
-            m_log.DebugFormat("[GRID USER SERVICE]: User {0} is online", userID);
+            m_logger.LogDebug($"[GRID USER SERVICE]: User {userID} is online");
 
             GridUserData d = GetGridUserData(userID);
 
@@ -246,6 +279,7 @@ namespace OpenSim.Services.UserAccountService
             d.Data["Login"] = Util.UnixTimeSinceEpoch().ToString();
 
             m_Database.Store(d);
+            
             if (userID.Length >= 36)
                 cache.Add(userID.Substring(0, 36), d, 300000);
 
@@ -254,7 +288,7 @@ namespace OpenSim.Services.UserAccountService
 
         public bool LoggedOut(string userID, UUID sessionID, UUID regionID, Vector3 lastPosition, Vector3 lastLookAt)
         {
-            m_log.DebugFormat("[GRID USER SERVICE]: User {0} is offline", userID);
+            m_logger.LogDebug($"[GRID USER SERVICE]: User {userID} is offline");
 
             GridUserData d = GetGridUserData(userID);
 
@@ -270,17 +304,21 @@ namespace OpenSim.Services.UserAccountService
             d.Data["LastPosition"] = lastPosition.ToString();
             d.Data["LastLookAt"] = lastLookAt.ToString();
 
-            if(m_Database.Store(d))
+            if (m_Database.Store(d))
             {
                 if (userID.Length >= 36)
                     cache.Add(userID.Substring(0, 36), d, 300000);
+
                 return true;
             }
+
             return false;
         }
 
         public bool SetHome(string userID, UUID homeID, Vector3 homePosition, Vector3 homeLookAt)
         {
+            m_logger.LogDebug($"[GRID USER SERVICE]: SetHome for {userID} to {homeID} at {homePosition}");
+
             GridUserData d = GetGridUserData(userID);
 
             if (d == null)
@@ -293,18 +331,20 @@ namespace OpenSim.Services.UserAccountService
             d.Data["HomePosition"] = homePosition.ToString();
             d.Data["HomeLookAt"] = homeLookAt.ToString();
 
-            if(m_Database.Store(d))
+            if (m_Database.Store(d))
             {
                 if (userID.Length >= 36)
                     cache.Add(userID.Substring(0, 36), d, 300000);
+
                 return true;
             }
+
             return false;
         }
 
         public bool SetLastPosition(string userID, UUID sessionID, UUID regionID, Vector3 lastPosition, Vector3 lastLookAt)
         {
-//            m_log.DebugFormat("[GRID USER SERVICE]: SetLastPosition for {0}", userID);
+            m_logger.LogDebug($"[GRID USER SERVICE]: SetLastPosition for {userID}");
 
             GridUserData d = GetGridUserData(userID);
 
@@ -318,12 +358,14 @@ namespace OpenSim.Services.UserAccountService
             d.Data["LastPosition"] = lastPosition.ToString();
             d.Data["LastLookAt"] = lastLookAt.ToString();
 
-            if(m_Database.Store(d))
+            if (m_Database.Store(d))
             {
                 if (userID.Length >= 36)
                     cache.Add(userID.Substring(0, 36), d, 300000);
+
                 return true;
             }
+
             return false;
         }
     }

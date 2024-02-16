@@ -25,22 +25,27 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System.Reflection;
-using log4net;
-using Microsoft.Extensions.Configuration;
 using OpenMetaverse;
 using OpenSim.Data;
 using OpenSim.Framework;
 using OpenSim.Services.Interfaces;
+
 using GridRegion = OpenSim.Services.Interfaces.GridRegion;
+
 using PermissionMask = OpenSim.Framework.PermissionMask;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Services.UserAccountService
 {
-    public class UserAccountService : UserAccountServiceBase, IUserAccountService
+    public class UserAccountService : IUserAccountService
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
         private static UserAccountService m_RootInstance;
+
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<UserAccountService> m_logger;
+        private readonly IUserAccountData m_Database;
 
         /// <summary>
         /// Should we create default entries (minimum body parts/clothing, avatar wearable entries) for a new avatar?
@@ -53,31 +58,62 @@ namespace OpenSim.Services.UserAccountService
         protected IInventoryService m_InventoryService;
         protected IAvatarService m_AvatarService;
 
-        public UserAccountService(IConfiguration config) : base(config)
+        public UserAccountService(
+            IConfiguration config,
+            ILogger<UserAccountService> logger,
+            IUserAccountData userAccountData,
+            IGridService gridService,
+            IAuthenticationService authenticationService,
+            IGridUserService gridUserService,
+            IInventoryService inventoryService,
+            IAvatarService avatarService
+            )
         {
+            m_configuration = config;
+            m_logger = logger;
+            m_Database = userAccountData;
+
+            m_GridService = gridService;
+            m_AuthenticationService = authenticationService;
+            m_GridUserService = gridUserService;
+            m_InventoryService = inventoryService;
+            m_AvatarService = avatarService;
+
+            string connString = String.Empty;
+            string realm = "UserAccounts";
+
+            var dbConfig = config.GetSection("DatabaseService");
+            if (dbConfig.Exists())
+                connString = dbConfig.GetValue("ConnectionString", String.Empty);
+
             var userConfig = config.GetSection("UserAccountService");
             if (userConfig.Exists() is false)
                 throw new Exception("No UserAccountService configuration");
 
-            string gridServiceDll = userConfig.GetValue("GridService", string.Empty);
-            if (!string.IsNullOrEmpty(gridServiceDll))
-                m_GridService = LoadPlugin<IGridService>(gridServiceDll, new Object[] { config });
+            connString = userConfig.GetValue("ConnectionString", connString);
+            realm = userConfig.GetValue("Realm", realm);
 
-            string authServiceDll = userConfig.GetValue("AuthenticationService", string.Empty);
-            if (!string.IsNullOrEmpty(authServiceDll))
-                m_AuthenticationService = LoadPlugin<IAuthenticationService>(authServiceDll, new Object[] { config });
+            m_Database.Initialize(connectionString: connString, realm: realm);
 
-            string presenceServiceDll = userConfig.GetValue("GridUserService", string.Empty);
-            if (!string.IsNullOrEmpty(presenceServiceDll))
-                m_GridUserService = LoadPlugin<IGridUserService>(presenceServiceDll, new Object[] { config });
+            // string gridServiceDll = userConfig.GetValue("GridService", string.Empty);
+            // if (!string.IsNullOrEmpty(gridServiceDll))
+            //     m_GridService = LoadPlugin<IGridService>(gridServiceDll, new Object[] { config });
 
-            string invServiceDll = userConfig.GetValue("InventoryService", string.Empty);
-            if (!string.IsNullOrEmpty(invServiceDll))
-                m_InventoryService = LoadPlugin<IInventoryService>(invServiceDll, new Object[] { config });
+            // string authServiceDll = userConfig.GetValue("AuthenticationService", string.Empty);
+            // if (!string.IsNullOrEmpty(authServiceDll))
+            //     m_AuthenticationService = LoadPlugin<IAuthenticationService>(authServiceDll, new Object[] { config });
 
-            string avatarServiceDll = userConfig.GetValue("AvatarService", string.Empty);
-            if (!string.IsNullOrEmpty(avatarServiceDll))
-                m_AvatarService = LoadPlugin<IAvatarService>(avatarServiceDll, new Object[] { config });
+            // string presenceServiceDll = userConfig.GetValue("GridUserService", string.Empty);
+            // if (!string.IsNullOrEmpty(presenceServiceDll))
+            //     m_GridUserService = LoadPlugin<IGridUserService>(presenceServiceDll, new Object[] { config });
+
+            // string invServiceDll = userConfig.GetValue("InventoryService", string.Empty);
+            // if (!string.IsNullOrEmpty(invServiceDll))
+            //     m_InventoryService = LoadPlugin<IInventoryService>(invServiceDll, new Object[] { config });
+
+            // string avatarServiceDll = userConfig.GetValue("AvatarService", string.Empty);
+            // if (!string.IsNullOrEmpty(avatarServiceDll))
+            //     m_AvatarService = LoadPlugin<IAvatarService>(avatarServiceDll, new Object[] { config });
 
             m_CreateDefaultAvatarEntries = userConfig.GetValue<bool>("CreateDefaultAvatarEntries", false);
 
@@ -87,6 +123,7 @@ namespace OpenSim.Services.UserAccountService
 
                 //  create a system grid god account
                 UserAccount ggod = GetUserAccount(UUID.Zero, Constants.servicesGodAgentID);
+
                 if(ggod == null)
                 {
                     UserAccountData d = new UserAccountData();
@@ -142,12 +179,9 @@ namespace OpenSim.Services.UserAccountService
 
         #region IUserAccountService
 
-        public UserAccount GetUserAccount(UUID scopeID, string firstName,
-                string lastName)
+        public UserAccount GetUserAccount(UUID scopeID, string firstName, string lastName)
         {
-//            m_log.DebugFormat(
-//                "[USER ACCOUNT SERVICE]: Retrieving account by username for {0} {1}, scope {2}",
-//                firstName, lastName, scopeID);
+            m_logger.LogDebug($"[USER ACCOUNT SERVICE]: Retrieving account by username for {firstName} {lastName}, scope {scopeID}");
 
             UserAccountData[] d;
 
@@ -183,6 +217,7 @@ namespace OpenSim.Services.UserAccountService
             u.LastName = d.LastName;
             u.PrincipalID = d.PrincipalID;
             u.ScopeID = d.ScopeID;
+
             if (d.Data.ContainsKey("Email") && d.Data["Email"] != null)
                 u.Email = d.Data["Email"].ToString();
             else
@@ -220,7 +255,9 @@ namespace OpenSim.Services.UserAccountService
                 }
             }
             else
+            {
                 u.ServiceURLs = new Dictionary<string, object>();
+            }
 
             return u;
         }
@@ -299,9 +336,9 @@ namespace OpenSim.Services.UserAccountService
 
         public bool StoreUserAccount(UserAccount data)
         {
-//            m_log.DebugFormat(
-//                "[USER ACCOUNT SERVICE]: Storing user account for {0} {1} {2}, scope {3}",
-//                data.FirstName, data.LastName, data.PrincipalID, data.ScopeID);
+            m_logger.LogDebug(
+                $"[USER ACCOUNT SERVICE]: Storing user account for "+
+                $"{data.FirstName} {data.LastName} {data.PrincipalID}, scope {data.ScopeID}");
 
             UserAccountData d = new UserAccountData();
 
@@ -318,6 +355,7 @@ namespace OpenSim.Services.UserAccountService
                 d.Data["UserTitle"] = data.UserTitle;
             if (!string.IsNullOrEmpty(data.UserCountry))
                 d.Data["UserCountry"] = data.UserCountry;
+
             List<string> parts = new List<string>();
 
             foreach (KeyValuePair<string, object> kvp in data.ServiceURLs)
@@ -595,6 +633,7 @@ namespace OpenSim.Services.UserAccountService
                 if (account.ServiceURLs == null || (account.ServiceURLs != null && account.ServiceURLs.Count == 0))
                 {
                     account.ServiceURLs = new Dictionary<string, object>();
+
                     account.ServiceURLs["HomeURI"] = string.Empty;
                     account.ServiceURLs["InventoryServerURI"] = string.Empty;
                     account.ServiceURLs["AssetServerURI"] = string.Empty;
@@ -607,8 +646,9 @@ namespace OpenSim.Services.UserAccountService
                     {
                         success = m_AuthenticationService.SetPassword(account.PrincipalID, password);
                         if (!success)
-                            m_log.WarnFormat("[USER ACCOUNT SERVICE]: Unable to set password for account {0} {1}.",
-                                firstName, lastName);
+                        {
+                            m_logger.LogWarning($"[USER ACCOUNT SERVICE]: Unable to set password for account {firstName} {lastName}.");
+                        }
                     }
 
                     GridRegion home = null;
@@ -621,13 +661,11 @@ namespace OpenSim.Services.UserAccountService
                         if (m_GridUserService != null && home != null)
                             m_GridUserService.SetHome(account.PrincipalID.ToString(), home.RegionID, new Vector3(128, 128, 0), new Vector3(0, 1, 0));
                         else
-                            m_log.WarnFormat("[USER ACCOUNT SERVICE]: Unable to set home for account {0} {1}.",
-                               firstName, lastName);
+                            m_logger.LogWarning($"[USER ACCOUNT SERVICE]: Unable to set home for account {firstName} {lastName}.");
                     }
                     else
                     {
-                        m_log.WarnFormat("[USER ACCOUNT SERVICE]: Unable to retrieve home region for account {0} {1}.",
-                           firstName, lastName);
+                        m_logger.LogWarning($"[USER ACCOUNT SERVICE]: Unable to retrieve home region for account {firstName} {lastName}.");
                     }
 
                     if (m_InventoryService != null)
@@ -635,13 +673,11 @@ namespace OpenSim.Services.UserAccountService
                         success = m_InventoryService.CreateUserInventory(account.PrincipalID);
                         if (!success)
                         {
-                            m_log.WarnFormat("[USER ACCOUNT SERVICE]: Unable to create inventory for account {0} {1}.",
-                                firstName, lastName);
+                            m_logger.LogWarning($"[USER ACCOUNT SERVICE]: Unable to create inventory for account {firstName} {lastName}.");
                         }
                         else
                         {
-                            m_log.DebugFormat(
-                                "[USER ACCOUNT SERVICE]: Created user inventory for {0} {1}", firstName, lastName);
+                            m_logger.LogDebug($"[USER ACCOUNT SERVICE]: Created user inventory for {firstName} {lastName}");
                         }
 
                         if (m_CreateDefaultAvatarEntries)
@@ -653,18 +689,16 @@ namespace OpenSim.Services.UserAccountService
                         }
                     }
 
-                    m_log.InfoFormat(
-                        "[USER ACCOUNT SERVICE]: Account {0} {1} {2} created successfully",
-                        firstName, lastName, account.PrincipalID);
+                    m_logger.LogInformation($"[USER ACCOUNT SERVICE]: Account {firstName} {lastName} {account.PrincipalID} created successfully");
                 }
                 else
                 {
-                    m_log.ErrorFormat("[USER ACCOUNT SERVICE]: Account creation failed for account {0} {1}", firstName, lastName);
+                    m_logger.LogError($"[USER ACCOUNT SERVICE]: Account creation failed for account {firstName} {lastName}");
                 }
             }
             else
             {
-                m_log.ErrorFormat("[USER ACCOUNT SERVICE]: A user with the name {0} {1} already exists!", firstName, lastName);
+                m_logger.LogError($"[USER ACCOUNT SERVICE]: A user with the name {firstName} {lastName} already exists!");
             }
 
             return account;
@@ -672,9 +706,10 @@ namespace OpenSim.Services.UserAccountService
 
         protected void CreateDefaultAppearanceEntries(UUID principalID)
         {
-            m_log.DebugFormat("[USER ACCOUNT SERVICE]: Creating default appearance items for {0}", principalID);
+            m_logger.LogDebug($"[USER ACCOUNT SERVICE]: Creating default appearance items for {principalID}");
 
             InventoryFolderBase bodyPartsFolder = m_InventoryService.GetFolderForType(principalID, FolderType.BodyPart);
+
             // Get Current Outfit folder
             InventoryFolderBase currentOutfitFolder = m_InventoryService.GetFolderForType(principalID, FolderType.CurrentOutfit);
 
@@ -778,7 +813,7 @@ namespace OpenSim.Services.UserAccountService
 
             if (m_AvatarService != null)
             {
-                m_log.DebugFormat("[USER ACCOUNT SERVICE]: Creating default avatar entries for {0}", principalID);
+                m_logger.LogDebug($"[USER ACCOUNT SERVICE]: Creating default avatar entries for {principalID}");
 
                 AvatarWearable[] wearables = new AvatarWearable[6];
                 wearables[AvatarWearable.EYES] = new AvatarWearable(eyes.ID, eyes.AssetID);
@@ -801,14 +836,12 @@ namespace OpenSim.Services.UserAccountService
 
         protected void EstablishAppearance(UUID destinationAgent, string model)
         {
-            m_log.DebugFormat("[USER ACCOUNT SERVICE]: Establishing new appearance for {0} - {1}",
-                              destinationAgent.ToString(), model);
+            m_logger.LogDebug($"[USER ACCOUNT SERVICE]: Establishing new appearance for {destinationAgent} - {model}");
 
             string[] modelSpecifiers = model.Split();
             if (modelSpecifiers.Length != 2)
             {
-                m_log.WarnFormat("[USER ACCOUNT SERVICE]: Invalid model name \'{0}\'. Falling back to Ruth for {1}",
-                                 model, destinationAgent);
+                m_logger.LogWarning($"[USER ACCOUNT SERVICE]: Invalid model name \'{model}\'. Falling back to Ruth for {destinationAgent}");
                 CreateDefaultAppearanceEntries(destinationAgent);
                 return;
             }
@@ -817,8 +850,7 @@ namespace OpenSim.Services.UserAccountService
             UserAccount modelAccount = GetUserAccount(UUID.Zero, modelSpecifiers[0], modelSpecifiers[1]);
             if (modelAccount == null)
             {
-                m_log.WarnFormat("[USER ACCOUNT SERVICE]: Requested model \'{0}\' not found. Falling back to Ruth for {1}",
-                                 model, destinationAgent);
+                m_logger.LogWarning($"[USER ACCOUNT SERVICE]: Requested model \'{model}\' not found. Falling back to Ruth for {destinationAgent}");
                 CreateDefaultAppearanceEntries(destinationAgent);
                 return;
             }
@@ -827,8 +859,7 @@ namespace OpenSim.Services.UserAccountService
             AvatarAppearance modelAppearance = m_AvatarService.GetAppearance(modelAccount.PrincipalID);
             if (modelAppearance == null)
             {
-                m_log.WarnFormat("USER ACCOUNT SERVICE]: Requested model \'{0}\' does not have an established appearance. Falling back to Ruth for {1}",
-                                 model, destinationAgent);
+                m_logger.LogWarning($"USER ACCOUNT SERVICE]: Requested model \'{model}\' does not have an established appearance. Falling back to Ruth for {destinationAgent}");
                 CreateDefaultAppearanceEntries(destinationAgent);
                 return;
             }
@@ -836,17 +867,14 @@ namespace OpenSim.Services.UserAccountService
             try
             {
                 CopyWearablesAndAttachments(destinationAgent, modelAccount.PrincipalID, modelAppearance);
-
                 m_AvatarService.SetAppearance(destinationAgent, modelAppearance);
             }
             catch (Exception e)
             {
-                m_log.WarnFormat("[USER ACCOUNT SERVICE]: Error transferring appearance for {0} : {1}",
-                    destinationAgent, e.Message);
+                m_logger.LogWarning(e, $"[USER ACCOUNT SERVICE]: Error transferring appearance for {destinationAgent}");
             }
 
-            m_log.DebugFormat("[USER ACCOUNT SERVICE]: Finished establishing appearance for {0}",
-                destinationAgent.ToString());
+            m_logger.LogDebug($"[USER ACCOUNT SERVICE]: Finished establishing appearance for {destinationAgent}");
         }
 
         /// <summary>
@@ -881,7 +909,8 @@ namespace OpenSim.Services.UserAccountService
                 destinationFolder.ParentID = m_InventoryService.GetRootFolder(destination).ID;
                 destinationFolder.Version  = 1;
                 m_InventoryService.AddFolder(destinationFolder);     // store base record
-                m_log.ErrorFormat("[USER ACCOUNT SERVICE]: Created folder for destination {0} Clothing", source);
+
+                m_logger.LogError($"[USER ACCOUNT SERVICE]: Created folder for destination {source} Clothing");
             }
 
             // Wearables
@@ -902,8 +931,8 @@ namespace OpenSim.Services.UserAccountService
                     wearable = basewearable[j];
                     if (!wearable.ItemID.IsZero())
                     {
-                        m_log.DebugFormat("[XXX]: Getting item {0} from avie {1} for {2} {3}",
-                            wearable.ItemID, source, i, j);
+                        m_logger.LogDebug($"Getting item {wearable.ItemID} from avie {source} for {i} {j}");
+
                         // Get inventory item and copy it
                         InventoryItemBase item = m_InventoryService.GetItem(source, wearable.ItemID);
 
@@ -941,7 +970,7 @@ namespace OpenSim.Services.UserAccountService
                             ApplyNextOwnerPermissions(destinationItem);
 
                             m_InventoryService.AddItem(destinationItem);
-                            m_log.DebugFormat("[USER ACCOUNT SERVICE]: Added item {0} to folder {1}", destinationItem.ID, destinationFolder.ID);
+                            m_logger.LogDebug($"[USER ACCOUNT SERVICE]: Added item {destinationItem.ID} to folder {destinationFolder.ID}");
 
                             // Wear item
                             newbasewearable.Add(destinationItem.ID,wearable.AssetID);
@@ -951,10 +980,11 @@ namespace OpenSim.Services.UserAccountService
                         }
                         else
                         {
-                            m_log.WarnFormat("[USER ACCOUNT SERVICE]: Error transferring {0} to folder {1}", wearable.ItemID, destinationFolder.ID);
+                            m_logger.LogWarning($"[USER ACCOUNT SERVICE]: Error transferring {wearable.ItemID} to folder {destinationFolder.ID}");
                         }
                     }
                 }
+
                 avatarAppearance.SetWearable(i, newbasewearable);
             }
 
@@ -998,18 +1028,18 @@ namespace OpenSim.Services.UserAccountService
                         ApplyNextOwnerPermissions(destinationItem);
 
                         m_InventoryService.AddItem(destinationItem);
-                        m_log.DebugFormat("[USER ACCOUNT SERVICE]: Added item {0} to folder {1}", destinationItem.ID, destinationFolder.ID);
+                        m_logger.LogDebug($"[USER ACCOUNT SERVICE]: Added item {destinationItem.ID} to folder {destinationFolder.ID}");
 
                         // Attach item
                         avatarAppearance.SetAttachment(attachpoint, destinationItem.ID, destinationItem.AssetID);
-                        m_log.DebugFormat("[USER ACCOUNT SERVICE]: Attached {0}", destinationItem.ID);
+                        m_logger.LogDebug($"[USER ACCOUNT SERVICE]: Attached {destinationItem.ID}");
 
                         // Add to Current Outfit
                         CreateCurrentOutfitLink(destinationItem.InvType, item.Flags, item.Name, destinationItem.ID, destination, currentOutfitFolder.ID);
                     }
                     else
                     {
-                        m_log.WarnFormat("[USER ACCOUNT SERVICE]: Error transferring {0} to folder {1}", itemID, destinationFolder.ID);
+                        m_logger.LogWarning($"[USER ACCOUNT SERVICE]: Error transferring {itemID} to folder {destinationFolder.ID}");
                     }
                 }
             }

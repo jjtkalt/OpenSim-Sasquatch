@@ -39,7 +39,10 @@ namespace OpenSim.Data
 
     public interface IAgentPreferencesData
     {
+        void Initialize(string connectionString, string realm);
+
         bool Store(AgentPreferencesData data);
+        
         AgentPreferencesData GetPrefs(UUID agentID);
     }
 }

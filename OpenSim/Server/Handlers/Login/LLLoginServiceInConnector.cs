@@ -48,7 +48,7 @@ namespace OpenSim.Server.Handlers.Login
         public LLLoginServiceInConnector(
             IConfiguration configuration,
             ILogger<LLLoginServiceInConnector> logger,
-            IScene scene
+            IScene scene = null
             )
         {
             Config = configuration;

@@ -25,8 +25,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework.ServiceAuth;
 using OpenSim.Framework.Servers.HttpServer;
@@ -35,16 +33,21 @@ using OpenSim.Server.Handlers.Base;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
+using Autofac;
+using OpenSim.Server.Base;
+
 namespace OpenSim.Server.Handlers.AgentPreferences
 {
     public class AgentPreferencesServiceConnector : IServiceConnector
     {
-        private IAgentPreferencesService m_AgentPreferencesService;
+        private IComponentContext m_context;
 
         public AgentPreferencesServiceConnector(
+            IComponentContext componentContext,
             IConfiguration configuration,
             ILogger<AgentPreferencesServiceConnector> logger)
         { 
+            m_context = componentContext;
             Config = configuration;
             Logger = logger;
         }
@@ -67,12 +70,14 @@ namespace OpenSim.Server.Handlers.AgentPreferences
             if (String.IsNullOrWhiteSpace(service))
                 throw new Exception("No LocalServiceModule in config file");
 
-            Object[] args = new Object[] { Config };
-            m_AgentPreferencesService = ServerUtils.LoadPlugin<IAgentPreferencesService>(service, args);
-
-            IServiceAuth auth = ServiceAuth.Create(Config, ConfigName);
-
-            server.AddStreamHandler(new AgentPreferencesServerPostHandler(m_AgentPreferencesService, auth));
+            var serviceName = ServerUtils.ParseServiceName(service);
+            
+            var agentPreferencesService = m_context.ResolveNamed<IAgentPreferencesService>(serviceName);
+            if (agentPreferencesService is not null)
+            {
+                IServiceAuth auth = ServiceAuth.Create(Config, ConfigName);
+                server.AddStreamHandler(new AgentPreferencesServerPostHandler(Logger, agentPreferencesService, auth));
+            }
         }
     }
 }

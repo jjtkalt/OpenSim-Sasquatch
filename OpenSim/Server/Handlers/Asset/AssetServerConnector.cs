@@ -37,17 +37,21 @@ using OpenSim.Server.Handlers.Base;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Autofac;
 
 namespace OpenSim.Server.Handlers.Asset
 {
     public class AssetServiceConnector : IServiceConnector
     {
+        private readonly IComponentContext m_context;
         private IAssetService m_AssetService;
        
         public AssetServiceConnector(
+            IComponentContext componentContext,
             IConfiguration configuration,
             ILogger<AssetServiceConnector> logger)
         {
+            m_context = componentContext;
             Config = configuration;
             Logger = logger;
         }
@@ -72,15 +76,16 @@ namespace OpenSim.Server.Handlers.Asset
             if (string.IsNullOrEmpty(assetService))
                 throw new Exception("No LocalServiceModule in config file");
 
-            object[] args = new object[] { Config, ConfigName };
-            m_AssetService = ServerUtils.LoadPlugin<IAssetService>(assetService, args);
+            var serviceName = assetService.Split(":")[1];
+            m_AssetService = m_context.ResolveNamed<IAssetService>(serviceName);
 
             if (m_AssetService == null)
-                throw new Exception(string.Format("Failed to load AssetService from {0}; config is {1}", assetService, ConfigName));
+            {
+                throw new Exception($"Failed to load AssetService from {assetService}; config is {ConfigName}");
+            }
 
             bool allowDelete = serverConfig.GetValue<bool>("AllowRemoteDelete", false);
             bool allowDeleteAllTypes = serverConfig.GetValue<bool>("AllowRemoteDeleteAllTypes", false);
-
             string redirectURL = serverConfig.GetValue<string>("RedirectURL", string.Empty);
 
             AllowedRemoteDeleteTypes allowedRemoteDeleteTypes;

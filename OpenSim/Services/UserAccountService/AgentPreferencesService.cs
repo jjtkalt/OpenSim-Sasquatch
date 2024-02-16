@@ -25,22 +25,52 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System.Reflection;
-using log4net;
-using Microsoft.Extensions.Configuration;
 using OpenMetaverse;
 using OpenSim.Data;
 using OpenSim.Services.Interfaces;
 
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Autofac;
+using OpenSim.Server.Base;
+
 namespace OpenSim.Services.UserAccountService
 {
-    public class AgentPreferencesService : AgentPreferencesServiceBase, IAgentPreferencesService
+    public class AgentPreferencesService : IAgentPreferencesService
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private readonly IComponentContext m_context;
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<AgentPreferencesService> m_logger;
+        private readonly IAgentPreferencesData m_Database;
 
-        public AgentPreferencesService(IConfiguration config) : base(config)
+        public AgentPreferencesService(
+            IComponentContext componentContext,
+            IConfiguration config,
+            ILogger<AgentPreferencesService> logger,
+            IAgentPreferencesData agentPreferencesData)
         {
-            m_log.Debug("[AGENT PREFERENCES SERVICE]: Starting agent preferences service");
+            m_context = componentContext;
+            m_configuration = config;
+            m_logger = logger;
+            m_Database = agentPreferencesData;
+
+            string realm = "AgentPrefs";
+            string connString = String.Empty;
+
+            var dbConfig = config.GetSection("DatabaseService");
+            if (dbConfig.Exists())
+                connString = dbConfig.GetValue("ConnectionString", String.Empty);
+
+            var userConfig = config.GetSection("AgentPreferencesService");
+            if (userConfig.Exists() is false)
+                throw new Exception("No AgentPreferencesService configuration");
+
+            connString = userConfig.GetValue("ConnectionString", connString);
+            realm = userConfig.GetValue("Realm", realm);
+            
+            m_Database.Initialize(connectionString: connString, realm: realm);
+
+            m_logger.LogDebug("[AGENT PREFERENCES SERVICE]: Starting agent preferences service");
         }
 
         public AgentPrefs GetAgentPreferences(UUID principalID)
@@ -53,6 +83,7 @@ namespace OpenSim.Services.UserAccountService
         public bool StoreAgentPreferences(AgentPrefs data)
         {
             AgentPreferencesData d = new AgentPreferencesData();
+
             d.Data = new Dictionary<string, string>();
             d.Data["PrincipalID"] = data.PrincipalID.ToString();
             d.Data["AccessPrefs"] = data.AccessPrefs;
@@ -62,6 +93,7 @@ namespace OpenSim.Services.UserAccountService
             d.Data["PermEveryone"] = data.PermEveryone.ToString();
             d.Data["PermGroup"] = data.PermGroup.ToString();
             d.Data["PermNextOwner"] = data.PermNextOwner.ToString();
+            
             return m_Database.Store(d);
         }
 
@@ -73,6 +105,7 @@ namespace OpenSim.Services.UserAccountService
                 if (data.LanguageIsPublic)
                     return data.Language;
             }
+
             return "en-us";
         }
     }

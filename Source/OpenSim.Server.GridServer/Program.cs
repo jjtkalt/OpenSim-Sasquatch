@@ -42,8 +42,10 @@ using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Base;
 using OpenSim.Server.Common;
 using OpenSim.Server.Handlers;
+using OpenSim.Services.UserAccountService;
+using OpenSim.Data.MySQL;
 
-namespace OpenSim.Server.RobustServer
+namespace OpenSim.Server.GridServer
 {
     class Program
     {
@@ -58,7 +60,7 @@ namespace OpenSim.Server.RobustServer
                 (name: "--inifile", description: "Specify the location of zero or more .ini file(s) to read.");
             var promptOption = new Option<string>
                 (name: "--prompt", description: "Overide the server prompt",
-                getDefaultValue: () => "ROBUST> ");
+                getDefaultValue: () => "GRID> ");
 
             rootCommand.AddGlobalOption(consoleOption);
             rootCommand.AddGlobalOption(inifileOption);
@@ -90,7 +92,7 @@ namespace OpenSim.Server.RobustServer
                 .ConfigureContainer<ContainerBuilder>(builder =>
                 {
                     builder.RegisterType<OpenSimServer>().SingleInstance();
-                    builder.RegisterType<RobustServer>().SingleInstance();
+                    builder.RegisterType<GridServer>().SingleInstance();
 
                     builder.RegisterType<BaseHttpServer>().As<IHttpServer>();
 
@@ -102,13 +104,15 @@ namespace OpenSim.Server.RobustServer
                         builder.RegisterType<MockConsole>().As<ICommandConsole>().SingleInstance();
                     else
                         builder.RegisterType<LocalConsole>().As<ICommandConsole>().SingleInstance();
-
+                        
                     // Register Grid Modules
+                    builder.RegisterModule(new MySQLDataModule());
+                    builder.RegisterModule(new UserAccountServiceModule());
                     builder.RegisterModule(new OpenSimServerHandlersModule());
                 })
                 .ConfigureServices(services =>
                 {
-                    services.AddHostedService<RobustService>();
+                    services.AddHostedService<GridService>();
                     services.AddHostedService<PidFileService>();
                 });
 

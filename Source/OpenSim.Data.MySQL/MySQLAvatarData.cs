@@ -25,44 +25,52 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Reflection;
-using System.Threading;
-using log4net;
 using MySqlConnector;
 using OpenMetaverse;
-using OpenSim.Framework;
 
 namespace OpenSim.Data.MySQL
 {
     /// <summary>
     /// A MySQL Interface for the Grid Server
     /// </summary>
-    public class MySQLAvatarData : MySQLGenericTableHandler<AvatarBaseData>,
-            IAvatarData
+    public class MySQLAvatarData : IAvatarData
     {
-//        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        protected MySQLGenericTableHandler<AvatarBaseData> tableHandler = null;
 
-        public MySQLAvatarData(string connectionString, string realm) :
-                base(connectionString, realm, "Avatar")
+        public void Initialize(string connectionString, string realm)
         {
+            tableHandler = new();
+            tableHandler.Initialize(connectionString, realm, "Avatar");
         }
 
         public bool Delete(UUID principalID, string name)
         {
             using (MySqlCommand cmd = new MySqlCommand())
             {
-                cmd.CommandText = String.Format("delete from {0} where `PrincipalID` = ?PrincipalID and `Name` = ?Name", m_Realm);
+                cmd.CommandText = String.Format("delete from {0} where `PrincipalID` = ?PrincipalID and `Name` = ?Name", tableHandler.Realm);
                 cmd.Parameters.AddWithValue("?PrincipalID", principalID.ToString());
                 cmd.Parameters.AddWithValue("?Name", name);
 
-                if (ExecuteNonQuery(cmd) > 0)
+                if (tableHandler.ExecuteNonQuery(cmd) > 0)
                     return true;
             }
 
             return false;
+        }
+
+        public AvatarBaseData[] Get(string field, string val)
+        {
+            return tableHandler.Get(field, val);
+        }
+
+        public bool Store(AvatarBaseData data)
+        {
+            return tableHandler.Store(data);
+        }
+
+        public bool Delete(string field, string val)
+        {
+            return tableHandler.Delete(field, val);
         }
     }
 }

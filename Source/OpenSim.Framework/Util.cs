@@ -2085,34 +2085,35 @@ namespace OpenSim.Framework
             }
         }
 
-        public static void SerializeToFile(string filename, Object obj)
-        {
-            IFormatter formatter = new BinaryFormatter();
-            try
-            {
-                using Stream stream = new FileStream(filename, FileMode.Create,FileAccess.Write, FileShare.None);
-                formatter.Serialize(stream, obj);
-            }
-            catch (Exception e)
-            {
-                m_log.Error(e.ToString());
-            }
-        }
+        // XXX MCD
+        // public static void SerializeToFile(string filename, Object obj)
+        // {
+        //     IFormatter formatter = new BinaryFormatter();
+        //     try
+        //     {
+        //         using Stream stream = new FileStream(filename, FileMode.Create,FileAccess.Write, FileShare.None);
+        //         formatter.Serialize(stream, obj);
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         m_log.Error(e.ToString());
+        //     }
+        // }
 
-        public static Object DeserializeFromFile(string filename)
-        {
-            try
-            {
-                using Stream stream = new FileStream(filename, FileMode.Open,FileAccess.Read, FileShare.None);
-                IFormatter formatter = new BinaryFormatter();
-                return formatter.Deserialize(stream);
-            }
-            catch (Exception e)
-            {
-                m_log.Error(e.ToString());
-            }
-            return null;
-        }
+        // public static Object DeserializeFromFile(string filename)
+        // {
+        //     try
+        //     {
+        //         using Stream stream = new FileStream(filename, FileMode.Open,FileAccess.Read, FileShare.None);
+        //         IFormatter formatter = new BinaryFormatter();
+        //         return formatter.Deserialize(stream);
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         m_log.Error(e.ToString());
+        //     }
+        //     return null;
+        // }
 
         public static string Compress(string text)
         {

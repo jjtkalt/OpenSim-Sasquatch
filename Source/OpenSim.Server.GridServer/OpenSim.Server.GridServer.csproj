@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <OutputType>Exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
@@ -26,6 +26,8 @@
     <ProjectReference Include="..\..\OpenSim\Server\Base\OpenSim.Server.Base.csproj" />
     <ProjectReference Include="..\..\OpenSim\Server\Handlers\OpenSim.Server.Handlers.csproj" />
     <ProjectReference Include="..\OpenSim.Server.Common\OpenSim.Server.Common.csproj" />
+    <ProjectReference Include="..\OpenSim.Data\OpenSim.Data.csproj" />
+    <ProjectReference Include="..\OpenSim.Data.MySQL\OpenSim.Data.MySQL.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Autofac" Version="7.1.0" />

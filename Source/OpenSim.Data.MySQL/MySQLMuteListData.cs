@@ -25,26 +25,25 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Data;
 using MySqlConnector;
 using OpenMetaverse;
 using OpenSim.Framework;
 
 namespace OpenSim.Data.MySQL
 {
-    public class MySqlMuteListData : MySQLGenericTableHandler<MuteData>, IMuteListData
+    public class MySqlMuteListData : IMuteListData
     {
-        public MySqlMuteListData(string connectionString)
-                : base(connectionString, "MuteList", "MuteListStore")
-        {
-        }
+        protected MySQLGenericTableHandler<MuteData> tableHandler = null;
 
+        public void Initialize(string connectionString)
+        {
+            tableHandler = new();
+            tableHandler.Initialize(connectionString, "MuteList", "MuteListStore");
+        }
+        
         public MuteData[] Get(UUID agentID)
         {
-            MuteData[] data = base.Get("AgentID", agentID.ToString());
+            MuteData[] data = tableHandler.Get("AgentID", agentID.ToString());
             return data;
         }
 
@@ -58,10 +57,16 @@ namespace OpenSim.Data.MySQL
                 cmd.Parameters.AddWithValue("?MuteID", muteID.ToString());
                 cmd.Parameters.AddWithValue("?MuteName", muteName);
 
-                if (ExecuteNonQuery(cmd) > 0)
+                if (tableHandler.ExecuteNonQuery(cmd) > 0)
                     return true;
+
                 return false;
             }
+        }
+
+        public bool Store(MuteData data)
+        {
+            return tableHandler.Store(data);
         }
     }
 }

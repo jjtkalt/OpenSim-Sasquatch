@@ -34,9 +34,10 @@ namespace OpenSim.Data.MySQL
     /// </summary>
     public class MySQLGridUserData : MySQLGenericTableHandler<GridUserData>, IGridUserData
     {
-//        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
-        public MySQLGridUserData(string connectionString, string realm) : base(connectionString, realm, "GridUserStore") {}
+        public void Initialize(string connectionString, string realm)
+        {
+            base.Initialize(connectionString, realm, "GridUserStore");
+        }
 
         public new GridUserData Get(string userID)
         {

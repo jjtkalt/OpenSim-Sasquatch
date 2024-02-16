@@ -25,47 +25,47 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Reflection;
 using System.Text;
+
 using MySqlConnector;
 using OpenMetaverse;
+
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Data.MySQL
 {
     public class MySQLGenericTableHandler<T> : MySqlFramework where T: class, new()
     {
-//        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         protected Dictionary<string, FieldInfo> m_Fields = new Dictionary<string, FieldInfo>();
 
         protected List<string> m_ColumnNames = null;
         protected string m_Realm;
         protected FieldInfo m_DataField = null;
 
+        public string Realm => m_Realm;
+
         protected virtual Assembly Assembly
         {
             get { return GetType().Assembly; }
         }
 
-        public MySQLGenericTableHandler(MySqlTransaction trans,
-                string realm, string storeName) : base(trans)
+        public void Initialize(MySqlTransaction trans, string realm, string storeName)
         {
-            m_Realm = realm;
+            base.Initialize(trans);
 
+            m_Realm = realm;
             CommonConstruct(storeName);
         }
-
-        public MySQLGenericTableHandler(string connectionString,
-                string realm, string storeName) : base(connectionString)
+        public void Initialize(string connectionString, string realm, string storeName)
         {
+            base.Initialize(connectionString);
+            
             m_Realm = realm;
-
             CommonConstruct(storeName);
         }
-
+        
         protected void CommonConstruct(string storeName)
         {
             if (!string.IsNullOrEmpty(storeName))
@@ -183,7 +183,7 @@ namespace OpenSim.Data.MySQL
             }
         }
 
-        protected T[] DoQuery(MySqlCommand cmd)
+        public T[] DoQuery(MySqlCommand cmd)
         {
             if (m_trans == null)
             {
@@ -201,14 +201,14 @@ namespace OpenSim.Data.MySQL
             }
         }
 
-        protected T[] DoQueryWithTransaction(MySqlCommand cmd, MySqlTransaction trans)
+        public T[] DoQueryWithTransaction(MySqlCommand cmd, MySqlTransaction trans)
         {
             cmd.Transaction = trans;
 
             return DoQueryWithConnection(cmd, trans.Connection);
         }
 
-        protected T[] DoQueryWithConnection(MySqlCommand cmd, MySqlConnection dbcon)
+        public T[] DoQueryWithConnection(MySqlCommand cmd, MySqlConnection dbcon)
         {
             List<T> result = new List<T>();
 
@@ -290,8 +290,6 @@ namespace OpenSim.Data.MySQL
 
         public virtual bool Store(T row)
         {
-//            m_log.DebugFormat("[MYSQL GENERIC TABLE HANDLER]: Store(T row) invoked");
-
             using (MySqlCommand cmd = new MySqlCommand())
             {
                 string query = "";
@@ -344,10 +342,6 @@ namespace OpenSim.Data.MySQL
 
         public virtual bool Delete(string[] fields, string[] keys)
         {
-//            m_log.DebugFormat(
-//                "[MYSQL GENERIC TABLE HANDLER]: Delete(string[] fields, string[] keys) invoked with {0}:{1}",
-//                string.Join(",", fields), string.Join(",", keys));
-
             int flen = fields.Length;
             if (flen == 0 || flen != keys.Length)
                 return false;

@@ -36,9 +36,10 @@ namespace OpenSim.Data.MySQL
     /// </summary>
     public class MySQLHGTravelData : MySQLGenericTableHandler<HGTravelingData>, IHGTravelingData
     {
-//        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
-        public MySQLHGTravelData(string connectionString, string realm) : base(connectionString, realm, "HGTravelStore") { }
+        public void Initialize(string connectionString, string realm)
+        {
+            base.Initialize(connectionString, realm, "HGTravelStore");
+        }
 
         public HGTravelingData Get(UUID sessionID)
         {

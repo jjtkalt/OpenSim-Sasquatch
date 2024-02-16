@@ -125,7 +125,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Services.UserProfil
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSimSearch.Modules", "addon-modules\OpenSimSearch\Modules\OpenSimSearch.Modules.csproj", "{BE5D1132-0000-0000-0000-000000000000}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Server.RobustServer", "Source\OpenSim.Server.RobustServer\OpenSim.Server.RobustServer.csproj", "{6E64F01D-0000-0000-0000-000000000000}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Server.GridServer", "Source\OpenSim.Server.GridServer\OpenSim.Server.GridServer.csproj", "{6E64F01D-0000-0000-0000-000000000000}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SmartThreadPool", "ThirdParty\SmartThreadPool\SmartThreadPool.csproj", "{8C618053-0000-0000-0000-000000000000}"
 EndProject
@@ -429,10 +429,10 @@ Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {A40AD54B-8BC7-41E4-B241-19B59EA65D2A}
-	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{3B850422-D5E2-4C10-BC5A-EC3C94598106} = {8F448DF9-DE18-4810-8545-96DFE17D5C39}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A40AD54B-8BC7-41E4-B241-19B59EA65D2A}
 	EndGlobalSection
 EndGlobal

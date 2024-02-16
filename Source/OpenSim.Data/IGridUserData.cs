@@ -49,8 +49,12 @@ namespace OpenSim.Data
     /// </summary>
     public interface IGridUserData
     {
+        void Initialize(string connectionString, string realm);
+
         GridUserData Get(string userID);
+        
         GridUserData[] GetAll(string query);
+        
         bool Store(GridUserData data);
     }
 }

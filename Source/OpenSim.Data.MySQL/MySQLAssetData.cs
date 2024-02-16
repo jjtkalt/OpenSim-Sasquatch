@@ -39,7 +39,7 @@ namespace OpenSim.Data.MySQL
     /// <summary>
     /// A MySQL Interface for the Asset Server
     /// </summary>
-    public class MySQLAssetData : AssetDataBase
+    public class MySQLAssetData : AssetDataBase, IAssetDataPlugin
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 

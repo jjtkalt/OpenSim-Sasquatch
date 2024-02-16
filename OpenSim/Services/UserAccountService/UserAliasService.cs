@@ -25,36 +25,39 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System.Reflection;
-using log4net;
-using Microsoft.Extensions.Configuration;
 using OpenMetaverse;
+
 using OpenSim.Data;
 using OpenSim.Framework;
-using OpenSim.Services.Base;
 using OpenSim.Services.Interfaces;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Services.UserAccountService
 {
-    public class UserAliasService : ServiceBase, IUserAliasService
+    public class UserAliasService : IUserAliasService
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<UserAliasService> m_logger;
+        private readonly IUserAliasData m_Database = null;
 
-        protected IUserAliasData m_Database = null;
-
-        public UserAliasService(IConfiguration config) 
-            : base(config)
+        public UserAliasService(
+            IConfiguration config,
+            ILogger<UserAliasService> logger,
+            IUserAliasData userAliasData
+            )
         {
-            string dllName = String.Empty;
+            m_configuration = config;
+            m_logger = logger;
+            m_Database = userAliasData;
+
             string connString = String.Empty;
             string realm = "UserAlias";
 
             var dbConfig = config.GetSection("DatabaseService");
             if (dbConfig.Exists())
-            {
-                dllName = dbConfig.GetValue("StorageProvider", String.Empty);
                 connString = dbConfig.GetValue("ConnectionString", String.Empty);
-            }
 
             var userConfig = config.GetSection("UserAliasService");
             if (userConfig.Exists() is false)
@@ -62,21 +65,10 @@ namespace OpenSim.Services.UserAccountService
                 throw new Exception("No UserAliasService configuration");
             }
 
-            dllName = userConfig.GetValue("StorageProvider", dllName);
-            if (string.IsNullOrEmpty(dllName))
-            {
-                throw new Exception("No StorageProvider configured");
-            }
-
             connString = userConfig.GetValue("ConnectionString", connString);
             realm = userConfig.GetValue("Realm", realm);
 
-            m_Database = LoadPlugin<IUserAliasData>(dllName, new Object[] { connString, realm });
-
-            if (m_Database == null)
-            {
-                throw new Exception("Could not find a storage interface in the given module");
-            }
+            m_Database.Initialize(connectionString: connString, realm: realm);
 
             // Console commands
 
@@ -100,7 +92,6 @@ namespace OpenSim.Services.UserAccountService
                         "delete an existing user alias by aliasId", HandleDeleteAlias);
             }
         }
-
 
         #region Console commands
 
@@ -178,7 +169,7 @@ namespace OpenSim.Services.UserAccountService
         /// <returns>List<UserAlias>() - A list of aliases or null if none are defined</UUID></returns>
         public List<UserAlias> GetUserAliases(UUID userID)
         {
- //           m_log.DebugFormat("[USER ALIAS SERVICE] Retrieving aliases for user by userid {0}", userID);
+            m_logger.LogDebug($"[USER ALIAS SERVICE] Retrieving aliases for user by userid {userID}");
 
             var aliases = m_Database.GetUserAliases(userID);
 
@@ -203,7 +194,7 @@ namespace OpenSim.Services.UserAccountService
 
         public UserAlias GetUserForAlias(UUID aliasID)
         {
-//            m_log.DebugFormat("[USER ALIAS SERVICE]: Retrieving userID for alias by aliasId ", aliasID);
+            m_logger.LogDebug($"[USER ALIAS SERVICE]: Retrieving userID for alias by aliasId {aliasID}");
 
             var alias = m_Database.GetUserForAlias(aliasID);
 
@@ -244,7 +235,6 @@ namespace OpenSim.Services.UserAccountService
         public bool DeleteAlias(UUID aliasID)
         {
             return m_Database.Delete("AliasID", aliasID.ToString());
-            throw new NotImplementedException();
         }
     }
 }

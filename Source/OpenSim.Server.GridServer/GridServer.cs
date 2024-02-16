@@ -34,27 +34,30 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 using OpenSim.Framework;
+using OpenSim.Framework.Servers;
+using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Base;
 using OpenSim.Server.Handlers.Base;
 
-namespace OpenSim.Server.RobustServer
+namespace OpenSim.Server.GridServer
 {
-    public class RobustServer
+    public class GridServer
     {
-        private OpenSimServer m_baseServer = null;
-        protected List<IServiceConnector> m_ServiceConnectors = new();
-
         private bool m_NoVerifyCertChain = false;
         private bool m_NoVerifyCertHostname = false;
+        private OpenSimServer m_baseServer = null;
+
+        protected List<IServiceConnector> m_ServiceConnectors = new();
+        protected Dictionary<string,uint> portMapping = new();
 
         private readonly IServiceProvider m_serviceProvider;
-        private readonly ILogger<RobustServer> m_logger;
+        private readonly ILogger<GridServer> m_logger;
         private readonly IConfiguration m_configuration;
 
-        public RobustServer(
+        public GridServer(
             IServiceProvider serviceProvider,
             IConfiguration configuration, 
-            ILogger<RobustServer> logger,
+            ILogger<GridServer> logger,
             OpenSimServer openSimServer
             )
         {
@@ -126,13 +129,52 @@ namespace OpenSim.Server.RobustServer
             {
                 foreach (var servicesConnector in scope.ServiceProvider.GetServices<IServiceConnector>())
                 {
-                    // is this connector active?
-                    //     if no then continue
-                    // fetch the port and check for an HTTP Server, creating if needed.
-                    // Initialize the connector with the http server
-                    // Add it to our active list 
+                    uint port;
+                    string typeName = servicesConnector.GetType().Name;
+
+                    m_logger.LogInformation($"Searching for {typeName} as {servicesConnector.ConfigName}");
+
+                    if (portMapping.TryGetValue(typeName, out port) == true)
+                    {                                                    
+                        IHttpServer server = MainServer.Instance;
+                        if (port != 0)
+                            server = MainServer.GetHttpServer(scope, port);
+
+                        servicesConnector.Initialize(server);
+                        m_ServiceConnectors.Add(servicesConnector);
+                    }
+                    else
+                    {
+                        m_logger.LogError($"Configuration for {typeName} not found.");
+                    }
                 }
             }
+
+            //     if (friendlyName == "LLLoginServiceInConnector")
+            //         server.AddSimpleStreamHandler(new IndexPHPHandler(server));
+
+            //     m_logger.LogInformation("[SERVER]: Loading {0} on port {1}", friendlyName, server.Port);
+
+            //     IServiceConnector connector = null;
+
+            //     object[] modargs = new object[] { m_configuration, server, configName };
+            //     connector = ServerUtils.LoadPlugin<IServiceConnector>(conn, modargs);
+
+            //     if (connector == null)
+            //     {
+            //         modargs = new object[] { m_configuration, server };
+            //         connector = ServerUtils.LoadPlugin<IServiceConnector>(conn, modargs);
+            //     }
+
+            //     if (connector != null)
+            //     {
+            //         m_ServiceConnectors.Add(connector);
+            //         m_logger.LogInformation("[SERVER]: {0} loaded successfully", friendlyName);
+            //     }
+            //     else
+            //     {
+            //         m_logger.LogError($"[SERVER]: Failed to load {conn}");
+            //     }                    
 
             m_logger.LogInformation("Grid Services Connectors Initialized");
 
@@ -141,100 +183,72 @@ namespace OpenSim.Server.RobustServer
 
         private int LoadConfiguration()
         {
-        //     var startupConfig = m_configuration.GetSection("Startup");
+            var startupConfig = m_configuration.GetSection("Startup");
 
-        //     string connList = startupConfig.GetValue<string>("ServiceConnectors", string.Empty);
-        //     registryLocation = startupConfig.GetValue<string>("RegistryLocation", ".");
+            var connList = startupConfig.GetValue<string>("ServiceConnectors", string.Empty);
+            var registryLocation = startupConfig.GetValue<string>("RegistryLocation", ".");
 
-        //     var servicesConfig = m_configuration.GetSection("ServiceList");
-        //     connList = NewMethod(connList, servicesConfig);
+            var servicesConfig = m_configuration.GetSection("ServiceList");
 
-        // string connList, IConfigurationSection servicesConfig)
-        // {
-        //     List<string> servicesList = new();
-        //     if (!string.IsNullOrEmpty(connList))
-        //         servicesList.Add(connList);
+            List<string> servicesList = new();
+            if (!string.IsNullOrEmpty(connList))
+                servicesList.Add(connList);
 
-        //     foreach (var k in servicesConfig.AsEnumerable())
-        //     {
-        //         string[] keyparts = k.Key.Split(":");
-        //         if ((keyparts.Length > 1) && (keyparts[0] == "ServiceList"))
-        //         {
-        //             string v = servicesConfig.GetValue<string>(keyparts[1]);
-        //             if (!string.IsNullOrEmpty(v))
-        //                 servicesList.Add(v);
-        //         }
-        //     }
+            foreach (var k in servicesConfig.AsEnumerable())
+            {
+                string[] keyparts = k.Key.Split(":");
+                if ((keyparts.Length > 1) && (keyparts[0] == "ServiceList"))
+                {
+                    string v = servicesConfig.GetValue<string>(keyparts[1]);
+                    if (!string.IsNullOrEmpty(v))
+                        servicesList.Add(v);
+                }
+            }
 
-        //     connList = string.Join(",", servicesList.ToArray());
+            foreach (string c in servicesList)
+            {
+                if (string.IsNullOrEmpty(c))
+                    continue;
 
-        //     string[] conns = connList.Split(new char[] { ',', ' ', '\n', '\r', '\t' });
+                string configName = string.Empty;
+                string conn = c;
+                uint port = 0;
 
-        //     foreach (string c in conns)
-        //     {
-        //         if (string.IsNullOrEmpty(c))
-        //             continue;
+                string[] split1 = conn.Split(new char[] { '/' });
+                if (split1.Length > 1)
+                {
+                    conn = split1[1];
 
-        //         string configName = string.Empty;
-        //         string conn = c;
-        //         uint port = 0;
+                    string[] split2 = split1[0].Split(new char[] { '@' });
+                    if (split2.Length > 1)
+                    {
+                        configName = split2[0];
+                        port = Convert.ToUInt32(split2[1]);
+                    }
+                    else
+                    {
+                        port = Convert.ToUInt32(split1[0]);
+                    }
+                }
 
-        //         string[] split1 = conn.Split(new char[] { '/' });
-        //         if (split1.Length > 1)
-        //         {
-        //             conn = split1[1];
+                string[] parts = conn.Split(new char[] { ':' });
+                string moduleName = string.Empty;
+                string friendlyName = parts[0];
+                if (parts.Length > 1)
+                {
+                    moduleName = parts[0];
+                    friendlyName = parts[1];
+                }
 
-        //             string[] split2 = split1[0].Split(new char[] { '@' });
-        //             if (split2.Length > 1)
-        //             {
-        //                 configName = split2[0];
-        //                 port = Convert.ToUInt32(split2[1]);
-        //             }
-        //             else
-        //             {
-        //                 port = Convert.ToUInt32(split1[0]);
-        //             }
-        //         }
-
-        //         string[] parts = conn.Split(new char[] { ':' });
-        //         string friendlyName = parts[0];
-        //         if (parts.Length > 1)
-        //             friendlyName = parts[1];
-
-        //         IHttpServer server;
-
-        //         if (port != 0)
-        //             server = (BaseHttpServer)MainServer.GetHttpServer(port);
-        //         else
-        //             server = MainServer.Instance;
-
-        //         if (friendlyName == "LLLoginServiceInConnector")
-        //             server.AddSimpleStreamHandler(new IndexPHPHandler(server));
-
-        //         m_logger.LogInformation("[SERVER]: Loading {0} on port {1}", friendlyName, server.Port);
-
-        //         IServiceConnector connector = null;
-
-        //         object[] modargs = new object[] { m_configuration, server, configName };
-        //         connector = ServerUtils.LoadPlugin<IServiceConnector>(conn, modargs);
-
-        //         if (connector == null)
-        //         {
-        //             modargs = new object[] { m_configuration, server };
-        //             connector = ServerUtils.LoadPlugin<IServiceConnector>(conn, modargs);
-        //         }
-
-        //         if (connector != null)
-        //         {
-        //             m_ServiceConnectors.Add(connector);
-        //             m_logger.LogInformation("[SERVER]: {0} loaded successfully", friendlyName);
-        //         }
-        //         else
-        //         {
-        //             m_logger.LogError($"[SERVER]: Failed to load {conn}");
-        //         }
-        //     }
-        //    return connList;
+                if (portMapping.ContainsKey(friendlyName))
+                {
+                    m_logger.LogInformation($"Loading configuration, {friendlyName} already found");
+                }
+                else
+                {
+                    portMapping.Add(friendlyName, port);
+                }
+            }
 
             return 1;
         }

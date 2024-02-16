@@ -35,158 +35,10 @@ using OpenMetaverse;
 using OpenSim.Framework.Servers.HttpServer;
 
 using Microsoft.Extensions.Configuration;
+using System.Net;
 
 namespace OpenSim.Server.Base
 {
-    public interface IRobustConnector
-    {
-        string ConfigName
-        {
-            get;
-        }
-
-        bool Enabled
-        {
-            get;
-        }
-
-        string PluginPath
-        {
-            get;
-            set;
-        }
-
-        uint Configure(IConfiguration config);
-
-        void Initialize(IHttpServer server);
-
-        void Unload();
-    }
-
-    // XXX
-
-    //public class PluginLoader
-    //{
-    //    static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
-    //    public AddinRegistry Registry
-    //    {
-    //        get;
-    //        private set;
-    //    }
-
-    //    public IConfiguration Config
-    //    {
-    //        get;
-    //        private set;
-    //    }
-
-    //    public PluginLoader(IConfiguration config, string registryPath)
-    //    {
-    //        Config = config;
-
-    //        Registry = new AddinRegistry(registryPath, ".");
-    //        //suppress_console_output_(true);
-    //        AddinManager.Initialize(registryPath);
-    //        //suppress_console_output_(false);
-    //        AddinManager.Registry.Update();
-    //        CommandManager commandmanager = new CommandManager(Registry);
-    //        AddinManager.AddExtensionNodeHandler("/Robust/Connector", OnExtensionChanged);
-    //    }
-
-    //    private static TextWriter prev_console_;
-    //    // Temporarily masking the errors reported on start
-    //    // This is caused by a non-managed dll in the ./bin dir
-    //    // when the registry is initialized. The dll belongs to
-    //    // libomv, which has a hard-coded path to "." for pinvoke
-    //    // to load the openjpeg dll
-    //    //
-    //    // Will look for a way to fix, but for now this keeps the
-    //    // confusion to a minimum. this was copied from our region
-    //    // plugin loader, we have been doing this in there for a long time.
-    //    //
-    //    public void suppress_console_output_(bool save)
-    //    {
-    //        if (save)
-    //        {
-    //            prev_console_ = System.Console.Out;
-    //            System.Console.SetOut(new StreamWriter(Stream.Null));
-    //        }
-    //        else
-    //        {
-    //            if (prev_console_ != null)
-    //                System.Console.SetOut(prev_console_);
-    //        }
-    //    }
-
-    //    private void OnExtensionChanged(object s, ExtensionNodeEventArgs args)
-    //    {
-    //        IRobustConnector connector = (IRobustConnector)args.ExtensionObject;
-    //        Addin a = Registry.GetAddin(args.ExtensionNode.Addin.Id);
-
-    //        if(a == null)
-    //        {
-    //            Registry.Rebuild(null);
-    //            a = Registry.GetAddin(args.ExtensionNode.Addin.Id);
-    //        }
-
-    //        switch(args.Change)
-    //        {
-    //            case ExtensionChange.Add:
-    //                if (a.AddinFile.Contains(Registry.DefaultAddinsFolder))
-    //                {
-    //                    m_log.InfoFormat("[SERVER UTILS]: Adding {0} from registry", a.Name);
-    //                    connector.PluginPath = System.IO.Path.Combine(Registry.DefaultAddinsFolder,a.Name.Replace(',', '.'));                    }
-    //                else
-    //                {
-    //                    m_log.InfoFormat("[SERVER UTILS]: Adding {0} from ./bin", a.Name);
-    //                    connector.PluginPath = a.AddinFile;
-    //                }
-    //                LoadPlugin(connector);
-    //                break;
-    //            case ExtensionChange.Remove:
-    //                m_log.InfoFormat("[SERVER UTILS]: Removing {0}", a.Name);
-    //                UnloadPlugin(connector);
-    //                break;
-    //        }
-    //    }
-
-    //    private void LoadPlugin(IRobustConnector connector)
-    //    {
-    //        IHttpServer server = null;
-    //        uint port = connector.Configure(Config);
-
-    //        if(connector.Enabled)
-    //        {
-    //            server = GetServer(connector, port);
-    //            connector.Initialize(server);
-    //        }
-    //        else
-    //        {
-    //            m_log.InfoFormat("[SERVER UTILS]: {0} Disabled.", connector.ConfigName);
-    //        }
-    //    }
-
-    //    private void UnloadPlugin(IRobustConnector connector)
-    //    {
-    //        m_log.InfoFormat("[SERVER UTILS]: Unloading {0}", connector.ConfigName);
-
-    //        connector.Unload();
-    //    }
-
-    //    private IHttpServer GetServer(IRobustConnector connector, uint port)
-    //    {
-    //        IHttpServer server;
-
-    //        if(port != 0)
-    //            server = MainServer.GetHttpServer(port);
-    //        else
-    //            server = MainServer.Instance;
-
-    //        return server;
-    //    }
-    //}
-
     public static class ServerUtils
     {
         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
@@ -207,6 +59,46 @@ namespace OpenSim.Server.Base
             }
         }
 
+        public static void ParseService(string serviceName, out string dllName, out string className)
+        {
+            className = String.Empty;
+
+            // The path for a dynamic plugin will contain ":" on Windows
+            string[] parts = serviceName.Split(new char[] { ':' });
+
+            if (parts.Length < 3)
+            {
+                // Linux. There will be ':' but the one we're looking for
+                dllName = parts[0];
+                if (parts.Length > 1)
+                    className = parts[1];
+            }
+            else
+            {
+                // This is Windows. Deal with the : in the Drive letter since
+                // the : is also our seperator in the serviceName
+                dllName = String.Format("{0}:{1}", parts[0], parts[1]);
+                if (parts.Length > 2)
+                    className = parts[2];
+            }
+        }
+
+        public static string ParseServiceName(string service)
+        {
+            string dllName = string.Empty;
+            string serviceName = string.Empty;
+            ParseService(service, out dllName, out serviceName);
+            return (serviceName);
+        }
+
+        public static string ParseDllName(string service)
+        {
+            string dllName = string.Empty;
+            string serviceName = string.Empty;
+            ParseService(service, out dllName, out serviceName);
+            return (dllName);
+        }
+        
         /// <summary>
         /// Load a plugin from a dll with the given class or interface
         /// </summary>

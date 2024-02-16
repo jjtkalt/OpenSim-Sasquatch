@@ -34,6 +34,7 @@ using OpenSim.Framework.Monitoring;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Net;
+using System.Runtime.CompilerServices;
 
 namespace OpenSim.Server.Base
 {
@@ -94,7 +95,7 @@ namespace OpenSim.Server.Base
             //
             if (!ssl_main)
             {
-                httpServer = MainServer.GetHttpServer(port);
+                httpServer = MainServer.GetHttpServer(null, port);  ///XXX MCD
             }
             else
             {
@@ -112,7 +113,7 @@ namespace OpenSim.Server.Base
                     Environment.Exit(1);
                 }
 
-                httpServer = MainServer.GetHttpServer(port, ipaddr: null, ssl_main, cert_path, cert_pass);
+                httpServer = MainServer.GetHttpServer(null, port, ipaddr: null, ssl_main, cert_path, cert_pass); //XXX MCD
             }
 
             // If https_listener = true, then add an ssl listener on the https_port...
@@ -136,12 +137,12 @@ namespace OpenSim.Server.Base
                         //Thread.CurrentThread.Abort();
                     }
 
-                    MainServer.GetHttpServer(https_port, ipaddr: null, ssl_listener, cert_path, cert_pass);
+                    MainServer.GetHttpServer(null, https_port, ipaddr: null, ssl_listener, cert_path, cert_pass); //XXX MCD
                 }
                 else
                 {
                     m_logger.LogWarning($"SSL port is active but no SSL is used because external SSL was requested.");
-                    MainServer.GetHttpServer(https_port);
+                    MainServer.GetHttpServer(null, https_port); // XXX MCD
                 }
             }
         }
@@ -160,7 +161,7 @@ namespace OpenSim.Server.Base
                 if (m_consolePort == 0)
                     mi.Invoke(MainConsole.Instance, new object[] { MainServer.Instance });
                 else
-                    mi.Invoke(MainConsole.Instance, new object[] { MainServer.GetHttpServer(m_consolePort) });
+                    mi.Invoke(MainConsole.Instance, new object[] { MainServer.GetHttpServer(null, m_consolePort) }); // XXX MCD
             }
         }
     }

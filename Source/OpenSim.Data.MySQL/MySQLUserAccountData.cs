@@ -25,17 +25,29 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
 using MySqlConnector;
 using OpenMetaverse;
 
 namespace OpenSim.Data.MySQL
 {
-    public class MySqlUserAccountData : MySQLGenericTableHandler<UserAccountData>, IUserAccountData
+    public class MySqlUserAccountData : IUserAccountData
     {
-        public MySqlUserAccountData(string connectionString, string realm)
-                : base(connectionString, realm, "UserAccount")
+        protected MySQLGenericTableHandler<UserAccountData> tableHandler = null;
+
+        public void Initialize(string connectionString, string realm)
         {
+            tableHandler = new();
+            tableHandler.Initialize(connectionString, realm, "UserAccount");
+        }
+
+        public bool Delete(string field, string val)
+        {
+            return tableHandler.Delete(field, val);
+        }
+
+        public UserAccountData[] Get(string[] fields, string[] values)
+        {
+            return tableHandler.Get(fields, values);
         }
 
         public UserAccountData[] GetUsers(UUID scopeID, string query)
@@ -48,12 +60,6 @@ namespace OpenSim.Data.MySQL
             {
                 if (words[i].Length > 2)
                     valid = true;
-//                if (words[i].Length < 3)
-//                {
-//                    if (i != words.Length - 1)
-//                        Array.Copy(words, i + 1, words, i, words.Length - i - 1);
-//                    Array.Resize(ref words, words.Length - 1);
-//                }
             }
 
             if ((!valid) || words.Length == 0)
@@ -66,19 +72,19 @@ namespace OpenSim.Data.MySQL
             {
                 if (words.Length == 1)
                 {
-                    cmd.CommandText = String.Format("select * from {0} where (ScopeID=?ScopeID or ScopeID='00000000-0000-0000-0000-000000000000') and (FirstName like ?search or LastName like ?search) and active=1", m_Realm);
+                    cmd.CommandText = String.Format("select * from {0} where (ScopeID=?ScopeID or ScopeID='00000000-0000-0000-0000-000000000000') and (FirstName like ?search or LastName like ?search) and active=1", tableHandler.Realm);
                     cmd.Parameters.AddWithValue("?search", "%" + words[0] + "%");
                     cmd.Parameters.AddWithValue("?ScopeID", scopeID.ToString());
                 }
                 else
                 {
-                    cmd.CommandText = String.Format("select * from {0} where (ScopeID=?ScopeID or ScopeID='00000000-0000-0000-0000-000000000000') and (FirstName like ?searchFirst and LastName like ?searchLast) and active=1", m_Realm);
+                    cmd.CommandText = String.Format("select * from {0} where (ScopeID=?ScopeID or ScopeID='00000000-0000-0000-0000-000000000000') and (FirstName like ?searchFirst and LastName like ?searchLast) and active=1", tableHandler.Realm);
                     cmd.Parameters.AddWithValue("?searchFirst", "%" + words[0] + "%");
                     cmd.Parameters.AddWithValue("?searchLast", "%" + words[1] + "%");
                     cmd.Parameters.AddWithValue("?ScopeID", scopeID.ToString());
                 }
 
-                return DoQuery(cmd);
+                return tableHandler.DoQuery(cmd);
             }
         }
 
@@ -92,10 +98,15 @@ namespace OpenSim.Data.MySQL
                     cmd.Parameters.AddWithValue("?ScopeID", scopeID.ToString());
                 }
 
-                cmd.CommandText = String.Format("select * from {0} where " + where, m_Realm);
+                cmd.CommandText = String.Format("select * from {0} where " + where, tableHandler.Realm);
 
-                return DoQuery(cmd);
+                return tableHandler.DoQuery(cmd);
             }
+        }
+
+        public bool Store(UserAccountData data)
+        {
+            return tableHandler.Store(data);
         }
     }
 }

@@ -45,8 +45,11 @@ namespace OpenSim.Data.MySQL
 
         public MySQLXInventoryData(string conn, string realm)
         {
-            m_Folders = new MySqlFolderHandler(conn, "inventoryfolders", "InventoryStore");
-            m_Items = new MySqlItemHandler(conn, "inventoryitems", string.Empty);
+            m_Folders = new MySqlFolderHandler();
+            m_Folders.Initialize(conn, "inventoryfolders", "InventoryStore");
+
+            m_Items = new MySqlItemHandler();
+            m_Items.Initialize(conn, "inventoryitems", string.Empty);
         }
 
         public XInventoryFolder[] GetFolder(string field, string val)
@@ -125,10 +128,9 @@ namespace OpenSim.Data.MySQL
 
     public class MySqlItemHandler : MySqlInventoryHandler<XInventoryItem>
     {
-        //private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
-        public MySqlItemHandler(string c, string t, string m) : base(c, t, m)
+        public void Initialize(string c, string t, string m)
         {
+            base.Initialize(c, t, m);
         }
 
         public override bool Delete(string field, string val)
@@ -250,10 +252,9 @@ namespace OpenSim.Data.MySQL
 
     public class MySqlFolderHandler : MySqlInventoryHandler<XInventoryFolder>
     {
-//        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
-        public MySqlFolderHandler(string c, string t, string m) : base(c, t, m)
+        public void Initialize(string c, string t, string m)
         {
+            base.Initialize(c, t, m);
         }
 
         public bool MoveFolder(string id, string newParentFolderID)
@@ -293,8 +294,11 @@ namespace OpenSim.Data.MySQL
     }
 
     public class MySqlInventoryHandler<T> : MySQLGenericTableHandler<T> where T: class, new()
-    {
-        public MySqlInventoryHandler(string c, string t, string m) : base(c, t, m) {}
+    { 
+        public void Initialize(string c, string t, string m)
+        {
+            base.Initialize(c, t, m);
+        }
 
         protected bool IncrementFolderVersion(UUID folderID)
         {

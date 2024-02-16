@@ -45,6 +45,8 @@ namespace OpenSim.Data
     /// </summary>
     public interface IUserAliasData
     {
+        public void Initialize(string connectionString, string realm);
+        
         bool Store(UserAliasData data);
         
         UserAliasData Get(int Id);

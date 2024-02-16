@@ -25,13 +25,13 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Reflection;
+
 using MySqlConnector;
 using OpenMetaverse;
 using OpenSim.Framework;
+
 using RegionFlags = OpenSim.Framework.RegionFlags;
 
 namespace OpenSim.Data.MySQL
@@ -47,9 +47,10 @@ namespace OpenSim.Data.MySQL
             get { return GetType().Assembly; }
         }
 
-        public MySqlRegionData(string connectionString, string realm)
-                : base(connectionString)
+        public void Initialize(string connectionString, string realm)
         {
+            base.Initialize(connectionString);
+
             m_Realm = realm;
             m_connectionString = connectionString;
 
@@ -96,7 +97,6 @@ namespace OpenSim.Data.MySQL
 
                 return ret[0];
             }
-
         }
 
         public RegionData Get(int posX, int posY, UUID scopeID)

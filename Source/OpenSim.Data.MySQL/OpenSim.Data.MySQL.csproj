@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <AssemblyTitle>OpenSim.Data.MySQL</AssemblyTitle>
     <Company>http://opensimulator.org</Company>
     <Product>OpenSim.Data.MySQL</Product>
@@ -51,9 +51,9 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Autofac" Version="7.1.0" />
-    <PackageReference Include="log4net" Version="2.0.15" />
     <PackageReference Include="MySqlConnector" Version="2.2.7" />
-    <PackageReference Include="RawScape.Nini" Version="1.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />

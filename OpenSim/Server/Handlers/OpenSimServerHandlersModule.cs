@@ -109,13 +109,13 @@ namespace OpenSim.Server.Handlers
                 .Named<IServiceConnector>("InventoryService")
                 .AsImplementedInterfaces();
 
-            builder.RegisterType<LandServiceInConnector>()
-                .Named<IServiceConnector>("LandService")
-                .AsImplementedInterfaces();
+            // builder.RegisterType<LandServiceInConnector>()
+            //     .Named<IServiceConnector>("LandService")
+            //     .AsImplementedInterfaces();
 
-            builder.RegisterType<LLLoginServiceInConnector>()
-                .Named<IServiceConnector>("LoginService")
-                .AsImplementedInterfaces();
+            // builder.RegisterType<LLLoginServiceInConnector>()
+            //     .Named<IServiceConnector>("LoginService")
+            //     .AsImplementedInterfaces();
 
             builder.RegisterType<MapAddServiceConnector>()
                 .Named<IServiceConnector>("MapImageService")
@@ -133,9 +133,9 @@ namespace OpenSim.Server.Handlers
                 .Named<IServiceConnector>("MuteListService")
                 .AsImplementedInterfaces();
 
-            builder.RegisterType<NeighbourServiceInConnector>()
-                .Named<IServiceConnector>("NeighbourService")
-                .AsImplementedInterfaces();
+            // builder.RegisterType<NeighbourServiceInConnector>()
+            //     .Named<IServiceConnector>("NeighbourService")
+            //     .AsImplementedInterfaces();
 
             builder.RegisterType<PresenceServiceConnector>()
                 .Named<IServiceConnector>("PresenceService")
@@ -145,9 +145,9 @@ namespace OpenSim.Server.Handlers
                 .Named<IServiceConnector>("UserProfilesService")
                 .AsImplementedInterfaces();
 
-            builder.RegisterType<SimulationServiceInConnector>()
-                .Named<IServiceConnector>("SimulationService")
-                .AsImplementedInterfaces();
+            // builder.RegisterType<SimulationServiceInConnector>()
+            //     .Named<IServiceConnector>("SimulationService")
+            //     .AsImplementedInterfaces();
 
             builder.RegisterType<UserAccountServiceConnector>()
                 .Named<IServiceConnector>("UserAccountService")

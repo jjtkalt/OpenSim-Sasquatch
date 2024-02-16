@@ -26,7 +26,6 @@
  */
 
 using MySqlConnector;
-using System;
 
 namespace OpenSim.Data.MySQL
 {
@@ -35,26 +34,22 @@ namespace OpenSim.Data.MySQL
     /// </summary>
     public class MySqlFramework
     {
-        private static readonly log4net.ILog m_log =
-                log4net.LogManager.GetLogger(
-                System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
-
         protected string m_connectionString = String.Empty;
         protected MySqlTransaction m_trans = null;
 
-        // Constructor using a connection string. Instances constructed
+        // Initialize using a connection string. Instances constructed
         // this way will open a new connection for each call.
-        protected MySqlFramework(string connectionString)
+        public void Initialize(string connectionString)
         {
             m_connectionString = connectionString;
         }
 
-        // Constructor using a connection object. Instances constructed
+        // Initialize using a connection object. Instances constructed
         // this way will use the connection object and never create
         // new connections.
-        protected MySqlFramework(MySqlTransaction trans)
+        public void Initialize(MySqlTransaction transaction)
         {
-            m_trans = trans;
+            m_trans = transaction;
         }
 
         //////////////////////////////////////////////////////////////
@@ -62,7 +57,7 @@ namespace OpenSim.Data.MySQL
         // All non queries are funneled through one connection
         // to increase performance a little
         //
-        protected int ExecuteNonQuery(MySqlCommand cmd)
+        public int ExecuteNonQuery(MySqlCommand cmd)
         {
             if (m_trans == null)
             {
@@ -80,13 +75,13 @@ namespace OpenSim.Data.MySQL
             }
         }
 
-        private int ExecuteNonQueryWithTransaction(MySqlCommand cmd, MySqlTransaction trans)
+        public int ExecuteNonQueryWithTransaction(MySqlCommand cmd, MySqlTransaction trans)
         {
             cmd.Transaction = trans;
             return ExecuteNonQueryWithConnection(cmd, trans.Connection);
         }
 
-        private int ExecuteNonQueryWithConnection(MySqlCommand cmd, MySqlConnection dbcon)
+        public int ExecuteNonQueryWithConnection(MySqlCommand cmd, MySqlConnection dbcon)
         {
             try
             {
@@ -98,17 +93,14 @@ namespace OpenSim.Data.MySQL
                     cmd.Connection = null;
                     return ret;
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
-                    m_log.Error(e.Message, e);
-                    m_log.Error(Environment.StackTrace.ToString());
                     cmd.Connection = null;
                     return 0;
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                m_log.Error(e.Message, e);
                 return 0;
             }
         }

@@ -31,11 +31,14 @@ using OpenMetaverse;
 
 namespace OpenSim.Data.MySQL
 {
-    public class MySqlFriendsData : MySQLGenericTableHandler<FriendsData>, IFriendsData
+    public class MySqlFriendsData : IFriendsData
     {
-        public MySqlFriendsData(string connectionString, string realm)
-                : base(connectionString, realm, "FriendsStore")
+        protected MySQLGenericTableHandler<FriendsData> tableHandler = null;
+
+        public void Initialize(string connectionString, string realm)
         {
+            tableHandler = new();
+            tableHandler.Initialize(connectionString, realm, "FriendsStore");
         }
 
         public bool Delete(UUID principalID, string friend)
@@ -43,15 +46,15 @@ namespace OpenSim.Data.MySQL
             return Delete(principalID.ToString(), friend);
         }
 
-        public override bool Delete(string principalID, string friend)
+        public bool Delete(string principalID, string friend)
         {
             using (MySqlCommand cmd = new MySqlCommand())
             {
-                cmd.CommandText = String.Format("delete from {0} where PrincipalID = ?PrincipalID and Friend = ?Friend", m_Realm);
+                cmd.CommandText = String.Format("delete from {0} where PrincipalID = ?PrincipalID and Friend = ?Friend", tableHandler.Realm);
                 cmd.Parameters.AddWithValue("?PrincipalID", principalID.ToString());
                 cmd.Parameters.AddWithValue("?Friend", friend);
 
-                ExecuteNonQuery(cmd);
+                tableHandler.ExecuteNonQuery(cmd);
             }
 
             return true;
@@ -61,10 +64,10 @@ namespace OpenSim.Data.MySQL
         {
             using (MySqlCommand cmd = new MySqlCommand())
             {
-                cmd.CommandText = String.Format("select a.*,case when b.Flags is null then -1 else b.Flags end as TheirFlags from {0} as a left join {0} as b on a.PrincipalID = b.Friend and a.Friend = b.PrincipalID where a.PrincipalID = ?PrincipalID", m_Realm);
+                cmd.CommandText = String.Format("select a.*,case when b.Flags is null then -1 else b.Flags end as TheirFlags from {0} as a left join {0} as b on a.PrincipalID = b.Friend and a.Friend = b.PrincipalID where a.PrincipalID = ?PrincipalID", tableHandler.Realm);
                 cmd.Parameters.AddWithValue("?PrincipalID", principalID.ToString());
 
-                return DoQuery(cmd);
+                return tableHandler.DoQuery(cmd);
             }
         }
 
@@ -72,11 +75,16 @@ namespace OpenSim.Data.MySQL
         {
             using (MySqlCommand cmd = new MySqlCommand())
             {
-                cmd.CommandText = String.Format("select a.*,case when b.Flags is null then -1 else b.Flags end as TheirFlags from {0} as a left join {0} as b on a.PrincipalID = b.Friend and a.Friend = b.PrincipalID where a.PrincipalID LIKE ?PrincipalID", m_Realm);
+                cmd.CommandText = String.Format("select a.*,case when b.Flags is null then -1 else b.Flags end as TheirFlags from {0} as a left join {0} as b on a.PrincipalID = b.Friend and a.Friend = b.PrincipalID where a.PrincipalID LIKE ?PrincipalID", tableHandler.Realm);
                 cmd.Parameters.AddWithValue("?PrincipalID", principalID.ToString() + '%');
 
-                return DoQuery(cmd);
+                return tableHandler.DoQuery(cmd);
             }
+        }
+
+        public bool Store(FriendsData data)
+        {
+            return tableHandler.Store(data);
         }
     }
 }

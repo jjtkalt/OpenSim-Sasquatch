@@ -37,7 +37,7 @@ namespace OpenSim.Framework.Servers
     {
         private static IHttpServer instance = null;
         private static IHttpServer unsecureinstance = null;
-        private static Dictionary<uint, IHttpServer> m_Servers = new Dictionary<uint, IHttpServer>();
+        private static Dictionary<uint, IHttpServer> m_Servers = new();
 
         /// <summary>
         /// Service Provider to Allow instantiation of services.  Since this is a static class
@@ -372,6 +372,20 @@ namespace OpenSim.Framework.Servers
         }
 
         /// <summary>
+        /// Lookup and return the HttpServer listening on port if it exists
+        /// </summary>
+        /// <param name="port">The port the target server is registered on</param>
+        /// <param name="server">An out paramater for the returned server</param>
+        /// <returns>true if a server is registered on port, false otherwise</returns>
+        public static bool TryGetHttpServer(uint port, out IHttpServer server) 
+        {
+            lock (m_Servers)
+            {
+                return m_Servers.TryGetValue(port, out server);
+            }
+        }
+
+        /// <summary>
         /// Get the default http server, an http server for a specific port
         /// and/or an http server bound to a specific address
         /// </summary>
@@ -382,6 +396,7 @@ namespace OpenSim.Framework.Servers
         /// <param name='port'>If 0 then the default HTTP server is returned.</param>
         /// <param name='ipaddr'>A specific IP address to bind to.  If null then the default IP address is used.</param>
         public static IHttpServer GetHttpServer(
+            IServiceScope serviceScope,
             uint port, 
             IPAddress ipaddr = null,
             bool ssl = false, 
@@ -398,28 +413,27 @@ namespace OpenSim.Framework.Servers
 
             lock (m_Servers)
             {
-                if (m_Servers.ContainsKey(port))
-                    return m_Servers[port];
-                
-                using (var scope = ServiceProvider.CreateScope())
-                {
-                    var httpServer = scope.ServiceProvider.GetService<IHttpServer>();
+                IHttpServer httpServer = null;
 
-                    if (ipaddr != null)
-                        httpServer.ListenIPAddress = ipaddr;
+                if (m_Servers.TryGetValue(port, out httpServer) is true)
+                    return httpServer;
 
-                    httpServer.Initialize(port, ipaddr, ssl, CN, CPath, CPass);
+                httpServer = serviceScope.ServiceProvider.GetService<IHttpServer>();
 
-                    m_Servers[port] = httpServer;
-                }
+                if (ipaddr != null)
+                    httpServer.ListenIPAddress = ipaddr;
+
+                httpServer.Initialize(port, ipaddr, ssl, CN, CPath, CPass);
 
                 if (Instance == null)
-                    Instance = m_Servers[port];
-                    
-                m_Servers[port].Start();
+                    Instance = httpServer;
 
-                return m_Servers[port];
+                m_Servers[port] = httpServer;
             }
+                  
+            m_Servers[port].Start();
+
+            return m_Servers[port];
         }
 
         public static void Stop()

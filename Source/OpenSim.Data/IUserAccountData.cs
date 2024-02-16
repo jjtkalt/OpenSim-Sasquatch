@@ -46,10 +46,16 @@ namespace OpenSim.Data
     /// </summary>
     public interface IUserAccountData
     {
+        public void Initialize(string connectionString, string realm);
+
         UserAccountData[] Get(string[] fields, string[] values);
+        
         bool Store(UserAccountData data);
+
         bool Delete(string field, string val);
+
         UserAccountData[] GetUsers(UUID scopeID, string query);
+        
         UserAccountData[] GetUsersWhere(UUID scopeID, string where);
     }
 }
