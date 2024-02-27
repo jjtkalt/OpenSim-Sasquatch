@@ -41,9 +41,14 @@ namespace OpenSim.Data
 
     public interface IAvatarData
     {
+        void Initialize(string connString, string realm);
+
         AvatarBaseData[] Get(string field, string val);
+
         bool Store(AvatarBaseData data);
+
         bool Delete(UUID principalID, string name);
+        
         bool Delete(string field, string val);
     }
 }

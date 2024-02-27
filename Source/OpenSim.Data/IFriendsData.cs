@@ -44,6 +44,7 @@ namespace OpenSim.Data
     /// </summary>
     public interface IFriendsData
     {
+        void Initialize(string connString, string realm);
         bool Store(FriendsData data);
         bool Delete(UUID ownerID, string friend);
         bool Delete(string ownerID, string friend);

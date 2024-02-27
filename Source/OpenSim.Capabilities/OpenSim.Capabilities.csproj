@@ -21,7 +21,7 @@
     <ProjectReference Include="..\..\Source\OpenSim.Framework.Monitoring\OpenSim.Framework.Monitoring.csproj" />
     <ProjectReference Include="..\..\Source\OpenSim.Framework.Servers\OpenSim.Framework.Servers.csproj" />
     <ProjectReference Include="..\..\Source\OpenSim.Framework.Servers.HttpServer\OpenSim.Framework.Servers.HttpServer.csproj" />
-    <ProjectReference Include="..\..\OpenSim\Services\Interfaces\OpenSim.Services.Interfaces.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Services\OpenSim.Services.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Autofac" Version="8.0.0" />

@@ -41,13 +41,10 @@
     <ProjectReference Include="..\..\OpenSim\Region\PhysicsModules\ubOdeMeshing\OpenSim.Region.PhysicsModule.ubOdeMeshing.csproj" />
     <ProjectReference Include="..\..\OpenSim\Region\PhysicsModules\ubOde\OpenSim.Region.PhysicsModule.ubOde.csproj" />
     <ProjectReference Include="..\..\Source\OpenSim.Region.ScriptEngine.YEngine\OpenSim.Region.ScriptEngine.YEngine.csproj" />
-    <ProjectReference Include="..\..\OpenSim\Server\Base\OpenSim.Server.Base.csproj" />
-    <ProjectReference Include="..\..\OpenSim\Server\Handlers\OpenSim.Server.Handlers.csproj" />
-    <ProjectReference Include="..\..\OpenSim\Services\EstateService\OpenSim.Services.EstateService.csproj" />
-    <ProjectReference Include="..\..\OpenSim\Services\Interfaces\OpenSim.Services.Interfaces.csproj" />
-    <ProjectReference Include="..\..\OpenSim\Services\SimulationService\OpenSim.Services.SimulationService.csproj" />
-    <ProjectReference Include="..\..\OpenSim\Services\UserAccountService\OpenSim.Services.UserAccountService.csproj" />
-    <ProjectReference Include="..\OpenSim.Server.Common\OpenSim.Server.Common.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Server.Base\OpenSim.Server.Base.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Server.Handlers\OpenSim.Server.Handlers.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Server.Common\OpenSim.Server.Common.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Services\OpenSim.Services.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Autofac" Version="8.0.0" />

@@ -33,20 +33,28 @@ using OpenMetaverse;
 using OpenMetaverse.StructuredData;
 using log4net;
 using MySqlConnector;
+using log4net.Core;
+using Microsoft.Extensions.Logging;
+using System.Security.AccessControl;
 
 namespace OpenSim.Data.MySQL
 {
-    public class UserProfilesData: IProfilesData
+    public class UserProfilesData : IProfilesData
     {
-        static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        protected readonly ILogger<UserProfilesData> m_logger;
 
-        #region Properites
-        string ConnectionString
+        public UserProfilesData(ILogger<UserProfilesData> logger)
         {
-            get; set;
+            m_logger = logger;
         }
 
-        protected virtual Assembly Assembly
+        #region Properites
+
+        string ConnectionString { get; set; }
+
+        string Realm { get; set; }
+
+        protected Assembly Assembly
         {
             get { return GetType().Assembly; }
         }
@@ -54,9 +62,12 @@ namespace OpenSim.Data.MySQL
         #endregion Properties
 
         #region class Member Functions
-        public UserProfilesData(string connectionString)
+        
+        public void Initialize(string connectionString, string realm)
         {
             ConnectionString = connectionString;
+            Realm = realm;
+
             Init();
         }
 
@@ -71,6 +82,7 @@ namespace OpenSim.Data.MySQL
                 dbcon.Close();
             }
         }
+
         #endregion Member Functions
 
         #region Classifieds Queries
@@ -111,8 +123,9 @@ namespace OpenSim.Data.MySQL
                                 }
                                 catch (Exception e)
                                 {
-                                    m_log.ErrorFormat("[PROFILES_DATA] GetClassifiedRecords exception {0}", e.Message);
+                                    m_logger.LogError(e, $"[PROFILES_DATA] GetClassifiedRecords exception");
                                 }
+
                                 n.Add("classifieduuid", OSD.FromUUID(Id));
                                 n.Add("name", OSD.FromString(Name));
                                 data.Add(n);
@@ -230,7 +243,7 @@ namespace OpenSim.Data.MySQL
             }
             catch (Exception e)
             {
-                m_log.ErrorFormat("[PROFILES_DATA]: UpdateClassifiedRecord exception {0}", e.Message);
+                m_logger.LogError(e, "[PROFILES_DATA]: UpdateClassifiedRecord exception");
                 result = e.Message;
                 return false;
             }
@@ -257,7 +270,7 @@ namespace OpenSim.Data.MySQL
             }
             catch (Exception e)
             {
-                m_log.ErrorFormat("[PROFILES_DATA]: DeleteClassifiedRecord exception {0}", e.Message);
+                m_logger.LogError(e, "[PROFILES_DATA]: DeleteClassifiedRecord exception");
                 return false;
             }
             return true;
@@ -304,7 +317,7 @@ namespace OpenSim.Data.MySQL
             }
             catch (Exception e)
             {
-                m_log.ErrorFormat("[PROFILES_DATA]: GetClassifiedInfo exception {0}", e.Message);
+                m_logger.LogError(e, "[PROFILES_DATA]: GetClassifiedInfo exception");
             }
             return true;
         }
@@ -346,7 +359,7 @@ namespace OpenSim.Data.MySQL
             }
             catch (Exception e)
             {
-                m_log.ErrorFormat("[PROFILES_DATA]: GetAvatarPicks exception {0}", e.Message);
+                m_logger.LogError(e, "[PROFILES_DATA]: GetAvatarPicks exception");
             }
             return data;
         }
@@ -399,7 +412,7 @@ namespace OpenSim.Data.MySQL
             }
             catch (Exception e)
             {
-                m_log.ErrorFormat("[PROFILES_DATA]: GetPickInfo exception {0}", e.Message);
+                m_logger.LogError(e, "[PROFILES_DATA]: GetPickInfo exception");
             }
             return pick;
         }
@@ -463,7 +476,7 @@ namespace OpenSim.Data.MySQL
             }
             catch (Exception e)
             {
-                m_log.ErrorFormat("[PROFILES_DATA]: UpdatePicksRecord exception {0}", e.Message);
+                m_logger.LogError(e, "[PROFILES_DATA]: UpdatePicksRecord exception");
                 return false;
             }
             return true;
@@ -490,7 +503,7 @@ namespace OpenSim.Data.MySQL
             }
             catch (Exception e)
             {
-                m_log.ErrorFormat("[PROFILES_DATA]: DeletePicksRecord exception {0}", e.Message);
+                m_logger.LogError(e, "[PROFILES_DATA]: DeletePicksRecord exception");
                 return false;
             }
             return true;
@@ -530,7 +543,7 @@ namespace OpenSim.Data.MySQL
             }
             catch (Exception e)
             {
-                m_log.ErrorFormat("[PROFILES_DATA]: GetAvatarNotes exception {0}", e.Message);
+                m_logger.LogError(e, "[PROFILES_DATA]: GetAvatarNotes exception");
             }
             return true;
         }
@@ -577,7 +590,7 @@ namespace OpenSim.Data.MySQL
             }
             catch (Exception e)
             {
-                m_log.ErrorFormat("[PROFILES_DATA]: UpdateAvatarNotes exception {0}", e.Message);
+                m_logger.LogError(e, "[PROFILES_DATA]: UpdateAvatarNotes exception");
                 return false;
             }
             return true;
@@ -603,8 +616,8 @@ namespace OpenSim.Data.MySQL
                         {
                             if(reader.HasRows)
                             {
-                                m_log.DebugFormat("[PROFILES_DATA]" +
-                                                  ": Getting data for {0}.", props.UserId);
+                                m_logger.LogDebug($"[PROFILES_DATA]: Getting data for {props.UserId}");
+
                                 reader.Read();
                                 props.WebUrl = (string)reader["profileURL"];
                                 UUID.TryParse((string)reader["profileImage"], out props.ImageId);
@@ -620,8 +633,7 @@ namespace OpenSim.Data.MySQL
                             }
                             else
                             {
-                                m_log.DebugFormat("[PROFILES_DATA]" +
-                                                 ": No data for {0}", props.UserId);
+                                m_logger.LogDebug($"[PROFILES_DATA]: No data for {props.UserId}");
 
                                 props.WebUrl = string.Empty;
                                 props.ImageId = UUID.Zero;
@@ -698,7 +710,7 @@ namespace OpenSim.Data.MySQL
             }
             catch (Exception e)
             {
-                m_log.ErrorFormat("[PROFILES_DATA]: GetAvatarProperties exception {0}", e.Message);
+                m_logger.LogError(e, "[PROFILES_DATA]: GetAvatarProperties exception");
                 result = e.Message;
                 return false;
             }
@@ -733,7 +745,7 @@ namespace OpenSim.Data.MySQL
             }
             catch (Exception e)
             {
-                m_log.ErrorFormat("[PROFILES_DATA]: UpdateAvatarProperties exception {0}", e.Message);
+                m_logger.LogError(e, "[PROFILES_DATA]: UpdateAvatarProperties exception");
 
                 return false;
             }
@@ -772,7 +784,7 @@ namespace OpenSim.Data.MySQL
             }
             catch (Exception e)
             {
-                m_log.ErrorFormat("[PROFILES_DATA]: UpdateAvatarInterests exception {0}", e.Message);
+                m_logger.LogError(e, "[PROFILES_DATA]: UpdateAvatarInterests exception");
                 result = e.Message;
                 return false;
             }
@@ -854,8 +866,9 @@ namespace OpenSim.Data.MySQL
             }
             catch (Exception e)
             {
-                m_log.ErrorFormat("[PROFILES_DATA]: GetUserImageAssets exception {0}", e.Message);
+                m_logger.LogError(e, "[PROFILES_DATA]: GetUserImageAssets exception");
             }
+
             return data;
         }
 
@@ -904,7 +917,7 @@ namespace OpenSim.Data.MySQL
             }
             catch (Exception e)
             {
-                m_log.ErrorFormat("[PROFILES_DATA]: GetUserPreferences exception {0}", e.Message);
+                m_logger.LogError(e, "[PROFILES_DATA]: GetUserPreferences exception");
                 result = e.Message;
                 return false;
             }
@@ -936,7 +949,7 @@ namespace OpenSim.Data.MySQL
             }
             catch (Exception e)
             {
-                m_log.ErrorFormat("[PROFILES_DATA]: UpdateUserPreferences exception {0} {1}", e.Message, e.InnerException);
+                m_logger.LogError(e, "[PROFILES_DATA]: UpdateUserPreferences exception");
                 result = e.Message;
                 return false;
             }
@@ -987,7 +1000,7 @@ namespace OpenSim.Data.MySQL
             }
             catch (Exception e)
             {
-                m_log.ErrorFormat("[PROFILES_DATA]: GetUserAppData exception {0}", e.Message);
+                m_logger.LogError(e, "[PROFILES_DATA]: GetUserAppData exception");
                 result = e.Message;
                 return false;
             }
@@ -1017,11 +1030,12 @@ namespace OpenSim.Data.MySQL
             }
             catch (Exception e)
             {
-                m_log.ErrorFormat("[PROFILES_DATA]: SetUserAppData exception {0}", e.Message);
+                m_logger.LogError(e, "[PROFILES_DATA]: SetUserAppData exception");
                 return false;
             }
             return true;
         }
+
         #endregion Integration
     }
 }

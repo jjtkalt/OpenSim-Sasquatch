@@ -27,21 +27,20 @@
 
 using System;
 using System.Reflection;
-using Nini.Config;
 using OpenSim.Framework;
 using OpenSim.Data;
 using OpenSim.Services.Interfaces;
-using OpenSim.Services.Base;
+
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Groups
 {
-    public class GroupsServiceBase : ServiceBase
+    public class GroupsServiceBase
     {
         protected IGroupsData m_Database = null;
         protected IGridUserData m_GridUserService = null;
 
         public GroupsServiceBase(IConfiguration config, string cName)
-            : base(config)
         {
             string dllName = String.Empty;
             string connString = String.Empty;
@@ -52,24 +51,24 @@ namespace OpenSim.Groups
             //
             // Try reading the [DatabaseService] section, if it exists
             //
-            IConfig dbConfig = config.Configs["DatabaseService"];
-            if (dbConfig != null)
+            var dbConfig = config.GetSection("DatabaseService");
+            if (dbConfig.Exists())
             {
                 if (dllName.Length == 0)
-                    dllName = dbConfig.GetString("StorageProvider", String.Empty);
+                    dllName = dbConfig.GetValue("StorageProvider", String.Empty);
                 if (connString.Length == 0)
-                    connString = dbConfig.GetString("ConnectionString", String.Empty);
+                    connString = dbConfig.GetValue("ConnectionString", String.Empty);
             }
 
             //
             // [Groups] section overrides [DatabaseService], if it exists
             //
-            IConfig groupsConfig = config.Configs[configName];
-            if (groupsConfig != null)
+            var groupsConfig = config.GetSection(configName);
+            if (groupsConfig.Exists())
             {
-                dllName = groupsConfig.GetString("StorageProvider", dllName);
-                connString = groupsConfig.GetString("ConnectionString", connString);
-                realm = groupsConfig.GetString("Realm", realm);
+                dllName = groupsConfig.GetValue("StorageProvider", dllName);
+                connString = groupsConfig.GetValue("ConnectionString", connString);
+                realm = groupsConfig.GetValue("Realm", realm);
             }
 
             //

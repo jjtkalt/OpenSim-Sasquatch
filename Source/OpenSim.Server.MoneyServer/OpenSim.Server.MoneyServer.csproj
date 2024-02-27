@@ -34,10 +34,10 @@
     <ProjectReference Include="..\..\Source\OpenSim.Data\OpenSim.Data.csproj" />
     <ProjectReference Include="..\..\Source\OpenSim.Framework\OpenSim.Framework.csproj" />
     <ProjectReference Include="..\..\OpenSim\Region\Framework\OpenSim.Region.Framework.csproj" />
-    <ProjectReference Include="..\..\OpenSim\Server\Base\OpenSim.Server.Base.csproj" />
-    <ProjectReference Include="..\..\OpenSim\Server\Handlers\OpenSim.Server.Handlers.csproj" />
-    <ProjectReference Include="..\..\OpenSim\Services\Interfaces\OpenSim.Services.Interfaces.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Server.Base\OpenSim.Server.Base.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Server.Handlers\OpenSim.Server.Handlers.csproj" />
     <ProjectReference Include="..\..\Source\OpenSim.Server.Common\OpenSim.Server.Common.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Services\OpenSim.Services.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Autofac" Version="8.0.0" />

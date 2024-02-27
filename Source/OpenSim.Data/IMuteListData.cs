@@ -37,6 +37,8 @@ namespace OpenSim.Data
     /// </summary>
     public interface IMuteListData
     {
+        void Initialize(string connString);
+        
         bool Store(MuteData data);
         MuteData[] Get(UUID agentID);
         bool Delete(UUID agentID, UUID muteID, string muteName);

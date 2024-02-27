@@ -42,8 +42,8 @@ using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Base;
 using OpenSim.Server.Common;
 using OpenSim.Server.Handlers;
-using OpenSim.Services.UserAccountService;
 using OpenSim.Data.MySQL;
+using OpenSim.Services;
 
 namespace OpenSim.Server.GridServer
 {
@@ -107,7 +107,7 @@ namespace OpenSim.Server.GridServer
                         
                     // Register Grid Modules
                     builder.RegisterModule(new MySQLDataModule());
-                    builder.RegisterModule(new UserAccountServiceModule());
+                    builder.RegisterModule(new OpenSimServicesModule());
                     builder.RegisterModule(new OpenSimServerHandlersModule());
                 })
                 .ConfigureServices(services =>

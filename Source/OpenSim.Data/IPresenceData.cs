@@ -46,6 +46,8 @@ namespace OpenSim.Data
     /// </summary>
     public interface IPresenceData
     {
+        void Initialize(string connString, string realm);
+        
         bool Store(PresenceData data);
 
         PresenceData Get(UUID sessionID);

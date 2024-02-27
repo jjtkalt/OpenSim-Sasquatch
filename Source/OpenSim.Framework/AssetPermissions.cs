@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
-
-using Nini.Config;
-using log4net;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 using OpenMetaverse;
 
@@ -11,14 +7,17 @@ namespace OpenSim.Framework
 {
     public class AssetPermissions
     {
-        private static readonly ILog m_log =
-            LogManager.GetLogger(
-            MethodBase.GetCurrentMethod().DeclaringType);
-
         private bool[] m_DisallowExport, m_DisallowImport;
         private string[] m_AssetTypeNames;
 
-        public AssetPermissions(IConfig config)
+        private readonly ILogger<AssetPermissions> m_logger;
+
+        public AssetPermissions(ILogger<AssetPermissions> logger)
+        {
+            m_logger = logger;
+        }
+
+        public AssetPermissions(IConfigurationSection config)
         {
             Type enumType = typeof(AssetType);
             m_AssetTypeNames = Enum.GetNames(enumType);
@@ -30,15 +29,15 @@ namespace OpenSim.Framework
 
             LoadPermsFromConfig(config, "DisallowExport", m_DisallowExport);
             LoadPermsFromConfig(config, "DisallowImport", m_DisallowImport);
-
         }
 
-        private void LoadPermsFromConfig(IConfig assetConfig, string variable, bool[] bitArray)
+
+        private void LoadPermsFromConfig(IConfigurationSection assetConfig, string variable, bool[] bitArray)
         {
             if (assetConfig == null)
                 return;
 
-            string perms = assetConfig.GetString(variable, String.Empty);
+            string perms = assetConfig.GetValue(variable, String.Empty);
             string[] parts = perms.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             foreach (string s in parts)
             {
@@ -46,9 +45,8 @@ namespace OpenSim.Framework
                 if (index >= 0)
                     bitArray[index] = true;
                 else
-                    m_log.Warn($"[Asset Permissions]: Invalid AssetType {s}");
+                    m_logger.LogWarning($"[Asset Permissions]: Invalid AssetType {s}");
             }
-
         }
 
         public bool AllowedExport(sbyte type)
@@ -58,7 +56,7 @@ namespace OpenSim.Framework
             int index = Array.IndexOf(m_AssetTypeNames, assetTypeName.ToLower());
             if (index >= 0 && m_DisallowExport[index])
             {
-                m_log.Debug($"[Asset Permissions]: Export denied: configuration does not allow export of AssetType {assetTypeName}");
+                m_logger.LogDebug($"[Asset Permissions]: Export denied: configuration does not allow export of AssetType {assetTypeName}");
                 return false;
             }
 
@@ -72,13 +70,11 @@ namespace OpenSim.Framework
             int index = Array.IndexOf(m_AssetTypeNames, assetTypeName.ToLower());
             if (index >= 0 && m_DisallowImport[index])
             {
-                m_log.Debug($"[Asset Permissions]: Import denied: configuration does not allow import of AssetType {assetTypeName}");
+                m_logger.LogDebug($"[Asset Permissions]: Import denied: configuration does not allow import of AssetType {assetTypeName}");
                 return false;
             }
 
             return true;
         }
-
-
     }
 }

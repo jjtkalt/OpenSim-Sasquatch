@@ -314,7 +314,9 @@ namespace OpenSim.Region.Framework.Scenes
             {
                 using (MemoryStream ms = new MemoryStream(data))
                 {
+#pragma warning disable SYSLIB0011 // Type or member is obsolete
                     BinaryFormatter fmt = new BinaryFormatter();
+#pragma warning restore SYSLIB0011 // Type or member is obsolete
                     newMotion = (KeyframeMotion)fmt.Deserialize(ms);
                 }
 
@@ -836,7 +838,9 @@ namespace OpenSim.Region.Framework.Scenes
 
             using (MemoryStream ms = new MemoryStream())
             {
+#pragma warning disable SYSLIB0011 // Type or member is obsolete
                 BinaryFormatter fmt = new BinaryFormatter();
+#pragma warning restore SYSLIB0011 // Type or member is obsolete
                 if (!m_selected && tmp != null)
                     m_serializedPosition = tmp.AbsolutePosition;
                 fmt.Serialize(ms, this);

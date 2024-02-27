@@ -40,6 +40,8 @@ namespace OpenSim.Data
     /// </summary>
     public interface IAuthenticationData
     {
+        void Initialize(string connString, string realm);
+        
         AuthenticationData Get(UUID principalID);
 
         bool Store(AuthenticationData data);
