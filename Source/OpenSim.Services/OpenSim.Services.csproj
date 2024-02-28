@@ -33,15 +33,16 @@
     <ProjectReference Include="..\..\Source\OpenSim.Framework.Serialization\OpenSim.Framework.Serialization.csproj" />
     <ProjectReference Include="..\..\Source\OpenSim.Server.Base\OpenSim.Server.Base.csproj" />
     <ProjectReference Include="..\..\Source\OpenSim.Services.Interfaces\OpenSim.Services.Interfaces.csproj" />
+    <ProjectReference Include="..\OpenSim.Framework.AssetLoader.Filesystem\OpenSim.Framework.AssetLoader.Filesystem.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="GridService/**"/>    
-    <Compile Remove="HypergridService/**"/>
-    <Compile Remove="InventoryService/**"/>
-    <Compile Remove="LLLoginService/**"/>    
-    <Compile Remove="PresenceService/**"/>    
-    <Compile Remove="SimulationService/**"/>    
+    <Compile Remove="GridService/**" />    
+    <Compile Remove="HypergridService/**" />
+    <Compile Remove="InventoryService/**" />
+    <Compile Remove="LLLoginService/**" />    
+    <Compile Remove="PresenceService/**" />    
+    <Compile Remove="SimulationService/**" />    
   </ItemGroup>
 
   <ItemGroup>

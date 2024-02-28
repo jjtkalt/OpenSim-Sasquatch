@@ -3,6 +3,8 @@ using OpenSim.Services.Interfaces;
 using OpenSim.Services.FSAssetService;
 using OpenSim.Services.UserAccountService;
 using OpenSim.Services.EstateService;
+using OpenSim.Framework;
+using OpenSim.Framework.AssetLoader.Filesystem;
 
 namespace OpenSim.Services;
 
@@ -12,6 +14,14 @@ public class OpenSimServicesModule : Module
     {
         builder.RegisterType<FSAssetConnector>()
             .Named<IAssetService>("FSAssetConnector")
+            .AsImplementedInterfaces().SingleInstance();
+
+        builder.RegisterType<AssetService.AssetService>()
+            .Named<IAssetService>("AssetService")
+            .AsImplementedInterfaces().SingleInstance();  
+
+        builder.RegisterType<AssetLoaderFileSystem>()
+            .Named<IAssetLoader>("AssetLoaderFileSystem")
             .AsImplementedInterfaces().SingleInstance();
 
         builder.RegisterType<AgentPreferencesService>()

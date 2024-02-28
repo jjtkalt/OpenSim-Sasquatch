@@ -59,14 +59,14 @@ namespace OpenSim.Services.FSAssetService
         protected IAssetService m_FallbackService;
         protected Thread m_WriterThread;
         protected Thread m_StatsThread;
-        protected string m_SpoolDirectory;
+        protected string? m_SpoolDirectory;
         protected object m_readLock = new object();
         protected object m_statsLock = new object();
         protected int m_readCount = 0;
         protected int m_readTicks = 0;
         protected int m_missingAssets = 0;
         protected int m_missingAssetsFS = 0;
-        protected string m_FSBase;
+        protected string? m_FSBase;
         protected bool m_useOsgridFormat = false;
         protected bool m_showStats = true;
 
@@ -148,11 +148,13 @@ namespace OpenSim.Services.FSAssetService
             m_DataConnector.Initialise(connectionString, realm, SkipAccessTimeDays);
 
             // Setup Fallback Service
-            string str = assetConfig.GetValue("FallbackService", string.Empty);
+            string? fallbackService = assetConfig.GetValue("FallbackService", string.Empty);
 
-            if (!string.IsNullOrEmpty(str))
+            if (!string.IsNullOrEmpty(fallbackService))
             {
-                m_FallbackService = m_context.ResolveNamed<IAssetService>(str);
+                
+                var serviceName = fallbackService.Split(":")[1];
+                m_FallbackService = m_context.ResolveNamed<IAssetService>(serviceName);
 
                 if (m_FallbackService is not null)
                 {
@@ -171,7 +173,7 @@ namespace OpenSim.Services.FSAssetService
             Directory.CreateDirectory(spoolTmp);
 
             m_FSBase = assetConfig.GetValue("BaseDirectory", String.Empty);
-            if (m_FSBase.Length == 0)
+            if (string.IsNullOrEmpty(m_FSBase) is true)
             {
                 m_logger.LogError("[FSASSETS]: BaseDirectory not specified");
                 throw new Exception("Configuration error");
@@ -184,12 +186,12 @@ namespace OpenSim.Services.FSAssetService
 
             if (m_isMainInstance)
             {
-                string loader = assetConfig.GetValue("DefaultAssetLoader", string.Empty);
-
+                string? loader = assetConfig.GetValue("DefaultAssetLoader", string.Empty);
                 if (!string.IsNullOrEmpty(loader))
                 {
-                    m_AssetLoader = m_context.ResolveNamed<IAssetLoader>(loader);
-                    string loaderArgs = assetConfig.GetValue("AssetLoaderArgs", string.Empty);
+                    var serviceName = loader.Split(":")[1];
+                    m_AssetLoader = m_context.ResolveNamed<IAssetLoader>(serviceName);
+                    string? loaderArgs = assetConfig.GetValue("AssetLoaderArgs", string.Empty);
 
                     m_logger.LogInformation($"[FSASSETS]: Loading default asset set from {loaderArgs}");
 

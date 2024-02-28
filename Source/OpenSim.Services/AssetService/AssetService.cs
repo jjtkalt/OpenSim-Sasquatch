@@ -96,10 +96,11 @@ namespace OpenSim.Services.AssetService
 
             if (string.IsNullOrEmpty(loaderName) is false)
             {
-                m_AssetLoader = m_context.ResolveNamed<IAssetLoader>(loaderName);
+                var serviceName = loaderName.Split(":")[1];
+                m_AssetLoader = m_context.ResolveNamed<IAssetLoader>(serviceName);
                 if (m_AssetLoader == null)
                 {
-                    throw new Exception($"Asset loader could not be loaded from {loaderName}");
+                    throw new Exception($"Asset loader could not be loaded for {serviceName}");
                 }
             }
 
