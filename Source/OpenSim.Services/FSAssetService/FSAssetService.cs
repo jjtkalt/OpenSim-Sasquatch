@@ -152,7 +152,6 @@ namespace OpenSim.Services.FSAssetService
 
             if (!string.IsNullOrEmpty(fallbackService))
             {
-                
                 var serviceName = fallbackService.Split(":")[1];
                 m_FallbackService = m_context.ResolveNamed<IAssetService>(serviceName);
 
