@@ -39,7 +39,7 @@ namespace OpenSim.Data.Null
         private static Dictionary<UUID, AuthenticationData> m_DataByUUID = new Dictionary<UUID, AuthenticationData>();
         private static Dictionary<UUID, string> m_Tokens = new Dictionary<UUID, string>();
 
-        public NullAuthenticationData(string connectionString, string realm)
+        public void Initialize(string connectionString, string realm)
         {
         }
 

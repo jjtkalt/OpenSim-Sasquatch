@@ -25,47 +25,63 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using Nini.Config;
-using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
+
 using OpenMetaverse;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+
+using Autofac;
 
 namespace OpenSim.Capabilities.Handlers
 {
-    public class FetchInventory2ServerConnector : ServiceConnector
+    public class FetchInventory2ServerConnector : IServiceConnector
     {
         private IInventoryService m_InventoryService;
-        private string m_ConfigName = "CapsService";
+        private const string _ConfigName = "CapsService";
 
-        public FetchInventory2ServerConnector(IConfiguration config, IHttpServer server, string configName)
-            : base(config, server, configName)
+        protected readonly IConfiguration m_configuration;
+        protected readonly ILogger<FetchInvDescServerConnector> m_logger;
+        protected readonly IComponentContext m_context;
+        
+        public FetchInventory2ServerConnector(
+            IConfiguration config,
+            ILogger<FetchInvDescServerConnector> logger,
+            IComponentContext componentContext)
         {
-            if (configName != String.Empty)
-                m_ConfigName = configName;
+            m_configuration = config;
+            m_logger = logger;
+            m_context = componentContext;
+        }
 
-            IConfig serverConfig = config.Configs[m_ConfigName];
-            if (serverConfig == null)
-                throw new Exception(String.Format("No section '{0}' in config file", m_ConfigName));
+        public string ConfigName { get; } = _ConfigName;
+        public IHttpServer HttpServer { get; private set; }
 
-            string invService = serverConfig.GetString("InventoryService", String.Empty);
+        public void Initialize(IHttpServer httpServer)
+        {
+            HttpServer = httpServer;
 
-            if (invService.Length == 0)
+            var serverConfig = m_configuration.GetSection(ConfigName);
+            if (serverConfig.Exists() is false)
+                throw new Exception($"No section '{ConfigName}' in config file");
+
+            string invService = serverConfig.GetValue("InventoryService", String.Empty);
+            if (string.IsNullOrEmpty(invService))
                 throw new Exception("No InventoryService in config file");
 
-            Object[] args = new Object[] { config };
-            m_InventoryService = ServerUtils.LoadPlugin<IInventoryService>(invService, args);
-
+            m_InventoryService = m_context.ResolveNamed<IInventoryService>(invService);
             if (m_InventoryService == null)
-                throw new Exception(String.Format("Failed to load InventoryService from {0}; config is {1}", invService, m_ConfigName));
+                throw new Exception($"Failed to load InventoryService from {invService}; config is {ConfigName}");
 
             FetchInventory2Handler fiHandler = new FetchInventory2Handler(m_InventoryService, UUID.Zero);
             IRequestHandler reqHandler
                 = new RestStreamHandler(
                     "POST", "/CAPS/FetchInventory/", fiHandler.FetchInventoryRequest, "FetchInventory", null);
-            server.AddStreamHandler(reqHandler);
+
+            HttpServer.AddStreamHandler(reqHandler);
         }
     }
 }

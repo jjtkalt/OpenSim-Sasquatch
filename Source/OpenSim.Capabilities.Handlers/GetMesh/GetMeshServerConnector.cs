@@ -25,44 +25,58 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using Nini.Config;
 using OpenMetaverse;
+
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Base;
 using OpenSim.Server.Handlers.Base;
 using OpenSim.Services.Interfaces;
-using System;
+
+using Autofac;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Capabilities.Handlers
 {
-    public class GetMeshServerConnector : ServiceConnector
+    public class GetMeshServerConnector : IServiceConnector
     {
         private IAssetService m_AssetService;
-        private string m_ConfigName = "CapsService";
+        private const string _ConfigName = "CapsService";
 
-        public GetMeshServerConnector(IConfiguration config, IHttpServer server, string configName) :
-                base(config, server, configName)
+        protected readonly IConfiguration m_configuration;
+        protected readonly ILogger<GetMeshServerConnector> m_logger;
+        protected readonly IComponentContext m_context;
+
+        public GetMeshServerConnector(
+            IConfiguration config,
+            ILogger<GetMeshServerConnector> logger,
+            IComponentContext componentContext
+            )
         {
-            if (configName != String.Empty)
-                m_ConfigName = configName;
+            m_configuration = config;
+            m_logger = logger;
+            m_context = componentContext;
+        }
 
-            IConfig serverConfig = config.Configs[m_ConfigName];
-            if (serverConfig == null)
-                throw new Exception(String.Format("No section '{0}' in config file", m_ConfigName));
+        public string ConfigName { get; } = _ConfigName;
 
-            string assetService = serverConfig.GetString("AssetService", String.Empty);
+        public IHttpServer HttpServer { get; private set; }
 
-            if (assetService.Length == 0)
+        public void Initialize(IHttpServer httpServer)
+        {
+            var serverConfig = m_configuration.GetSection(ConfigName);
+            if (serverConfig.Exists() is false)
+                throw new Exception($"No section '{ConfigName}' in config file");
+
+            string assetService = serverConfig.GetValue("AssetService", string.Empty);
+            if (string.IsNullOrEmpty(assetService))
                 throw new Exception("No AssetService in config file");
 
-            Object[] args = new Object[] { config };
-            m_AssetService =
-                    ServerUtils.LoadPlugin<IAssetService>(assetService, args);
-
+            m_AssetService = m_context.ResolveNamed<IAssetService>(assetService);
             if (m_AssetService == null)
-                throw new Exception(String.Format("Failed to load AssetService from {0}; config is {1}", assetService, m_ConfigName));
+                throw new Exception($"Failed to load AssetService from {assetService}; config is {ConfigName}");
 
-            string rurl = serverConfig.GetString("GetMeshRedirectURL");
+            string rurl = serverConfig.GetValue("GetMeshRedirectURL", string.Empty);
 
             GetMeshHandler gmeshHandler = new GetMeshHandler(m_AssetService);
             IRequestHandler reqHandler
@@ -72,7 +86,8 @@ namespace OpenSim.Capabilities.Handlers
                     httpMethod => gmeshHandler.ProcessGetMesh(httpMethod, UUID.Zero, null),
                     "GetMesh",
                     null);
-            server.AddStreamHandler(reqHandler);
+
+            HttpServer.AddStreamHandler(reqHandler);
         }
     }
 }

@@ -25,49 +25,65 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using Nini.Config;
-using OpenSim.Server.Base;
+using OpenSim.Server.Handlers.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework.Servers.HttpServer;
-using OpenSim.Server.Handlers.Base;
-using OpenMetaverse;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Autofac;
+
 
 
 namespace OpenSim.Capabilities.Handlers
 {
-    public class GetTextureServerConnector : ServiceConnector
+    public class GetTextureServerConnector : IServiceConnector
     {
         private IAssetService m_AssetService;
-        private string m_ConfigName = "CapsService";
+        private const string _ConfigName = "CapsService";
 
-        public GetTextureServerConnector(IConfiguration config, IHttpServer server, string configName) :
-                base(config, server, configName)
+        protected readonly IConfiguration m_configuration;
+        protected readonly ILogger<GetTextureServerConnector> m_logger;
+        protected readonly IComponentContext m_context;
+
+        public GetTextureServerConnector(
+            IConfiguration config,
+            ILogger<GetTextureServerConnector> logger,
+            IComponentContext componentContext
+            )
         {
-            if (configName != String.Empty)
-                m_ConfigName = configName;
+            m_configuration = config;
+            m_logger = logger;
+            m_context = componentContext;
+        }
 
-            IConfig serverConfig = config.Configs[m_ConfigName];
-            if (serverConfig == null)
-                throw new Exception(String.Format("No section '{0}' in config file", m_ConfigName));
+        public string ConfigName { get; } = _ConfigName;
+        public IHttpServer HttpServer { get; private set; }
 
-            string assetService = serverConfig.GetString("AssetService", String.Empty);
+        public void Initialize(IHttpServer httpServer)
+        {
+            HttpServer = httpServer;
 
-            if (assetService.Length == 0)
+            var serverConfig = m_configuration.GetSection(ConfigName);
+            if (serverConfig.Exists() is false)
+                throw new Exception($"No section '{ConfigName}' in config file");
+
+            string assetService = serverConfig.GetValue("AssetService", String.Empty);
+            if (string.IsNullOrEmpty(assetService))
                 throw new Exception("No AssetService in config file");
 
-            Object[] args = new Object[] { config };
-            m_AssetService =
-                    ServerUtils.LoadPlugin<IAssetService>(assetService, args);
-
+            m_AssetService = m_context.ResolveNamed<IAssetService>(assetService);
             if (m_AssetService == null)
-                throw new Exception(String.Format("Failed to load AssetService from {0}; config is {1}", assetService, m_ConfigName));
+                throw new Exception($"Failed to load AssetService from {assetService}; config is {ConfigName}");
 
-            string rurl = serverConfig.GetString("GetTextureRedirectURL");
+            string rurl = serverConfig.GetValue("GetTextureRedirectURL", string.Empty);
 
-            server.AddStreamHandler(
+            HttpServer.AddStreamHandler(
                 new GetTextureRobustHandler("/CAPS/GetTexture", m_AssetService, "GetTexture", null, rurl));
         }
+
+
+
     }
 }
 

@@ -25,50 +25,64 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using Nini.Config;
-using OpenSim.Server.Base;
+using OpenSim.Server.Handlers.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework;
 using OpenSim.Framework.Servers.HttpServer;
-using OpenSim.Server.Handlers.Base;
+
 using OpenMetaverse;
-using OpenMetaverse.StructuredData;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+
+using Autofac;
 
 
 namespace OpenSim.Capabilities.Handlers
 {
-    public class FetchInvDescServerConnector : ServiceConnector
+    public class FetchInvDescServerConnector : IServiceConnector
     {
         private IInventoryService m_InventoryService;
         private ILibraryService m_LibraryService;
-        private string m_ConfigName = "CapsService";
-
-        public FetchInvDescServerConnector(IConfiguration config, IHttpServer server, string configName) :
-                base(config, server, configName)
+        private const string _ConfigName = "CapsService";
+        
+        protected readonly IConfiguration m_configuration;
+        protected readonly ILogger<FetchInvDescServerConnector> m_logger;
+        protected readonly IComponentContext m_context;
+        
+        public FetchInvDescServerConnector(
+            IConfiguration config,
+            ILogger<FetchInvDescServerConnector> logger,
+            IComponentContext componentContext)
         {
-            if (configName != String.Empty)
-                m_ConfigName = configName;
+            m_configuration = config;
+            m_logger = logger;
+            m_context = componentContext;
+        }
 
-            IConfig serverConfig = config.Configs[m_ConfigName];
-            if (serverConfig == null)
-                throw new Exception(String.Format("No section '{0}' in config file", m_ConfigName));
+        public string ConfigName { get; } = _ConfigName;
 
-            string invService = serverConfig.GetString("InventoryService", String.Empty);
+        public IHttpServer HttpServer { get; private set; }
 
-            if (invService.Length == 0)
+        public void Initialize(IHttpServer httpServer)
+        {
+            HttpServer = httpServer;
+
+            var serverConfig = m_configuration.GetSection(ConfigName);
+            if (serverConfig.Exists() is false)
+                throw new Exception($"No section '{ConfigName}' in config file");
+
+            string invService = serverConfig.GetValue("InventoryService", String.Empty);
+
+            if (string.IsNullOrEmpty(invService))
                 throw new Exception("No InventoryService in config file");
 
-            Object[] args = new Object[] { config };
-            m_InventoryService =
-                    ServerUtils.LoadPlugin<IInventoryService>(invService, args);
-
+            m_InventoryService = m_context.ResolveNamed<IInventoryService>(invService);
             if (m_InventoryService == null)
-                throw new Exception(String.Format("Failed to load InventoryService from {0}; config is {1}", invService, m_ConfigName));
+                throw new Exception($"Failed to load InventoryService from {invService}; config is {ConfigName}");
 
-            string libService = serverConfig.GetString("LibraryService", String.Empty);
-            m_LibraryService =
-                    ServerUtils.LoadPlugin<ILibraryService>(libService, args);
+            string libService = serverConfig.GetValue("LibraryService", String.Empty);
+            m_LibraryService = m_context.ResolveNamed<ILibraryService>(libService);
 
             ExpiringKey<UUID> m_badRequests = new ExpiringKey<UUID>(30000);
 
@@ -79,7 +93,7 @@ namespace OpenSim.Capabilities.Handlers
                     webFetchHandler.FetchInventoryDescendentsRequest(httpRequest, httpResponse, m_badRequests);
                 });
 
-            server.AddSimpleStreamHandler(reqHandler);
+            HttpServer.AddSimpleStreamHandler(reqHandler);
         }
     }
 }

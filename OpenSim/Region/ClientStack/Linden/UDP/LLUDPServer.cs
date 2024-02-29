@@ -35,6 +35,7 @@ using OpenSim.Framework;
 using OpenSim.Framework.Monitoring;
 using OpenSim.Region.Framework.Scenes;
 using OpenSim.Region.Framework.Interfaces;
+
 using OpenMetaverse;
 
 using Microsoft.Extensions.Configuration;
@@ -240,8 +241,6 @@ namespace OpenSim.Region.ClientStack.LindenUDP
     /// </summary>
     public class LLUDPServer : OpenSimUDPBase
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         /// <summary>Maximum transmission unit, or UDP packet size, for the LLUDP protocol</summary>
         public const int MTU = 1400;
         public const int MAXPAYLOAD = 1200;

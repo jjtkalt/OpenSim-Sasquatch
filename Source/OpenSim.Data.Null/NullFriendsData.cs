@@ -43,7 +43,7 @@ namespace OpenSim.Data.Null
 
         private static List<FriendsData> m_Data = new List<FriendsData>();
 
-        public NullFriendsData(string connectionString, string realm)
+        public void Initialize(string connectionString, string realm)
         {
         }
 
