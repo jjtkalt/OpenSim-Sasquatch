@@ -33,6 +33,7 @@ using OpenSim.Server.Handlers.Base;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Autofac;
 
 namespace OpenSim.Server.Handlers.GridUser
 {
@@ -41,25 +42,29 @@ namespace OpenSim.Server.Handlers.GridUser
         private IMuteListService m_MuteListService;
         private static string _ConfigName = "MuteListService";
 
-        public string ConfigName { get; private set; } = _ConfigName;
+        protected IConfiguration m_configuration;
+        protected ILogger<MuteListServiceConnector> m_logger;
+        protected IComponentContext m_context;
 
-        public IConfiguration Config { get; private set; }
-        public ILogger Logger { get; private set; }
+        public string ConfigName { get; private set; } = _ConfigName;
         public IHttpServer HttpServer { get; private set; }
 
         public MuteListServiceConnector(
             IConfiguration config, 
-            ILogger<MuteListServiceConnector> logger)
+            ILogger<MuteListServiceConnector> logger,
+            IComponentContext componentContext
+            )
         {
-            Config = config;
-            Logger = Logger;
+            m_configuration = config;
+            m_logger = logger;
+            m_context = componentContext;
         }
 
         public void Initialize(IHttpServer httpServer)
         {
             HttpServer = httpServer;
 
-            var serverConfig = Config.GetSection(ConfigName);
+            var serverConfig = m_configuration.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
                 throw new Exception($"No section {ConfigName} in config file");
 
@@ -67,10 +72,9 @@ namespace OpenSim.Server.Handlers.GridUser
             if (string.IsNullOrEmpty(service))
                 throw new Exception("LocalServiceModule not present in MuteListService config file MuteListService section");
 
-            Object[] args = new Object[] { Config };
-            m_MuteListService = ServerUtils.LoadPlugin<IMuteListService>(service, args);
+            m_MuteListService = m_context.ResolveNamed<IMuteListService>(service);
 
-            IServiceAuth auth = ServiceAuth.Create(Config, ConfigName);
+            IServiceAuth auth = ServiceAuth.Create(m_configuration, ConfigName);
 
             HttpServer.AddStreamHandler(new MuteListServerPostHandler(m_MuteListService, auth));
         }

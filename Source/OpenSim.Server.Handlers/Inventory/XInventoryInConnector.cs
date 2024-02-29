@@ -38,6 +38,8 @@ using OpenMetaverse;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
+using Autofac;
+
 namespace OpenSim.Server.Handlers.Inventory
 {
     public class XInventoryInConnector : IServiceConnector
@@ -45,26 +47,31 @@ namespace OpenSim.Server.Handlers.Inventory
         private IInventoryService m_InventoryService;
         private static string _configName = "InventoryService";
 
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<XInventoryInConnector> m_logger;
+        private readonly IComponentContext m_context;
+
+
         public string ConfigName { get; private set; } = _configName;
-        public IConfiguration Config { get; private set; }
-        public ILogger Logger { get; private set; }
         public IHttpServer HttpServer { get; private set; }
 
         public XInventoryInConnector(
             IConfiguration config, 
-            ILogger<XInventoryInConnector> logger)
+            ILogger<XInventoryInConnector> logger,
+            IComponentContext componentContext)
         { 
-            Config = config;
-            Logger = logger;
+            m_configuration = config;
+            m_logger = logger;
+            m_context = componentContext;
         }
 
         public void Initialize(IHttpServer httpServer)
         {
             HttpServer = httpServer;
 
-            Logger.LogDebug($"Starting with config name {ConfigName}");
+            m_logger.LogDebug($"[XInventoryInConnector] Starting with config name {ConfigName}");
 
-            var serverConfig = Config.GetSection(ConfigName);
+            var serverConfig = m_configuration.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
                 throw new Exception($"No section '{ConfigName}' in config file");
 
@@ -72,12 +79,11 @@ namespace OpenSim.Server.Handlers.Inventory
             if (string.IsNullOrEmpty(inventoryService))
                 throw new Exception("No InventoryService in config file");
 
-            Object[] args = new Object[] { Config, ConfigName };
-            m_InventoryService = ServerUtils.LoadPlugin<IInventoryService>(inventoryService, args);
+            m_InventoryService = m_context.ResolveNamed<IInventoryService>(inventoryService);
 
-            IServiceAuth auth = ServiceAuth.Create(Config, ConfigName);
+            IServiceAuth auth = ServiceAuth.Create(m_configuration, ConfigName);
 
-            HttpServer.AddStreamHandler(new XInventoryConnectorPostHandler(Logger, m_InventoryService, auth));
+            HttpServer.AddStreamHandler(new XInventoryConnectorPostHandler(m_logger, m_InventoryService, auth));
         }
     }
 
@@ -101,12 +107,9 @@ namespace OpenSim.Server.Handlers.Inventory
                 body = sr.ReadToEnd();
             body = body.Trim();
 
-            //m_log.DebugFormat("[XXX]: query String: {0}", body);
-
             try
             {
-                Dictionary<string, object> request =
-                        ServerUtils.ParseQueryString(body);
+                Dictionary<string, object> request = ServerUtils.ParseQueryString(body);
 
                 if (!request.ContainsKey("METHOD"))
                     return FailureResult();

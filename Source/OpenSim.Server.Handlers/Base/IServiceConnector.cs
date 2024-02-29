@@ -27,16 +27,12 @@
 
 using OpenSim.Framework.Servers.HttpServer;
 
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-
 namespace OpenSim.Server.Handlers.Base
 {
     public interface IServiceConnector
     {
         string ConfigName { get; }
-        IConfiguration Config { get; }
-        ILogger Logger { get; }
+
         IHttpServer HttpServer { get; }
 
         void Initialize(IHttpServer httpServer);

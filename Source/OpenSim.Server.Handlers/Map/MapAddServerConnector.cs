@@ -37,8 +37,10 @@ using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
 
 using GridRegion = OpenSim.Services.Interfaces.GridRegion;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Autofac;
 
 namespace OpenSim.Server.Handlers.MapImage
 {
@@ -48,18 +50,22 @@ namespace OpenSim.Server.Handlers.MapImage
         private IGridService m_GridService;
         private static string _configName = "MapImageService";
 
+        protected IConfiguration m_configuration;
+        protected ILogger<MapAddServiceConnector> m_logger;
+        protected IComponentContext m_context;
+
         public MapAddServiceConnector(
             IConfiguration config, 
-            ILogger<MapAddServiceConnector> logger)
+            ILogger<MapAddServiceConnector> logger,
+            IComponentContext componentContext)
         {
-            Config = config;
-            Logger = logger;
+            m_configuration = config;
+            m_logger = logger;
+            m_context = componentContext;
          }
 
         public string ConfigName { get; private set; } = _configName;
 
-        public IConfiguration Config { get; private set; }
-        public ILogger Logger { get; private set; }
         public IHttpServer HttpServer { get; private set; }
 
 
@@ -67,7 +73,7 @@ namespace OpenSim.Server.Handlers.MapImage
         {
             HttpServer = httpServer;
 
-            var serverConfig = Config.GetSection(ConfigName);
+            var serverConfig = m_configuration.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
                 throw new Exception($"No section {ConfigName} in config file");
 
@@ -75,24 +81,25 @@ namespace OpenSim.Server.Handlers.MapImage
             if (string.IsNullOrWhiteSpace(mapService))
                 throw new Exception("No LocalServiceModule in config file");
 
-            object[] args = new object[] { Config };
-            m_MapService = ServerUtils.LoadPlugin<IMapImageService>(mapService, args);
+            m_MapService = m_context.ResolveNamed<IMapImageService>(mapService);
 
             string gridService = serverConfig.GetValue("GridService", string.Empty);
             if (!string.IsNullOrWhiteSpace(gridService))
-                m_GridService = ServerUtils.LoadPlugin<IGridService>(gridService, args);
+            {
+                m_GridService = m_context.ResolveNamed<IGridService>(gridService);
+            }
 
             if (m_GridService != null)
-                Logger.LogInformation($"GridService check is ON");
+                m_logger.LogInformation($"GridService check is ON");
             else
-                Logger.LogInformation($"GridService check is OFF");
+                m_logger.LogInformation($"GridService check is OFF");
 
             bool proxy = serverConfig.GetValue<bool>("HasProxy", false);
             
-            IServiceAuth auth = ServiceAuth.Create(Config, ConfigName);
+            IServiceAuth auth = ServiceAuth.Create(m_configuration, ConfigName);
 
             HttpServer.AddSimpleStreamHandler(
-                new MapServerPostHandler(Logger, m_MapService, m_GridService, proxy, auth));
+                new MapServerPostHandler(m_logger, m_MapService, m_GridService, proxy, auth));
         }
 
     }

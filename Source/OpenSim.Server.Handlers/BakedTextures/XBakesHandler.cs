@@ -35,29 +35,35 @@ using OpenSim.Server.Handlers.Base;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
+using Autofac;
+
 namespace OpenSim.Server.Handlers.BakedTextures
 {
     public class XBakesConnector : IServiceConnector
     {
+        protected readonly IConfiguration m_configuration;
+        protected readonly ILogger<XBakesConnector> m_logger;
+        protected readonly IComponentContext m_context;
+
         public XBakesConnector(
             IConfiguration config, 
-            ILogger<XBakesConnector> logger)
+            ILogger<XBakesConnector> logger,
+            IComponentContext componentContext)
         { 
-            Config = config;
-            Logger = logger;
+            m_configuration = config;
+            m_logger = logger;
+            m_context = componentContext;
         }
 
         public string ConfigName => "BakedTextureService";
 
-        public IConfiguration Config { get; private set; }
-        public ILogger Logger { get; private set; }
         public IHttpServer HttpServer { get; private set; }
 
         public void Initialize(IHttpServer httpServer)
         {
             HttpServer = httpServer;
 
-            var serverConfig = Config.GetSection(ConfigName);
+            var serverConfig = m_configuration.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
                 throw new Exception($"No section {ConfigName} in config file");
 
@@ -65,14 +71,12 @@ namespace OpenSim.Server.Handlers.BakedTextures
             if (string.IsNullOrWhiteSpace(bakesServiceName))
                 throw new Exception("No BakedTextureService in config file");
 
-            object[] args = new object[] { Config };
-            IBakedTextureService bakesService = ServerUtils.LoadPlugin<IBakedTextureService>(bakesServiceName, args);
+            IBakedTextureService bakesService = m_context.ResolveNamed<IBakedTextureService>(bakesServiceName);
 
-            IServiceAuth auth = ServiceAuth.Create(Config, ConfigName);
+            IServiceAuth auth = ServiceAuth.Create(m_configuration, ConfigName);
 
             HttpServer.AddSimpleStreamHandler(new BakesServerHandler(bakesService, auth), true);
         }
-
     }
 
     public class BakesServerHandler : SimpleStreamHandler

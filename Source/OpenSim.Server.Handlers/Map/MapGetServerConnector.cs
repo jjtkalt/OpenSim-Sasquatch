@@ -27,7 +27,6 @@
 
 using System.Net;
 
-using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
@@ -35,6 +34,8 @@ using OpenMetaverse;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+
+using Autofac;
 
 
 namespace OpenSim.Server.Handlers.MapImage
@@ -45,25 +46,30 @@ namespace OpenSim.Server.Handlers.MapImage
 
         private static string _configName = "MapImageService";
 
+        protected IConfiguration m_configuration;
+        protected ILogger<MapGetServiceConnector> m_logger;
+        protected IComponentContext m_context;
+
+
         public string ConfigName { get; private set; } = _configName;
 
-        public IConfiguration Config { get; private set; }
-        public ILogger Logger { get; private set; }
         public IHttpServer HttpServer { get; private set; }
 
         public MapGetServiceConnector(
             IConfiguration config, 
-            ILogger<MapGetServiceConnector> logger)
+            ILogger<MapGetServiceConnector> logger,
+            IComponentContext componentContext)
         {
-            Config = config;
-            Logger = logger;
+            m_configuration = config;
+            m_logger = logger;
+            m_context = componentContext;
         }
 
         public void Initialize(IHttpServer httpServer)
         {
             HttpServer = httpServer;
 
-            var serverConfig = Config.GetSection(ConfigName);
+            var serverConfig = m_configuration.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
                 throw new Exception($"No section {ConfigName} in config file");
 
@@ -71,10 +77,9 @@ namespace OpenSim.Server.Handlers.MapImage
             if (string.IsNullOrWhiteSpace(gridService))
                 throw new Exception("No LocalServiceModule in config file");
 
-            object[] args = new object[] { Config };
-            m_MapService = ServerUtils.LoadPlugin<IMapImageService>(gridService, args);
+            m_MapService = m_context.ResolveNamed<IMapImageService>(gridService);
 
-            HttpServer.AddStreamHandler(new MapServerGetHandler(Logger, m_MapService));
+            HttpServer.AddStreamHandler(new MapServerGetHandler(m_logger, m_MapService));
         }
     }
 

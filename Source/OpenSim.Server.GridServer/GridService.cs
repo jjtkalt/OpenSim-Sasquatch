@@ -12,8 +12,6 @@ namespace OpenSim.Server.GridServer
         private readonly IConfiguration _configuration;
         private readonly GridServer _openSimServer;
 
-        private int m_res;
-
         public GridService(
             IConfiguration configuration, 
             ILogger<GridService> logger,
@@ -37,6 +35,8 @@ namespace OpenSim.Server.GridServer
 
         public Task StopAsync(CancellationToken stoppingToken)
         {
+            int m_res = 0;
+
             _logger.LogInformation("{Service} is stopping.", nameof(Server.GridServer));
 
             _openSimServer.Shutdown(m_res);

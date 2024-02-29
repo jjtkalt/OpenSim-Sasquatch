@@ -34,6 +34,8 @@ using OpenSim.Server.Handlers.Base;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
+using Autofac;
+
 namespace OpenSim.Server.Handlers.UserAccounts
 {
     public class UserAccountServiceConnector : IServiceConnector
@@ -41,26 +43,31 @@ namespace OpenSim.Server.Handlers.UserAccounts
         private IUserAccountService m_UserAccountService;
         private static string _ConfigName = "UserAccountService";
 
+        protected IConfiguration m_configuration;
+        protected ILogger<UserAccountServiceConnector> m_logger;
+        protected IComponentContext m_context;
+
+
         public UserAccountServiceConnector(
             IConfiguration config, 
-            ILogger<UserAccountServiceConnector> logger
+            ILogger<UserAccountServiceConnector> logger,
+            IComponentContext componentContext
             )
         {
-            Config = config;
-            Logger = logger;
+            m_configuration = config;
+            m_logger = logger;
+            m_context = componentContext;
         }
 
         public string ConfigName {get; private set; } = _ConfigName;
 
-        public IConfiguration Config {get; private set; }
-        public ILogger Logger {get; private set; }
         public IHttpServer HttpServer {get; private set; }
 
         public void Initialize(IHttpServer httpServer)
         {
             HttpServer = httpServer;
 
-            var serverConfig = Config.GetSection(ConfigName);
+            var serverConfig = m_configuration.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
                 throw new Exception($"No section {ConfigName} in config file");
 
@@ -68,10 +75,9 @@ namespace OpenSim.Server.Handlers.UserAccounts
             if (string.IsNullOrEmpty(service))
                 throw new Exception("No LocalServiceModule in config file");
 
-            Object[] args = new Object[] { Config };
-            m_UserAccountService = ServerUtils.LoadPlugin<IUserAccountService>(service, args);
+            m_UserAccountService = m_context.ResolveNamed<IUserAccountService>(service);
 
-            IServiceAuth auth = ServiceAuth.Create(Config, ConfigName);
+            IServiceAuth auth = ServiceAuth.Create(m_configuration, ConfigName);
 
             HttpServer.AddStreamHandler(new UserAccountServerPostHandler(m_UserAccountService, serverConfig, auth));
         }

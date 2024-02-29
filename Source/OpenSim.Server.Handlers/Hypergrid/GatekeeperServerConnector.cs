@@ -33,6 +33,9 @@ using OpenSim.Server.Handlers.Base;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
+using Autofac;
+using System.ComponentModel;
+
 namespace OpenSim.Server.Handlers.Hypergrid
 {
     public class GatekeeperServiceInConnector : IServiceConnector
@@ -40,12 +43,19 @@ namespace OpenSim.Server.Handlers.Hypergrid
         private IGatekeeperService m_GatekeeperService = null;
         private bool m_Proxy = false;
 
+                
+        protected readonly IConfiguration m_configuration;
+        protected readonly ILogger<GatekeeperServiceInConnector> m_logger;
+        protected readonly IComponentContext m_context;
+
         public GatekeeperServiceInConnector(
             IConfiguration config,
-            ILogger<GatekeeperServiceInConnector> logger)
+            ILogger<GatekeeperServiceInConnector> logger,
+            IComponentContext componentContext)
         {
-            Config = config;
-            Logger = logger;
+            m_configuration = config;
+            m_logger = logger;
+            m_context = componentContext;
         }
 
         public IGatekeeperService GateKeeper
@@ -55,8 +65,6 @@ namespace OpenSim.Server.Handlers.Hypergrid
 
         public string ConfigName { get; private set; } = "GatekeeperService";
 
-        public IConfiguration Config { get; private set; }
-        public ILogger Logger { get; private set; }
         public IHttpServer HttpServer { get; private set; }
 
 //        public GatekeeperServiceInConnector(IConfigSource config, IHttpServer server, ISimulationService simService) :
@@ -65,15 +73,14 @@ namespace OpenSim.Server.Handlers.Hypergrid
         {
             HttpServer = httpServer;
 
-            var gridConfig = Config.GetSection(ConfigName);
+            var gridConfig = m_configuration.GetSection(ConfigName);
             if (gridConfig.Exists() is false)
             {
-                string serviceDll = gridConfig.GetValue("LocalServiceModule", string.Empty);
-                if (string.IsNullOrWhiteSpace(serviceDll))
+                string service = gridConfig.GetValue("LocalServiceModule", string.Empty);
+                if (string.IsNullOrWhiteSpace(service))
                     throw new Exception("No LocalServiceModule in config file");
 
-                Object[] args = new Object[] { Config, "XXX" /*simService*/ };
-                m_GatekeeperService = ServerUtils.LoadPlugin<IGatekeeperService>(serviceDll, args);
+                m_GatekeeperService = m_context.ResolveNamed<IGatekeeperService>(service);
             }
 
             if (m_GatekeeperService == null)

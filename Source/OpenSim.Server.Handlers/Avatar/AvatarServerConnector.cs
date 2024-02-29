@@ -33,6 +33,7 @@ using OpenSim.Server.Handlers.Base;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Autofac;
 
 namespace OpenSim.Server.Handlers.Avatar
 {
@@ -40,18 +41,21 @@ namespace OpenSim.Server.Handlers.Avatar
     {
         private IAvatarService m_AvatarService;
 
+        protected readonly IConfiguration m_configuration;
+        protected readonly ILogger<AvatarServiceConnector> m_logger;
+        protected readonly IComponentContext m_context;
+
         public AvatarServiceConnector(
             IConfiguration config, 
-            ILogger<AvatarServiceConnector> logger)
+            ILogger<AvatarServiceConnector> logger,
+            IComponentContext componentContext)
         { 
-            Config = config;
-            Logger = logger;
+            m_configuration = config;
+            m_logger = logger;
+            m_context = componentContext;
         }
 
         public string ConfigName => "AvatarService";
-
-        public IConfiguration Config { get; private set; }
-        public ILogger Logger { get; private set; }
         
         public IHttpServer HttpServer { get; private set; }
 
@@ -59,7 +63,7 @@ namespace OpenSim.Server.Handlers.Avatar
         {
             HttpServer = httpServer;
 
-            var serverConfig = Config.GetSection(ConfigName);
+            var serverConfig = m_configuration.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
                 throw new Exception($"No section {ConfigName} in config file");
 
@@ -67,10 +71,9 @@ namespace OpenSim.Server.Handlers.Avatar
             if (string.IsNullOrEmpty(avatarService))
                 throw new Exception("No LocalServiceModule in config file");
 
-            Object[] args = new Object[] { Config };
-            m_AvatarService = ServerUtils.LoadPlugin<IAvatarService>(avatarService, args);
+            m_AvatarService = m_context.ResolveNamed<IAvatarService>(avatarService);
 
-            IServiceAuth auth = ServiceAuth.Create(Config, ConfigName);
+            IServiceAuth auth = ServiceAuth.Create(m_configuration, ConfigName);
 
             HttpServer.AddStreamHandler(new AvatarServerPostHandler(m_AvatarService, auth));
         }

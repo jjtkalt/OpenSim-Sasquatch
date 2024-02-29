@@ -34,6 +34,9 @@ using OpenSim.Server.Handlers.Base;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
+using Autofac;
+using System.ComponentModel;
+
 namespace OpenSim.Server.Handlers.Friends
 {
     public class FriendsServiceConnector : IServiceConnector
@@ -41,27 +44,29 @@ namespace OpenSim.Server.Handlers.Friends
         private const string ServiceName = "FriendsService";
 
         private IFriendsService m_FriendsService;
+        protected readonly IConfiguration m_configuration; 
+        protected readonly ILogger<FriendsServiceConnector> m_logger;
+        protected readonly IComponentContext m_context;
         
         public FriendsServiceConnector(
             IConfiguration config, 
-            ILogger<FriendsServiceConnector> logger)
+            ILogger<FriendsServiceConnector> logger,
+            IComponentContext componentContext)
         { 
-            Config = config;
-            Logger = logger;
+            m_configuration = config;
+            m_logger = logger;
+            m_context = componentContext;
         }
 
         public string ConfigName { get; private set; } = ServiceName;
 
-        public IConfiguration Config { get; private set; }
-        public ILogger Logger { get; private set; }
         public IHttpServer HttpServer { get; private set; }
-
 
         public void Initialize(IHttpServer httpServer)
         {
             HttpServer = httpServer;
 
-            var serverConfig = Config.GetSection(ConfigName);
+            var serverConfig = m_configuration.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
                 throw new Exception($"No section {ConfigName} in config file");
 
@@ -69,14 +74,11 @@ namespace OpenSim.Server.Handlers.Friends
             if (string.IsNullOrEmpty(theService))
                 throw new Exception("No LocalServiceModule in config file");
 
-            Object[] args = new Object[] { Config };
-            m_FriendsService = ServerUtils.LoadPlugin<IFriendsService>(theService, args);
+            m_FriendsService = m_context.ResolveNamed<IFriendsService>(theService);
 
-            IServiceAuth auth = ServiceAuth.Create(Config, ConfigName);
+            IServiceAuth auth = ServiceAuth.Create(m_configuration, ConfigName);
             
             HttpServer.AddStreamHandler(new FriendsServerPostHandler(m_FriendsService, auth));
         }
-
-
     }
 }

@@ -33,6 +33,7 @@ using OpenSim.Server.Handlers.Base;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Autofac;
 
 namespace OpenSim.Server.Handlers.Presence
 {
@@ -40,20 +41,22 @@ namespace OpenSim.Server.Handlers.Presence
     {
         private IPresenceService m_PresenceService;
         private static string m_ConfigName = "PresenceService";
+        
+        protected IConfiguration m_configuration;
+        protected ILogger<PresenceServiceConnector> m_logger;
+        protected IComponentContext m_context;
 
         public PresenceServiceConnector(
             IConfiguration config, 
-            ILogger<PresenceServiceConnector> logger)
+            ILogger<PresenceServiceConnector> logger,
+            IComponentContext componentContext)
         {
-            Config = config;
-            Logger = logger;
+            m_configuration = config;
+            m_logger = logger;
+            m_context = componentContext;
         }
 
         public string ConfigName { get; private set; } = m_ConfigName;
-
-        public IConfiguration Config { get; private set; }
-
-        public ILogger Logger { get; private set; }
 
         public IHttpServer HttpServer { get; private set; }
 
@@ -61,7 +64,7 @@ namespace OpenSim.Server.Handlers.Presence
         {
             HttpServer = httpServer;
 
-            var serverConfig = Config.GetSection(ConfigName);
+            var serverConfig = m_configuration.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
                 throw new Exception(String.Format("No section {0} in config file", ConfigName));
 
@@ -69,10 +72,9 @@ namespace OpenSim.Server.Handlers.Presence
             if (string.IsNullOrEmpty(gridService))
                 throw new Exception("No LocalServiceModule in config file");
 
-            Object[] args = new Object[] { Config };
-            m_PresenceService = ServerUtils.LoadPlugin<IPresenceService>(gridService, args);
+            m_PresenceService = m_context.ResolveNamed<IPresenceService>(gridService);
 
-            IServiceAuth auth = ServiceAuth.Create(Config, ConfigName);
+            IServiceAuth auth = ServiceAuth.Create(m_configuration, ConfigName);
 
             HttpServer.AddStreamHandler(new PresenceServerPostHandler(m_PresenceService, auth));
         }

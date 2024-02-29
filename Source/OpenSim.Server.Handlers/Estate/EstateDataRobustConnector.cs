@@ -24,7 +24,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-using System.Reflection;
 using System.Net;
 using OpenMetaverse;
 
@@ -38,22 +37,27 @@ using OpenSim.Server.Handlers.Base;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
+using Autofac;
+
 namespace OpenSim.Server.Handlers
 {
     public class EstateDataRobustConnector : IServiceConnector
-    {        
+    {  
+        protected readonly IConfiguration m_configuration;
+        protected readonly ILogger<EstateDataRobustConnector> m_logger;
+        protected readonly IComponentContext m_context;      
+
         public EstateDataRobustConnector(
             IConfiguration config, 
-            ILogger<EstateDataRobustConnector> logger)
+            ILogger<EstateDataRobustConnector> logger,
+            IComponentContext componentContext)
         { 
-            Config = config;
-            Logger = logger;
+            m_configuration = config;
+            m_logger = logger;
+            m_context = componentContext;
         }
 
         public string ConfigName => "EstateService";
-
-        public IConfiguration Config { get; private set; }
-        public ILogger Logger { get; private set; }
 
         public IHttpServer HttpServer { get; private set; }
 
@@ -61,7 +65,7 @@ namespace OpenSim.Server.Handlers
         {
             HttpServer = httpServer;
 
-            var serverConfig = Config.GetSection(ConfigName);
+            var serverConfig = m_configuration.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
                 throw new Exception($"No section {ConfigName} in config file");
 
@@ -69,10 +73,9 @@ namespace OpenSim.Server.Handlers
             if (String.IsNullOrWhiteSpace(service))
                 throw new Exception("No LocalServiceModule in config file");
 
-            Object[] args = new Object[] { Config };
-            IEstateDataService e_service = ServerUtils.LoadPlugin<IEstateDataService>(service, args);
+            IEstateDataService e_service = m_context.ResolveNamed<IEstateDataService>(service);
 
-            IServiceAuth auth = ServiceAuth.Create(Config, ConfigName);
+            IServiceAuth auth = ServiceAuth.Create(m_configuration, ConfigName);
 
             HttpServer.AddStreamHandler(new EstateServerGetHandler(e_service, auth));
             HttpServer.AddStreamHandler(new EstateServerPostHandler(e_service, auth));

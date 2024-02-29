@@ -35,6 +35,8 @@ using OpenSim.Server.Handlers.Base;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
+using Autofac;
+
 namespace OpenSim.Server.Handlers.Freeswitch
 {
     public class FreeswitchServerConnector : IServiceConnector
@@ -42,26 +44,29 @@ namespace OpenSim.Server.Handlers.Freeswitch
         private IFreeswitchService m_FreeswitchService;
 
         protected readonly string m_freeSwitchAPIPrefix = "/fsapi";
+        protected readonly IConfiguration m_configuration;
+        protected readonly ILogger<FreeswitchServerConnector> m_logger;
+        protected readonly IComponentContext m_context;
 
         public FreeswitchServerConnector(
             IConfiguration config, 
-            ILogger<FreeswitchServerConnector> logger)
+            ILogger<FreeswitchServerConnector> logger,
+            IComponentContext componentContext)
         { 
-            Config = config;
-            Logger = logger;
+            m_configuration = config;
+            m_logger = logger;
+            m_context = componentContext;
         }
 
         public string ConfigName => "FreeswitchService";
 
-        public IConfiguration Config { get; private set; }
-        public ILogger Logger { get; private set; }
         public IHttpServer HttpServer { get; private set; }
 
         public void Initialize(IHttpServer httpServer)
         {
             HttpServer = httpServer;
 
-            var serverConfig = Config.GetSection(ConfigName);
+            var serverConfig = m_configuration.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
                 throw new Exception($"No section {ConfigName} in config file");
 
@@ -69,8 +74,7 @@ namespace OpenSim.Server.Handlers.Freeswitch
             if (string.IsNullOrEmpty(freeswitchService))
                 throw new Exception("No LocalServiceModule in config file");
 
-            Object[] args = new Object[] { Config };
-            m_FreeswitchService = ServerUtils.LoadPlugin<IFreeswitchService>(freeswitchService, args);
+            m_FreeswitchService = m_context.ResolveNamed<IFreeswitchService>(freeswitchService);
 
             HttpServer.AddHTTPHandler(String.Format("{0}/freeswitch-config", m_freeSwitchAPIPrefix), FreeSwitchConfigHTTPHandler);
             HttpServer.AddHTTPHandler(String.Format("{0}/region-config", m_freeSwitchAPIPrefix), RegionConfigHTTPHandler);
@@ -93,7 +97,7 @@ namespace OpenSim.Server.Handlers.Freeswitch
             else if (section == "dialplan")
                 response = m_FreeswitchService.HandleDialplanRequest(requestBody);
             else
-                Logger.LogWarning($"section was {section}");
+                m_logger.LogWarning($"section was {section}");
 
             return response;
         }

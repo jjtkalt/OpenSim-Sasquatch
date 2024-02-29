@@ -32,6 +32,7 @@ using OpenSim.Server.Handlers.Base;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Autofac;
 
 namespace OpenSim.Server.Handlers.Hypergrid
 {
@@ -40,19 +41,25 @@ namespace OpenSim.Server.Handlers.Hypergrid
         private IUserAgentService m_UserAgentService;
         private IHGFriendsService m_TheService;
 
+        protected readonly IConfiguration m_configuration;
+        protected readonly ILogger<HGFriendsServerConnector> m_logger;
+        protected readonly IComponentContext m_context;
+        
+
         // Called from Robust
         public HGFriendsServerConnector(
             IConfiguration config, 
-            ILogger<HGFriendsServerConnector> logger)
+            ILogger<HGFriendsServerConnector> logger,
+            IComponentContext componentContext
+            )
         {
-            Config = config;
-            Logger = logger;
+            m_configuration = config;
+            m_logger = logger;
+            m_context = componentContext;
         }
         
         public string ConfigName { get; private set; } = "HGFriendsService";
 
-        public IConfiguration Config { get; private set; } 
-        public ILogger Logger { get; private set; }
         public IHttpServer HttpServer { get; private set; } 
 
 //        public HGFriendsServerConnector(IConfiguration config, IHttpServer server, string configName, IFriendsSimConnector localConn)
@@ -61,9 +68,9 @@ namespace OpenSim.Server.Handlers.Hypergrid
         {
             HttpServer = httpServer;
 
-            Object[] args = new Object[] { Config, ConfigName, null /*localConn*/ };
+            Object[] args = new Object[] { m_configuration, ConfigName, null /*localConn*/ };
 
-            var serverConfig = Config.GetSection(ConfigName);
+            var serverConfig = m_configuration.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
                 throw new Exception($"No section {ConfigName} in config file");
 
@@ -71,17 +78,15 @@ namespace OpenSim.Server.Handlers.Hypergrid
             if (string.IsNullOrEmpty(theService))
                 throw new Exception("No LocalServiceModule in config file");
 
-            m_TheService = ServerUtils.LoadPlugin<IHGFriendsService>(theService, args);
+            m_TheService = m_context.ResolveNamed<IHGFriendsService>(theService);
 
             theService = serverConfig.GetValue("UserAgentService", string.Empty);
             if (string.IsNullOrEmpty(theService))
                 throw new Exception($"No UserAgentService in {ConfigName}");
                 
-            m_UserAgentService = ServerUtils.LoadPlugin<IUserAgentService>(theService, new Object[] { Config, null /*localConn*/ });
+            m_UserAgentService = m_context.ResolveNamed<IUserAgentService>(theService);
 
-            HttpServer.AddStreamHandler(new HGFriendsServerPostHandler(m_TheService, m_UserAgentService, null /*localConn*/));
+            HttpServer.AddStreamHandler(new HGFriendsServerPostHandler(m_TheService, m_UserAgentService, null /*m_friendsSimConnector*/ ));
         }
-
-
     }
 }

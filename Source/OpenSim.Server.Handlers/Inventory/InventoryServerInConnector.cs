@@ -27,7 +27,6 @@
 
 using System.Net;
 
-using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework;
 using OpenSim.Framework.Servers.HttpServer;
@@ -37,6 +36,7 @@ using OpenMetaverse;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Autofac;
 
 namespace OpenSim.Server.Handlers.Inventory
 {
@@ -50,30 +50,31 @@ namespace OpenSim.Server.Handlers.Inventory
         //private AuthedSessionCache m_session_cache = new AuthedSessionCache(INVENTORY_DEFAULT_SESSION_TIME);
 
         private string m_userserver_url;
-        protected static string _configName = "InventoryService";
+        protected const string _configName = "InventoryService";
 
         public string ConfigName { get; private set; } = _configName;
-
-        public IConfiguration Config { get; private set; }
-
-        public ILogger Logger { get; private set; }
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<InventoryServiceInConnector> m_logger;
+        private readonly IComponentContext m_context;
 
         public IHttpServer HttpServer { get; private set; }
 
 
         public InventoryServiceInConnector(
             IConfiguration config, 
-            ILogger<InventoryServiceInConnector> logger)
+            ILogger<InventoryServiceInConnector> logger,
+            IComponentContext componentContext)
         {
-            Config = config;
-            Logger = logger;
+            m_configuration = config;
+            m_logger = logger;
+            m_context = componentContext;
         }
 
         public void Initialize(IHttpServer httpServer)
         {
             HttpServer = httpServer;
 
-            var serverConfig = Config.GetSection(ConfigName);
+            var serverConfig = m_configuration.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
                 throw new Exception($"No section '{ConfigName}' in config file");
 
@@ -82,15 +83,14 @@ namespace OpenSim.Server.Handlers.Inventory
             if (string.IsNullOrEmpty(inventoryService))
                 throw new Exception("No LocalServiceModule in config file");
 
-            Object[] args = new Object[] { Config };
-            m_InventoryService = ServerUtils.LoadPlugin<IInventoryService>(inventoryService, args);
+            m_InventoryService = m_context.ResolveNamed<IInventoryService>(inventoryService);
 
             m_userserver_url = serverConfig.GetValue("UserServerURI", String.Empty);
             m_doLookup = serverConfig.GetValue<bool>("SessionAuthentication", false);
 
             AddHttpHandlers(HttpServer);
             
-            Logger.LogDebug("Handlers initialized");
+            m_logger.LogDebug("Handlers initialized");
         }
 
         protected virtual void AddHttpHandlers(IHttpServer HttpServer)
@@ -212,7 +212,7 @@ namespace OpenSim.Server.Handlers.Inventory
                 }
             }
 
-            Logger.LogWarning($"System folders for {userID} not found");
+            m_logger.LogWarning($"System folders for {userID} not found");
             return new Dictionary<AssetType, InventoryFolderBase>();
         }
 
@@ -312,7 +312,7 @@ namespace OpenSim.Server.Handlers.Inventory
         {
             if (m_doLookup)
             {
-                Logger.LogInformation($"Checking trusted source {peer}");
+                m_logger.LogInformation($"Checking trusted source {peer}");
 
                 UriBuilder ub = new UriBuilder(m_userserver_url);
                 IPAddress[] uaddrs = Dns.GetHostAddresses(ub.Host);
@@ -324,7 +324,7 @@ namespace OpenSim.Server.Handlers.Inventory
                     }
                 }
 
-                Logger.LogWarning($"Rejecting request since source {peer} was not in the list of trusted sources");
+                m_logger.LogWarning($"Rejecting request since source {peer} was not in the list of trusted sources");
                 
                 return false;
             }

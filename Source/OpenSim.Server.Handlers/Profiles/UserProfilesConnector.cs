@@ -31,6 +31,7 @@ using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Autofac;
 
 namespace OpenSim.Server.Handlers.Profiles
 {
@@ -38,29 +39,33 @@ namespace OpenSim.Server.Handlers.Profiles
     {
         private const string _ConfigName = "UserProfilesService";
 
+        protected IConfiguration m_configuration;
+        protected ILogger<UserProfilesConnector> m_logger;
+        protected IComponentContext m_context;
+
+        public UserProfilesConnector(
+            IConfiguration config, 
+            ILogger<UserProfilesConnector> logger,
+            IComponentContext componentContext)
+        {
+            m_configuration = config;
+            m_logger = logger;
+            m_context = componentContext;
+        }
+
         public IUserProfilesService ServiceModule { get; private set; }
 
         public bool Enabled { get; private set; }
 
         public string ConfigName { get; private set; } = _ConfigName;
 
-        public IConfiguration Config { get; private set; }
-        public ILogger Logger { get; private set; }
         public IHttpServer HttpServer { get; private set; }
-
-        public UserProfilesConnector(
-            IConfiguration config, 
-            ILogger<UserProfilesConnector> logger)
-        {
-            Config = config;
-            Logger = logger;
-        }
 
         public void Initialize(IHttpServer httpServer)
         {
             HttpServer = httpServer;
 
-            var serverConfig = Config.GetSection(ConfigName);
+            var serverConfig = m_configuration.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
                 throw new Exception(String.Format("No section {0} in config file", ConfigName));
 
@@ -73,9 +78,7 @@ namespace OpenSim.Server.Handlers.Profiles
             Enabled = true;
 
             string service = serverConfig.GetValue("LocalServiceModule", String.Empty);
-
-            Object[] args = new Object[] { Config, ConfigName };
-            ServiceModule = ServerUtils.LoadPlugin<IUserProfilesService>(service, args);
+            ServiceModule = m_context.ResolveNamed<IUserProfilesService>(service);
 
             JsonRpcProfileHandlers handler = new JsonRpcProfileHandlers(ServiceModule);
 

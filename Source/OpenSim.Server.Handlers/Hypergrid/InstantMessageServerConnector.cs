@@ -29,7 +29,6 @@ using System.Collections;
 using System.Net;
 
 using OpenSim.Framework;
-using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Handlers.Base;
@@ -38,6 +37,7 @@ using OpenMetaverse;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Autofac;
 
 namespace OpenSim.Server.Handlers.Hypergrid
 {
@@ -45,36 +45,32 @@ namespace OpenSim.Server.Handlers.Hypergrid
     {
         private IInstantMessage m_IMService;
 
-        public string ConfigName { get; private set; } = "HGInstantMessageService";
-
-        public IConfiguration Config { get; private set; }
-        public ILogger Logger { get; private set; }
-        public IHttpServer HttpServer { get; private set; }
+        protected IConfiguration m_configuration;
+        protected ILogger<InstantMessageServerConnector> m_logger;
+        protected IComponentContext m_context;
 
         public InstantMessageServerConnector(
             IConfiguration config, 
-            ILogger<InstantMessageServerConnector> logger)
+            ILogger<InstantMessageServerConnector> logger,
+            IComponentContext componentContext)
         {
-            Config = config;
-            Logger = logger;
+            m_configuration = config;
+            m_logger = logger;
+            m_context = componentContext;
         }
         
-//        public InstantMessageServerConnector(IConfiguration config, IHttpServer server, IInstantMessageSimConnector simConnector) :
-// XXX
+        public string ConfigName { get; private set; } = "InstantMessageServerConnector";           // "HGInstantMessageService";
+        public IHttpServer HttpServer { get; private set; }
 
         public void Initialize(IHttpServer httpServer)
         {
             HttpServer = httpServer;
-            IInstantMessageSimConnector simConnector = null;
 
-            var gridConfig = Config.GetSection(ConfigName);
+            var gridConfig = m_configuration.GetSection(ConfigName);
             if (gridConfig.Exists())
             {
-                string serviceDll = gridConfig.GetValue("LocalServiceModule", string.Empty);
-
-                Object[] args = new Object[] { Config, simConnector };
-
-                m_IMService = ServerUtils.LoadPlugin<IInstantMessage>(serviceDll, args);
+                string service = gridConfig.GetValue("LocalServiceModule", string.Empty);
+                m_IMService = m_context.ResolveNamed<IInstantMessage>(service);
             }
 
             if (m_IMService == null)
@@ -228,7 +224,7 @@ namespace OpenSim.Server.Handlers.Hypergrid
             }
             catch (Exception e)
             {
-                Logger.LogError(e, "Caught unexpected exception");
+                m_logger.LogError(e, "Caught unexpected exception");
                 successful = false;
             }
 

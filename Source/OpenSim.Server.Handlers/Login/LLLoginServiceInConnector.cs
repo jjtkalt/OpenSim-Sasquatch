@@ -33,6 +33,7 @@ using OpenSim.Server.Handlers.Base;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Autofac;
 
 namespace OpenSim.Server.Handlers.Login
 {
@@ -42,48 +43,52 @@ namespace OpenSim.Server.Handlers.Login
         private IScene m_Scene;
         private bool m_Proxy;
         private BasicDosProtectorOptions m_DosProtectionOptions;
-
         private static string _configName = "LoginService";
+
+        protected IConfiguration m_configuration;
+        protected ILogger<LLLoginServiceInConnector> m_logger;
+        protected IComponentContext m_context;
 
         public LLLoginServiceInConnector(
             IConfiguration configuration,
             ILogger<LLLoginServiceInConnector> logger,
+            IComponentContext componentContext,
             IScene scene = null
             )
         {
-            Config = configuration;
-            Logger = logger;
+            m_configuration = configuration;
+            m_logger = logger;
+            m_context = componentContext;
             m_Scene = scene;
         }
 
         public string ConfigName { get; private set; } = _configName;
-        public IConfiguration Config  { get; private set; } 
-        public ILogger Logger { get; private set; } 
         public IHttpServer HttpServer { get; private set; } 
 
         public void Initialize(IHttpServer httpServer)
         {
             HttpServer = httpServer;
 
-            Logger.LogDebug($"Starting...");
-            string loginService = ReadLocalServiceFromConfig(Config, ConfigName);
+            m_logger.LogDebug($"Starting...");
+            string loginService = ReadLocalServiceFromConfig(m_configuration, ConfigName);
 
-            ISimulationService simService = null;
-            ILibraryService libService  = null;
-            Object[] args = null;
+            // ISimulationService simService = null;
+            // ILibraryService libService  = null;
 
-            if (m_Scene != null)
-            {
-                simService = m_Scene.RequestModuleInterface<ISimulationService>();
-                libService = m_Scene.RequestModuleInterface<ILibraryService>();
-                args = new Object[] { Config, simService, libService };
-            }
-            else
-            {
-                args = new Object[] { Config };
-            }
+            // Object[] args = null;
 
-            m_LoginService = ServerUtils.LoadPlugin<ILoginService>(loginService, args);
+            // if (m_Scene != null)
+            // {
+            //     simService = m_Scene.RequestModuleInterface<ISimulationService>();
+            //     libService = m_Scene.RequestModuleInterface<ILibraryService>();
+            //     args = new Object[] { Config, simService, libService };
+            // }
+            // else
+            // {
+            //     args = new Object[] { Config };
+            // }
+
+            m_LoginService = m_context.ResolveNamed<ILoginService>(loginService);
 
             InitializeHandlers(HttpServer);
         }

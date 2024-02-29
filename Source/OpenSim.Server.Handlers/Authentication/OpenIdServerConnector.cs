@@ -32,6 +32,7 @@ using OpenSim.Server.Handlers.Base;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Autofac;
 
 namespace OpenSim.Server.Handlers.Authentication
 {
@@ -40,26 +41,30 @@ namespace OpenSim.Server.Handlers.Authentication
         private IAuthenticationService m_AuthenticationService;
         private IUserAccountService m_UserAccountService;
 
+        protected readonly IConfiguration m_configuration;
+        protected readonly ILogger<OpenIdServerConnector> m_logger;
+        protected readonly IComponentContext m_context;
+
+
         public OpenIdServerConnector(
             IConfiguration configuration,
-            ILogger<OpenIdServerConnector> logger
+            ILogger<OpenIdServerConnector> logger,
+            IComponentContext componentContext
             )
         {
-            Config = configuration;
-            Logger = Logger;
+            m_configuration = configuration;
+            m_logger = logger;
+            m_context = componentContext;
         }
 
         public string ConfigName => "OpenIdService";
 
-        public IConfiguration Config { get; private set; }
-        public ILogger Logger { get; private set; }
         public IHttpServer HttpServer { get; private set; }
 
         public void Initialize(IHttpServer httpServer)
-        {
-            HttpServer = httpServer;
+        {          
 
-            var serverConfig = Config.GetSection(ConfigName);
+            var serverConfig = m_configuration.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
                 throw new Exception($"No section {ConfigName} in config file");
 
@@ -72,10 +77,8 @@ namespace OpenSim.Server.Handlers.Authentication
             if (string.IsNullOrEmpty(userService))
                 throw new Exception("No UserAccountServiceModule in config file for OpenId authentication");
 
-            Object[] args = new Object[] { Config };
-
-            m_AuthenticationService = ServerUtils.LoadPlugin<IAuthenticationService>(authService, args);
-            m_UserAccountService = ServerUtils.LoadPlugin<IUserAccountService>(userService, args);
+            m_AuthenticationService = m_context.ResolveNamed<IAuthenticationService>(authService);
+            m_UserAccountService = m_context.ResolveNamed<IUserAccountService>(userService);
 
             // Handler for OpenID user identity pages
             HttpServer.AddStreamHandler(new OpenIdStreamHandler("GET", "/users", m_UserAccountService, m_AuthenticationService));

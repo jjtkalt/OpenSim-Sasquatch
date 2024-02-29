@@ -25,6 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+using Autofac;
+
 using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 using OpenSim.Framework.ServiceAuth;
@@ -41,20 +43,22 @@ namespace OpenSim.Server.Handlers.Authentication
         private IAuthenticationService m_AuthenticationService;
         private IHttpServer m_httpServer;
 
+        protected readonly IConfiguration m_configuration;
+        protected readonly ILogger<AuthenticationServiceConnector> m_logger;
+        protected readonly IComponentContext m_context;
+
         public AuthenticationServiceConnector(
             IConfiguration configuraion,
-            ILogger<AuthenticationServiceConnector> logger
+            ILogger<AuthenticationServiceConnector> logger,
+            IComponentContext componentContext
             )
         {
-            Config = configuraion;
-            Logger = logger;
+            m_configuration = configuraion;
+            m_logger = logger;
+            m_context = componentContext;
         }
 
         public string ConfigName => "AuthenticationService";
-
-        public IConfiguration Config { get; private set; }
-        
-        public ILogger Logger { get; private set; }
 
         public IHttpServer HttpServer => m_httpServer;
 
@@ -62,7 +66,7 @@ namespace OpenSim.Server.Handlers.Authentication
         {
             m_httpServer = httpServer;
 
-            var serverConfig = Config.GetSection(ConfigName);
+            var serverConfig = m_configuration.GetSection(ConfigName);
             if (serverConfig.Exists() is false)
                 throw new Exception($"No section {ConfigName} in config file");
 
@@ -70,12 +74,11 @@ namespace OpenSim.Server.Handlers.Authentication
             if (string.IsNullOrEmpty(authenticationService))
                 throw new Exception("No LocalServiceModule in config file");
 
-            Object[] args = new Object[] { Config };
-            m_AuthenticationService = ServerUtils.LoadPlugin<IAuthenticationService>(authenticationService, args);
+            m_AuthenticationService = m_context.ResolveNamed<IAuthenticationService>(authenticationService);
 
-            IServiceAuth auth = ServiceAuth.Create(Config, ConfigName);
+            IServiceAuth auth = ServiceAuth.Create(m_configuration, ConfigName);
 
-            HttpServer.AddStreamHandler(new AuthenticationServerPostHandler(m_AuthenticationService, Config, auth));
+            HttpServer.AddStreamHandler(new AuthenticationServerPostHandler(m_AuthenticationService, m_configuration, auth));
         }
     }
 }

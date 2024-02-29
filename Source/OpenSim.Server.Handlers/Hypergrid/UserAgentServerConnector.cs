@@ -41,6 +41,8 @@ using OpenMetaverse;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
+using Autofac;
+
 namespace OpenSim.Server.Handlers.Hypergrid
 {
     public class UserAgentServerConnector : IServiceConnector
@@ -48,15 +50,18 @@ namespace OpenSim.Server.Handlers.Hypergrid
         private string[] m_AuthorizedCallers;
         private bool m_VerifyCallers = false;
 
+        private readonly IConfiguration m_configuration;
         private readonly ILogger<UserAgentServerConnector> m_logger;
+        private readonly IComponentContext m_context;
         
         public UserAgentServerConnector(
             IConfiguration config, 
-            ILogger<UserAgentServerConnector> logger)
+            ILogger<UserAgentServerConnector> logger,
+            IComponentContext componentContext)
         {
-            Config = config;
-            Logger = logger;
+            m_configuration = config;
             m_logger = logger;
+            m_context = componentContext;
         }
 
         private IUserAgentService m_HomeUsersService;
@@ -66,31 +71,19 @@ namespace OpenSim.Server.Handlers.Hypergrid
             get { return m_HomeUsersService; }
         }
 
-        public string ConfigName { get; private set; } = "UserAgentService";
-
-        public IConfiguration Config { get; private set; }
-
-        public ILogger Logger { get; private set; }
+        public string ConfigName { get; private set; } = "UserAgentServerConnector";    // "UserAgentService";
 
         public IHttpServer HttpServer { get; private set; }
-
-        // XXX
-        // public UserAgentServerConnector(IConfiguration config, IHttpServer server, IFriendsSimConnector friendsConnector) :
-        //         base(config, server, "UserAgentService")
 
         public void Initialize(IHttpServer httpServer)
         {
             HttpServer = httpServer;
-            IFriendsSimConnector friendsConnector = null;
 
-            var gridConfig = Config.GetSection("UserAgentService");
+            var gridConfig = m_configuration.GetSection(ConfigName);
             if (gridConfig.Exists())
             {
-                string serviceDll = gridConfig.GetValue("LocalServiceModule", string.Empty);
-
-                Object[] args = new Object[] { Config, friendsConnector };
-
-                m_HomeUsersService = ServerUtils.LoadPlugin<IUserAgentService>(serviceDll, args);
+                string service = gridConfig.GetValue("LocalServiceModule", string.Empty);
+                m_HomeUsersService = m_context.ResolveNamed<IUserAgentService>(service);
             }
 
             if (m_HomeUsersService == null)
@@ -98,7 +91,6 @@ namespace OpenSim.Server.Handlers.Hypergrid
 
             string loginServerIP = gridConfig.GetValue("LoginServerIP", "127.0.0.1");
             bool proxy = gridConfig.GetValue<bool>("HasProxy", false);
-
             m_VerifyCallers = gridConfig.GetValue<bool>("VerifyCallers", false);
             string csv = gridConfig.GetValue("AuthorizedCallers", "127.0.0.1");
 
