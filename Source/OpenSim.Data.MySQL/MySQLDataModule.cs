@@ -1,21 +1,11 @@
 ﻿using Autofac;
 
-using Microsoft.Extensions.Configuration;
-
-using OpenSim.Services.Interfaces;
 using OpenSim.Region.Framework.Interfaces;
 
 namespace OpenSim.Data.MySQL;
 
 public class MySQLDataModule : Module
 {
-    // private readonly IConfiguration m_configuration;
-
-    // public UserAccountServiceModule(IConfiguration configuration)
-    // {
-    //     m_configuration = configuration;
-    // }
-
     protected override void Load(ContainerBuilder builder)
     {
         builder.RegisterType<MySQLAgentPreferencesData>()

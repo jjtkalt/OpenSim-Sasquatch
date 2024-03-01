@@ -25,21 +25,19 @@
   <ItemGroup>
     <ProjectReference Include="..\..\addon-modules\Gloebit\GloebitMoneyModule\Gloebit.csproj" />
     <ProjectReference Include="..\..\addon-modules\OpenSimSearch\Modules\OpenSimSearch.Modules.csproj" />
-    <ProjectReference Include="..\..\OpenSim\Addons\Groups\OpenSim.Addons.Groups.csproj" />
-    <ProjectReference Include="..\..\OpenSim\ApplicationPlugins\LoadRegions\OpenSim.ApplicationPlugins.LoadRegions.csproj" />
-    <ProjectReference Include="..\..\OpenSim\ApplicationPlugins\RegionModulesController\OpenSim.ApplicationPlugins.RegionModulesController.csproj" />
-    <ProjectReference Include="..\..\OpenSim\ApplicationPlugins\RemoteController\OpenSim.ApplicationPlugins.RemoteController.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Addons.Groups\OpenSim.Addons.Groups.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.ApplicationPlugins.LoadRegions\OpenSim.ApplicationPlugins.LoadRegions.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.ApplicationPlugins.RegionModulesController\OpenSim.ApplicationPlugins.RegionModulesController.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.ApplicationPlugins.RemoteController\OpenSim.ApplicationPlugins.RemoteController.csproj" />
     <ProjectReference Include="..\..\Source\OpenSim.Framework\OpenSim.Framework.csproj" />
-    <ProjectReference Include="..\..\OpenSim\Region\Application\OpenSim.csproj" />
-    <ProjectReference Include="..\..\OpenSim\Region\ClientStack\Linden\Caps\OpenSim.Region.ClientStack.LindenCaps.csproj" />
-    <ProjectReference Include="..\..\OpenSim\Region\ClientStack\Linden\UDP\OpenSim.Region.ClientStack.LindenUDP.csproj" />
-    <ProjectReference Include="..\..\OpenSim\Region\OptionalModules\OpenSim.Region.OptionalModules.csproj" />
-    <ProjectReference Include="..\..\OpenSim\Region\PhysicsModules\BasicPhysics\OpenSim.Region.PhysicsModule.BasicPhysics.csproj" />
-    <ProjectReference Include="..\..\OpenSim\Region\PhysicsModules\BulletS\OpenSim.Region.PhysicsModule.BulletS.csproj" />
-    <ProjectReference Include="..\..\OpenSim\Region\PhysicsModules\Meshing\OpenSim.Region.PhysicsModule.Meshing.csproj" />
-    <ProjectReference Include="..\..\OpenSim\Region\PhysicsModules\POS\OpenSim.Region.PhysicsModule.POS.csproj" />
-    <ProjectReference Include="..\..\OpenSim\Region\PhysicsModules\ubOdeMeshing\OpenSim.Region.PhysicsModule.ubOdeMeshing.csproj" />
-    <ProjectReference Include="..\..\OpenSim\Region\PhysicsModules\ubOde\OpenSim.Region.PhysicsModule.ubOde.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Region.ClientStack.LindenCaps\OpenSim.Region.ClientStack.LindenCaps.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Region.OptionalModules\OpenSim.Region.OptionalModules.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Region.PhysicsModule.BasicPhysics\OpenSim.Region.PhysicsModule.BasicPhysics.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Region.PhysicsModule.BulletS\OpenSim.Region.PhysicsModule.BulletS.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Region.PhysicsModule.Meshing\OpenSim.Region.PhysicsModule.Meshing.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Region.PhysicsModule.POS\OpenSim.Region.PhysicsModule.POS.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Region.PhysicsModule.ubOdeMeshing\OpenSim.Region.PhysicsModule.ubOdeMeshing.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Region.PhysicsModule.ubOde\OpenSim.Region.PhysicsModule.ubOde.csproj" />
     <ProjectReference Include="..\..\Source\OpenSim.Region.ScriptEngine.YEngine\OpenSim.Region.ScriptEngine.YEngine.csproj" />
     <ProjectReference Include="..\..\Source\OpenSim.Server.Base\OpenSim.Server.Base.csproj" />
     <ProjectReference Include="..\..\Source\OpenSim.Server.Handlers\OpenSim.Server.Handlers.csproj" />
@@ -50,12 +48,9 @@
     <PackageReference Include="Autofac" Version="8.0.0" />
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="9.0.0" />
     <PackageReference Include="ConfigurationSubstitutor" Version="1.5.1" />
-    <PackageReference Include="log4net" Version="2.0.15" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Ini" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
-    <PackageReference Include="NDesk.Options.Core" Version="1.2.6" />
-    <PackageReference Include="RawScape.Nini" Version="1.0.0" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
   </ItemGroup>
   <ItemGroup>

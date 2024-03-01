@@ -33,7 +33,7 @@
     <ProjectReference Include="..\..\addon-modules\OpenSim.Region.OptionalModules.Currency\OpenSim.Region.OptionalModules.Currency\OpenSim.Region.OptionalModules.Currency.csproj" />
     <ProjectReference Include="..\..\Source\OpenSim.Data\OpenSim.Data.csproj" />
     <ProjectReference Include="..\..\Source\OpenSim.Framework\OpenSim.Framework.csproj" />
-    <ProjectReference Include="..\..\OpenSim\Region\Framework\OpenSim.Region.Framework.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Region.Framework\OpenSim.Region.Framework.csproj" />
     <ProjectReference Include="..\..\Source\OpenSim.Server.Base\OpenSim.Server.Base.csproj" />
     <ProjectReference Include="..\..\Source\OpenSim.Server.Handlers\OpenSim.Server.Handlers.csproj" />
     <ProjectReference Include="..\..\Source\OpenSim.Server.Common\OpenSim.Server.Common.csproj" />
