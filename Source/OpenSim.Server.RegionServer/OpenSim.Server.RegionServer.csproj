@@ -23,8 +23,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\addon-modules\Gloebit\GloebitMoneyModule\Gloebit.csproj" />
-    <ProjectReference Include="..\..\addon-modules\OpenSimSearch\Modules\OpenSimSearch.Modules.csproj" />
     <ProjectReference Include="..\..\Source\OpenSim.Addons.Groups\OpenSim.Addons.Groups.csproj" />
     <ProjectReference Include="..\..\Source\OpenSim.ApplicationPlugins.LoadRegions\OpenSim.ApplicationPlugins.LoadRegions.csproj" />
     <ProjectReference Include="..\..\Source\OpenSim.ApplicationPlugins.RegionModulesController\OpenSim.ApplicationPlugins.RegionModulesController.csproj" />

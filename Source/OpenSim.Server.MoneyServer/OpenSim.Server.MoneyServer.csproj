@@ -29,8 +29,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\addon-modules\OpenSim.Data.MySQL.MoneyData\OpenSim.Data.MySQL.MoneyData\OpenSim.Data.MySQL.MoneyData.csproj" />
-    <ProjectReference Include="..\..\addon-modules\OpenSim.Region.OptionalModules.Currency\OpenSim.Region.OptionalModules.Currency\OpenSim.Region.OptionalModules.Currency.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Data.MySQL.MoneyData\OpenSim.Data.MySQL.MoneyData.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Region.OptionalModules.Currency\OpenSim.Region.OptionalModules.Currency.csproj" />
     <ProjectReference Include="..\..\Source\OpenSim.Data\OpenSim.Data.csproj" />
     <ProjectReference Include="..\..\Source\OpenSim.Framework\OpenSim.Framework.csproj" />
     <ProjectReference Include="..\..\Source\OpenSim.Region.Framework\OpenSim.Region.Framework.csproj" />

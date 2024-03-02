@@ -95,7 +95,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSim.Capabilities.Handle
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSim.Tests.Clients.AssetClient", "Tests\OpenSim.Clients.Assets.Tests\OpenSim.Tests.Clients.AssetClient.csproj", "{8B1577EA-D750-4F86-BFF9-137ACC201DF9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSim.Tests.Common", "Tests\OpenSim.Common.Tests\OpenSim.Tests.Common.csproj", "{4B9B10D0-DF6A-4D9F-9AF4-75E723AF69A8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSim.Tests.Common", "Tests\OpenSim.Tests.Common\OpenSim.Tests.Common.csproj", "{4B9B10D0-DF6A-4D9F-9AF4-75E723AF69A8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSim.Data.Tests", "Tests\OpenSim.Data.Tests\OpenSim.Data.Tests.csproj", "{8579C7CF-F05C-42FB-8DFB-7F0E7CB122ED}"
 EndProject

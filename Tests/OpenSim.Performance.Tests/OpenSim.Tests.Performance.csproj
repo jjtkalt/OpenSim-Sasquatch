@@ -1,45 +1,51 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
+ <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="log4net" Version="2.0.15" />
-    <PackageReference Include="NUnit" Version="2.7.1" />
-    <PackageReference Include="NUnitTestAdapter" Version="2.3.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="Nini">
-      <HintPath>..\..\..\bin\Nini.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="OpenMetaverse">
-      <HintPath>..\..\..\bin\OpenMetaverse.dll</HintPath>
+      <HintPath>..\..\bin\OpenMetaverse.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="OpenMetaverse.StructuredData">
-      <HintPath>..\..\..\bin\OpenMetaverse.StructuredData.dll</HintPath>
+      <HintPath>..\..\bin\OpenMetaverse.StructuredData.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="OpenMetaverseTypes">
-      <HintPath>..\..\..\bin\OpenMetaverseTypes.dll</HintPath>
+      <HintPath>..\..\bin\OpenMetaverseTypes.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="XMLRPC">
-      <HintPath>..\..\..\bin\XMLRPC.dll</HintPath>
+      <HintPath>..\..\bin\XMLRPC.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Framework\OpenSim.Framework.csproj" />
-    <ProjectReference Include="..\..\Framework\Console\OpenSim.Framework.Console.csproj" />
-    <ProjectReference Include="..\..\Framework\Servers\HttpServer\OpenSim.Framework.Servers.HttpServer.csproj" />
-    <ProjectReference Include="..\..\Region\CoreModules\OpenSim.Region.CoreModules.csproj" />
-    <ProjectReference Include="..\..\Region\Framework\OpenSim.Region.Framework.csproj" />
-    <ProjectReference Include="..\..\Region\OptionalModules\OpenSim.Region.OptionalModules.csproj" />
-    <ProjectReference Include="..\..\Region\ScriptEngine\Shared\OpenSim.Region.ScriptEngine.Shared.csproj" />
-    <ProjectReference Include="..\..\Services\AvatarService\OpenSim.Services.AvatarService.csproj" />
-    <ProjectReference Include="..\..\Services\Interfaces\OpenSim.Services.Interfaces.csproj" />
-    <ProjectReference Include="..\Common\OpenSim.Tests.Common.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Framework\OpenSim.Framework.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Framework.Console\OpenSim.Framework.Console.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Framework.Servers.HttpServer\OpenSim.Framework.Servers.HttpServer.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Region.CoreModules\OpenSim.Region.CoreModules.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Region.Framework\OpenSim.Region.Framework.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Region.OptionalModules\OpenSim.Region.OptionalModules.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Region.ScriptEngine.Shared\OpenSim.Region.ScriptEngine.Shared.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Services\OpenSim.Services.csproj" />
+    <ProjectReference Include="..\..\Source\OpenSim.Services.Interfaces\OpenSim.Services.Interfaces.csproj" />
+    <ProjectReference Include="..\..\Tests\OpenSim.Tests.Common\OpenSim.Tests.Common.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="NUnit" Version="3.14.0" />
+    <PackageReference Include="NUnit.Analyzers" Version="3.9.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="NUnit.Framework" />
+  </ItemGroup>
+
 </Project>
