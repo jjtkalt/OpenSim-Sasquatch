@@ -25,14 +25,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using Xunit;
-using OpenSim.Framework;
-
 namespace OpenSim.Framework.Tests
 {
     public class LocationTest
     {
-        [Fact]
+        [Test]
         public void locationRegionHandleRegionHandle()
         {
             //1099511628032000
@@ -47,7 +44,7 @@ namespace OpenSim.Framework.Tests
             Assert.True(TestLocation1 != TestLocation2);
         }
 
-        [Fact]
+        [Test]
         public void locationXYRegionHandle()
         {
             Location TestLocation1 = new Location(255000,256000);

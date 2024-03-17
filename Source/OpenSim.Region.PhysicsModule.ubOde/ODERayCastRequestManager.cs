@@ -32,7 +32,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using OpenSim.Framework;
-using OpenSim.Region.PhysicsModules.SharedBase;
+using OpenSim.Region.PhysicsModule.SharedBase;
 using log4net;
 using OpenMetaverse;
 

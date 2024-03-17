@@ -27,9 +27,10 @@
 
 using System.Collections.Concurrent;
 using System.Net;
-using Nini.Config;
+
 using OpenMetaverse;
 using OpenMetaverse.StructuredData;
+
 using OpenSim.Framework;
 using OpenSim.Framework.Console;
 using OpenSim.Framework.Servers.HttpServer;
@@ -38,14 +39,12 @@ using OpenSim.Region.Framework.Scenes;
 
 using Caps = OpenSim.Framework.Capabilities.Caps;
 
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Region.ClientStack.Linden
 {
     public class RegionConsoleModule : INonSharedRegionModule, IRegionConsole
     {
-//        private static readonly ILog m_log =
-//            LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         private Scene m_scene;
         private IEventQueue m_eventQueue;
         private Commands m_commands = new Commands();
@@ -53,9 +52,16 @@ namespace OpenSim.Region.ClientStack.Linden
 
         ConcurrentDictionary<UUID, OnOutputDelegate> currentConsoles = new ConcurrentDictionary<UUID, OnOutputDelegate>();
 
+        protected readonly IConfiguration m_configuration;
+
+        public RegionConsoleModule(IConfiguration configuration)
+        {
+            m_configuration = configuration;
+        }
+
         public event ConsoleMessage OnConsoleMessage;
 
-        public void Initialise(IConfiguration source)
+        public void Initialise()
         {
             m_commands.AddCommand( "Help", false, "help", "help [<item>]", "Display help on a particular command or on a list of commands in a category", Help);
         }

@@ -29,8 +29,7 @@
 using OpenSim.Framework;
 using OpenSim.Region.Framework.Scenes;
 using OpenSim.Region.Framework.Interfaces;
-using OpenSim.Region.PhysicsModules.SharedBase;
-using OpenSim.Region.PhysicsModules.ConvexDecompositionDotNet;
+using OpenSim.Region.PhysicsModule.SharedBase;
 using OpenMetaverse;
 using OpenMetaverse.StructuredData;
 using System.Drawing;

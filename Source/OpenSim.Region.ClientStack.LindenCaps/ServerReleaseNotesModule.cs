@@ -27,24 +27,32 @@
 
 // Dedicated to Quill Littlefeather
 
-using System.Reflection;
-using log4net;
-using Nini.Config;
 using OpenMetaverse;
+
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
 
 using Caps = OpenSim.Framework.Capabilities.Caps;
 
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+
 namespace OpenSim.Region.ClientStack.Linden
 {
     class ServerReleaseNotesModule : ISharedRegionModule
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         private bool m_enabled;
         private string m_ServerReleaseNotesURL;
+        
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<ServerReleaseNotesModule> m_logger;
+
+        public ServerReleaseNotesModule(IConfiguration configuration, ILogger<ServerReleaseNotesModule> logger)
+        {
+            m_configuration = configuration;
+            m_logger = logger;
+        }
 
         public string Name { get { return "ServerReleaseNotesModule"; } }
 
@@ -53,29 +61,30 @@ namespace OpenSim.Region.ClientStack.Linden
             get { return null; }
         }
 
-        public void Initialise(IConfiguration source)
+        public void Initialise()
         {
             m_enabled = false; // whatever
-            IConfig config = source.Configs["ClientStack.LindenCaps"];
-            if (config == null)
+
+            var config = m_configuration.GetSection("ClientStack.LindenCaps");
+            if (config.Exists() is false)
                 return;
 
-            string capURL = config.GetString("Cap_ServerReleaseNotes", string.Empty);
+            string capURL = config.GetValue("Cap_ServerReleaseNotes", string.Empty);
             if (string.IsNullOrEmpty(capURL) || capURL != "localhost")
                 return;
 
-            config = source.Configs["ServerReleaseNotes"];
-            if (config == null)
+            config = m_configuration.GetSection("ServerReleaseNotes");
+            if (config.Exists() is false)
                 return;
 
-            m_ServerReleaseNotesURL = config.GetString("ServerReleaseNotesURL", m_ServerReleaseNotesURL);
+            m_ServerReleaseNotesURL = config.GetValue("ServerReleaseNotesURL", m_ServerReleaseNotesURL);
             if (string.IsNullOrEmpty(m_ServerReleaseNotesURL))
                 return;
 
             Uri dummy;
-            if(!Uri.TryCreate(m_ServerReleaseNotesURL,UriKind.Absolute, out dummy))
+            if (Uri.TryCreate(m_ServerReleaseNotesURL,UriKind.Absolute, out dummy) is false)
             {
-                m_log.Error("[Cap_ServerReleaseNotes]: Invalid ServerReleaseNotesURL. Cap Disabled");
+                m_logger.LogError("[Cap_ServerReleaseNotes]: Invalid ServerReleaseNotesURL. Cap Disabled");
                 return;
             }
 

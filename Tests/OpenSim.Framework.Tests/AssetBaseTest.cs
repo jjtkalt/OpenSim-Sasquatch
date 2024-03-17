@@ -25,11 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using Xunit;
-using OpenSim.Framework;
-
 using OpenMetaverse;
-using OpenMetaverse.StructuredData;
 
 namespace OpenSim.Framework.Tests
 {
@@ -44,7 +40,7 @@ namespace OpenSim.Framework.Tests
             // throw new NotImplementedException();
         }
 
-        [Fact]
+        [Test]
         public void TestContainsReferences()
         {
             CheckContainsReferences(AssetType.Bodypart, true);

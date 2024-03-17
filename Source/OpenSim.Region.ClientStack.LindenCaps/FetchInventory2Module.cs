@@ -25,9 +25,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using Nini.Config;
 using OpenMetaverse;
 using OpenMetaverse.StructuredData;
+
 using OpenSim.Capabilities.Handlers;
 using OpenSim.Framework;
 using OpenSim.Framework.Servers.HttpServer;
@@ -37,6 +37,8 @@ using OpenSim.Services.Interfaces;
 
 using Caps = OpenSim.Framework.Capabilities.Caps;
 
+using Microsoft.Extensions.Configuration;
+
 namespace OpenSim.Region.ClientStack.Linden
 {
     /// <summary>
@@ -44,8 +46,6 @@ namespace OpenSim.Region.ClientStack.Linden
     /// </summary>
     public class FetchInventory2Module : ISharedRegionModule
     {
-//        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         public bool Enabled { get; private set; }
 
         private int m_nScenes;
@@ -58,18 +58,25 @@ namespace OpenSim.Region.ClientStack.Linden
 
         private string m_fetchLib2Url;
 
+        private readonly IConfiguration m_configuration;
+
+        public FetchInventory2Module(IConfiguration configuration)
+        {
+            m_configuration = configuration;
+        }
+
         #region ISharedRegionModule Members
 
-        public void Initialise(IConfiguration source)
+        public void Initialise()
         {
-            IConfig config = source.Configs["ClientStack.LindenCaps"];
-            if (config == null)
+            var config = m_configuration.GetSection("ClientStack.LindenCaps");
+            if (config.Exists() is false)
                 return;
 
-            m_fetchInventory2Url = config.GetString("Cap_FetchInventory2", string.Empty);
-            m_fetchLib2Url = config.GetString("Cap_FetchLib2", "localhost");
+            m_fetchInventory2Url = config.GetValue("Cap_FetchInventory2", string.Empty);
+            m_fetchLib2Url = config.GetValue("Cap_FetchLib2", "localhost");
 
-            if (m_fetchInventory2Url.Length > 0)
+            if (string.IsNullOrEmpty(m_fetchInventory2Url) is false)
                 Enabled = true;
         }
 

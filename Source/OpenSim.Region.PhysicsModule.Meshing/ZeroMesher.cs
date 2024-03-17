@@ -28,7 +28,7 @@
 using OpenSim.Framework;
 using OpenSim.Region.Framework.Scenes;
 using OpenSim.Region.Framework.Interfaces;
-using OpenSim.Region.PhysicsModules.SharedBase;
+using OpenSim.Region.PhysicsModule.SharedBase;
 using OpenMetaverse;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;

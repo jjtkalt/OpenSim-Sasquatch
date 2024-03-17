@@ -36,7 +36,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using OpenMetaverse;
 using OpenSim.Framework;
-using OpenSim.Region.PhysicsModules.SharedBase;
+using OpenSim.Region.PhysicsModule.SharedBase;
 
 namespace OpenSim.Region.PhysicsModule.BulletS
 {

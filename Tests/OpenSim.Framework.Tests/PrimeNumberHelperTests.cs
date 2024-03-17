@@ -25,15 +25,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using Xunit;
-using OpenSim.Framework;
-using OpenMetaverse;
-
 namespace OpenSim.Framework.Tests
 {
-        public class PrimeNumberHelperTests
+    public class PrimeNumberHelperTests
     {
-        [Fact]
+        [Test]
         public void TestGetPrime()
         {
             int prime1 = PrimeNumberHelper.GetPrime(7919);
@@ -45,7 +41,7 @@ namespace OpenSim.Framework.Tests
 
         }
 
-        [Fact]
+        [Test]
         public void Test1000SmallPrimeNumbers()
         {
             int[] primes = {

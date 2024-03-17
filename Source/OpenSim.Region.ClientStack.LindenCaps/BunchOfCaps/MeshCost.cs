@@ -46,6 +46,7 @@ using OSDArray = OpenMetaverse.StructuredData.OSDArray;
 using OSDMap = OpenMetaverse.StructuredData.OSDMap;
 
 using Nini.Config;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Region.ClientStack.Linden
 {
@@ -111,14 +112,15 @@ namespace OpenSim.Region.ClientStack.Linden
             ObjectLinkedPartsMax = scene.m_linksetCapacity;
         }
 
-        public void Econfig(IConfig EconomyConfig)
+        public void Econfig(IConfigurationSection EconomyConfig)
         {
-            ModelMeshCostFactor = EconomyConfig.GetFloat("MeshModelUploadCostFactor", ModelMeshCostFactor);
-            ModelTextureCostFactor = EconomyConfig.GetFloat("MeshModelUploadTextureCostFactor", ModelTextureCostFactor);
-            ModelMinCostFactor = EconomyConfig.GetFloat("MeshModelMinCostFactor", ModelMinCostFactor);
+            ModelMeshCostFactor = EconomyConfig.GetValue<float>("MeshModelUploadCostFactor", ModelMeshCostFactor);
+            ModelTextureCostFactor = EconomyConfig.GetValue<float>("MeshModelUploadTextureCostFactor", ModelTextureCostFactor);
+            ModelMinCostFactor = EconomyConfig.GetValue<float>("MeshModelMinCostFactor", ModelMinCostFactor);
+            
                     // next 2 are normalized so final cost is afected by modelUploadFactor above and normal cost
-            primCreationCost = EconomyConfig.GetFloat("ModelPrimCreationCost", primCreationCost);
-            bytecost = EconomyConfig.GetFloat("ModelMeshByteCost", bytecost);
+            primCreationCost = EconomyConfig.GetValue<float>("ModelPrimCreationCost", primCreationCost);
+            bytecost = EconomyConfig.GetValue<float>("ModelMeshByteCost", bytecost);
         }
 
         // storage for a single mesh asset cost parameters

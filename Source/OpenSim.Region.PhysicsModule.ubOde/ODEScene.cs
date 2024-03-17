@@ -34,7 +34,7 @@ using System.Runtime.InteropServices;
 
 using OpenSim.Framework;
 using OpenSim.Region.Framework.Scenes;
-using OpenSim.Region.PhysicsModules.SharedBase;
+using OpenSim.Region.PhysicsModule.SharedBase;
 using OpenMetaverse;
 
 using Microsoft.Extensions.Configuration;

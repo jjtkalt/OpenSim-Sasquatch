@@ -28,7 +28,6 @@
 using OpenMetaverse;
 
 using OpenSim.Services.Interfaces;
-using System.Reflection;
 using OpenSim.Data;
 
 using Microsoft.Extensions.Configuration;

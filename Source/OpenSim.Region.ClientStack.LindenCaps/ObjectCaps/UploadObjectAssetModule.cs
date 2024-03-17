@@ -26,9 +26,7 @@
  */
 
 using System.Net;
-using System.Reflection;
-using log4net;
-using Nini.Config;
+
 using OpenMetaverse;
 using OpenMetaverse.Messages.Linden;
 using OpenSim.Framework;
@@ -40,13 +38,23 @@ using Caps = OpenSim.Framework.Capabilities.Caps;
 using OSDMap = OpenMetaverse.StructuredData.OSDMap;
 using ExtraParamType = OpenMetaverse.ExtraParamType;
 
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+
 namespace OpenSim.Region.ClientStack.Linden
 {
     public class UploadObjectAssetModule : INonSharedRegionModule
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         private Scene m_scene;
+
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<UploadObjectAssetModule> m_logger;
+
+        public UploadObjectAssetModule(IConfiguration configuration, ILogger<UploadObjectAssetModule> logger)
+        {
+            m_configuration = configuration;
+            m_logger = logger;
+        }
 
         #region Region Module interfaceBase Members
 
@@ -55,7 +63,7 @@ namespace OpenSim.Region.ClientStack.Linden
             get { return null; }
         }
 
-        public void Initialise(IConfiguration source)
+        public void Initialise()
         {
         }
 
@@ -123,7 +131,7 @@ namespace OpenSim.Region.ClientStack.Linden
             }
             catch (Exception ex)
             {
-                m_log.Error("[UPLOAD OBJECT ASSET MODULE]: Error deserializing message " + ex.ToString());
+                m_logger.LogError(ex, "[UPLOAD OBJECT ASSET MODULE]: Error deserializing message");
                 message = null;
             }
 

@@ -33,22 +33,22 @@
     <ProjectReference Include="..\..\Source\OpenSim.Framework.Serialization\OpenSim.Framework.Serialization.csproj" />
     <ProjectReference Include="..\..\Source\OpenSim.Server.Base\OpenSim.Server.Base.csproj" />
     <ProjectReference Include="..\..\Source\OpenSim.Services.Interfaces\OpenSim.Services.Interfaces.csproj" />
-    <ProjectReference Include="..\OpenSim.Framework.AssetLoader.Filesystem\OpenSim.Framework.AssetLoader.Filesystem.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Remove="GridService/**" />    
-    <Compile Remove="HypergridService/**" />
-    <Compile Remove="InventoryService/**" />
-    <Compile Remove="LLLoginService/**" />    
-    <Compile Remove="PresenceService/**" />    
-    <Compile Remove="SimulationService/**" />    
+    <ProjectReference Include="..\..\Source\OpenSim.Framework.AssetLoader.Filesystem\OpenSim.Framework.AssetLoader.Filesystem.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Autofac" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Xml" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+      <Compile Remove="GridService/**"/>    
+      <Compile Remove="HypergridService/**"/>
+      <Compile Remove="LLLoginService/**"/>    
+      <Compile Remove="PresenceService/**"/>
+      <Compile Remove="SimulationService/**"/>
   </ItemGroup>
 
 </Project>

@@ -36,7 +36,7 @@ namespace OpenSim.Data.MySQL
     /// </summary>
     public class MySQLHGTravelData : MySQLGenericTableHandler<HGTravelingData>, IHGTravelingData
     {
-        public void Initialize(string connectionString, string realm)
+        public void Initialize(string? connectionString, string? realm)
         {
             base.Initialize(connectionString, realm, "HGTravelStore");
         }

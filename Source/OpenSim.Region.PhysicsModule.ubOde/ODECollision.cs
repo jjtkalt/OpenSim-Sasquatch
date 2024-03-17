@@ -1,5 +1,5 @@
 ﻿using OpenMetaverse;
-using OpenSim.Region.PhysicsModules.SharedBase;
+using OpenSim.Region.PhysicsModule.SharedBase;
 using System;
 using System.Runtime.CompilerServices;
 

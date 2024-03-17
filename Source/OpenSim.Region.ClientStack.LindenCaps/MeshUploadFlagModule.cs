@@ -27,6 +27,7 @@
 
 using System.Net;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 using Nini.Config;
 using OpenMetaverse;
 using OpenMetaverse.StructuredData;
@@ -43,9 +44,6 @@ namespace OpenSim.Region.ClientStack.Linden
     /// </summary>
     public class MeshUploadFlagModule : INonSharedRegionModule
     {
-//        private static readonly ILog m_log =
-//            LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         /// <summary>
         /// Is this module enabled?
         /// </summary>
@@ -53,23 +51,27 @@ namespace OpenSim.Region.ClientStack.Linden
 
         private Scene m_scene;
 
+        private readonly IConfiguration m_configuration;
+
         #region ISharedRegionModule Members
 
-        public MeshUploadFlagModule()
+
+        public MeshUploadFlagModule(IConfiguration configuration)
         {
+            m_configuration = configuration;
             Enabled = true;
         }
 
-        public void Initialise(IConfiguration source)
+        public void Initialise()
         {
-            IConfig config = source.Configs["Mesh"];
-            if (config == null)
+            var config = m_configuration.GetSection("Mesh");
+            if (config.Exists() is false)
             {
                 return;
             }
             else
             {
-                Enabled = config.GetBoolean("AllowMeshUpload", Enabled);
+                Enabled = config.GetValue<bool>("AllowMeshUpload", Enabled);
             }
         }
 

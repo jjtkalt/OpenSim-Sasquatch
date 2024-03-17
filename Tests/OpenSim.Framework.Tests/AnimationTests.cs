@@ -25,9 +25,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using Xunit;
-using OpenSim.Framework;
-
 using OpenMetaverse;
 using OpenMetaverse.StructuredData;
 
@@ -44,6 +41,11 @@ namespace OpenSim.Framework.Tests
 
         public AnimationTests()
         {
+        }
+
+        [SetUp]
+        public void Setup()
+        {
             animUUID1 = UUID.Random();
             animUUID2 = UUID.Random();
             objUUID1 = UUID.Random();
@@ -58,7 +60,7 @@ namespace OpenSim.Framework.Tests
             // throw new NotImplementedException();
         }
 
-        [Fact]
+        [Test]
         public void AnimationOSDTest()
         {
             Assert.True(anim1.AnimID==animUUID1 && anim1.ObjectID == objUUID1 && anim1.SequenceNum ==1, "The Animation Constructor didn't set the fields correctly");

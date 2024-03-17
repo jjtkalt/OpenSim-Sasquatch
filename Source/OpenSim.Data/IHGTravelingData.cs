@@ -50,6 +50,8 @@ namespace OpenSim.Data
     /// </summary>
     public interface IHGTravelingData
     {
+        void Initialize(string? connString, string? realm);
+        
         HGTravelingData Get(UUID sessionID);
         HGTravelingData[] GetSessions(UUID userID);
         bool Store(HGTravelingData data);

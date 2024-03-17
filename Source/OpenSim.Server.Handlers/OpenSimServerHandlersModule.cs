@@ -34,11 +34,11 @@ namespace OpenSim.Server.Handlers
                 .AsImplementedInterfaces();
 
             builder.RegisterType<AssetServiceConnector>()
-                .Named<IServiceConnector>("AssetService")
+                .Named<IServiceConnector>("AssetServiceConnector")
                 .AsImplementedInterfaces();
 
             builder.RegisterType<AuthenticationServiceConnector>()
-                .Named<IServiceConnector>("AuthenticationService")
+                .Named<IServiceConnector>("AuthenticationServiceConnector")
                 .AsImplementedInterfaces();
 
             builder.RegisterType<OpenIdServerConnector>()
@@ -66,7 +66,7 @@ namespace OpenSim.Server.Handlers
                 .AsImplementedInterfaces();
 
             builder.RegisterType<FriendsServiceConnector>()
-                .Named<IServiceConnector>("FriendsService")
+                .Named<IServiceConnector>("GridInfoServerInConnector")
                 .AsImplementedInterfaces();
 
             builder.RegisterType<GridInfoServerInConnector>()
@@ -74,7 +74,7 @@ namespace OpenSim.Server.Handlers
                 .AsImplementedInterfaces();
 
             builder.RegisterType<GridServiceConnector>()
-                .Named<IServiceConnector>("GridService")
+                .Named<IServiceConnector>("GridServiceConnector")
                 .AsImplementedInterfaces();
 
             builder.RegisterType<GridUserServiceConnector>()
@@ -106,7 +106,7 @@ namespace OpenSim.Server.Handlers
                 .AsImplementedInterfaces();
 
             builder.RegisterType<XInventoryInConnector>()
-                .Named<IServiceConnector>("InventoryService")
+                .Named<IServiceConnector>("XInventoryInConnector")
                 .AsImplementedInterfaces();
 
             // builder.RegisterType<LandServiceInConnector>()

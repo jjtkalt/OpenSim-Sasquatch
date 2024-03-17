@@ -26,10 +26,9 @@
  */
 
 using System.Collections;
-using System.Reflection;
-using log4net;
-using Nini.Config;
+
 using OpenMetaverse;
+
 using OpenSim.Framework;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Region.Framework.Interfaces;
@@ -40,6 +39,8 @@ using Caps = OpenSim.Framework.Capabilities.Caps;
 
 using OpenSim.Capabilities.Handlers;
 using OpenSim.Framework.Monitoring;
+
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Region.ClientStack.Linden
 {
@@ -54,8 +55,6 @@ namespace OpenSim.Region.ClientStack.Linden
             public UUID reqID;
             public OSHttpRequest request;
         }
-
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         /// <summary>
         /// Control whether requests will be processed asynchronously.
@@ -92,23 +91,25 @@ namespace OpenSim.Region.ClientStack.Linden
 
         private static int m_NumberScenes = 0;
 
+        protected readonly IConfiguration m_configuration;
+
         #region ISharedRegionModule Members
 
-        public WebFetchInvDescModule() : this(true) {}
-
-        public WebFetchInvDescModule(bool processQueuedResultsAsync)
+        public WebFetchInvDescModule(IConfiguration configuratioon, bool processQueuedResultsAsync = true)
         {
+            m_configuration = configuratioon;
+
             ProcessQueuedRequestsAsync = processQueuedResultsAsync;
         }
 
-        public void Initialise(IConfiguration source)
+        public void Initialise()
         {
-            IConfig config = source.Configs["ClientStack.LindenCaps"];
-            if (config == null)
+            var config = m_configuration.GetSection("ClientStack.LindenCaps");
+            if (config.Exists() is false)
                 return;
 
-            m_fetchInventoryDescendents2Url = config.GetString("Cap_FetchInventoryDescendents2", string.Empty);
-            m_Enabled = m_fetchInventoryDescendents2Url.Length > 0;
+            m_fetchInventoryDescendents2Url = config.GetValue("Cap_FetchInventoryDescendents2", string.Empty);
+            m_Enabled = string.IsNullOrEmpty(m_fetchInventoryDescendents2Url) is false;
         }
 
         public void AddRegion(Scene s)

@@ -25,8 +25,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using Xunit;
-using OpenSim.Framework;
 using OpenMetaverse;
 
 
@@ -38,6 +36,11 @@ namespace OpenSim.Framework.Tests
         private UUID cacheItemUUID;
 
         public CacheTests()
+        {
+        }
+
+        [SetUp]
+        public void Setup()
         {
             cache = new Cache();
             cache = new Cache(CacheMedium.Memory,CacheStrategy.Aggressive,CacheFlags.AllowUpdate);
@@ -54,7 +57,7 @@ namespace OpenSim.Framework.Tests
             throw new NotImplementedException();
         }
 
-        [Fact]
+        [Test]
         public void TestRetreive()
         {
             CacheItemBase citem = (CacheItemBase)cache.Get(cacheItemUUID.ToString());
@@ -63,7 +66,7 @@ namespace OpenSim.Framework.Tests
             Assert.True(data[0] == 255, "Cached Item element should be 255");
         }
 
-        [Fact]
+        [Test]
         public void TestNotInCache()
         {
             UUID randomNotIn = UUID.Random();
@@ -76,7 +79,7 @@ namespace OpenSim.Framework.Tests
         }
 
 
-        [Fact]
+        [Test]
         public void ExpireItemManually()
         {
             UUID ImmediateExpiryUUID = UUID.Random();
@@ -91,7 +94,7 @@ namespace OpenSim.Framework.Tests
             Assert.True(citem == null, "Item should not be in Cache because we manually invalidated it");
         }
 
-        [Fact]
+        [Test]
         public void ClearCacheTest()
         {
             UUID ImmediateExpiryUUID = UUID.Random();
@@ -106,7 +109,7 @@ namespace OpenSim.Framework.Tests
             Assert.True(citem == null, "Item should not be in Cache because we manually invalidated it");
         }
 
-        [Fact]
+        [Test]
         public void CacheItemMundane()
         {
             UUID Random1 = UUID.Random();

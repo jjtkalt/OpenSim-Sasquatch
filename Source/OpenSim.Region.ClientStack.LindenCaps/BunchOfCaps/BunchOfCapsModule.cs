@@ -25,8 +25,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using Nini.Config;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+
 using OpenMetaverse;
+
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
 
@@ -36,10 +39,18 @@ namespace OpenSim.Region.ClientStack.Linden
 {
     public class BunchOfCapsModule : INonSharedRegionModule
     {
-//        private static readonly ILog m_log =
-//            LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         private Scene m_Scene;
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<BunchOfCapsModule> m_logger;
+
+        public BunchOfCapsModule(
+            IConfiguration configuration,
+            ILogger<BunchOfCapsModule> logger
+            )
+        {
+            m_configuration = configuration;
+            m_logger = logger;
+        }
 
         #region INonSharedRegionModule
 
@@ -47,7 +58,7 @@ namespace OpenSim.Region.ClientStack.Linden
 
         public Type ReplaceableInterface { get { return null; } }
 
-        public void Initialise(IConfiguration source)
+        public void Initialise()
         {
         }
 
@@ -68,12 +79,12 @@ namespace OpenSim.Region.ClientStack.Linden
         }
 
         public void PostInitialise() { }
+
         #endregion
 
         private void OnRegisterCaps(UUID agentID, Caps caps)
         {
-            new BunchOfCaps(m_Scene, agentID, caps);
+            new BunchOfCaps(m_configuration, m_logger, m_Scene, agentID, caps);
         }
-
     }
 }

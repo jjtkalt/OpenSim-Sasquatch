@@ -26,39 +26,49 @@
  */
 
 using System.Net;
-using System.Reflection;
 
-using log4net;
-using Nini.Config;
 using OpenMetaverse;
 using OpenMetaverse.StructuredData;
 
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
+
 using Caps = OpenSim.Framework.Capabilities.Caps;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Region.ClientStack.Linden
 {
     public class EstateChangeInfoCapModule : INonSharedRegionModule
     {
-        private static readonly ILog m_log =
-            LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         private Scene m_scene;
         private bool m_Enabled = false;
         private string m_capUrl;
         IEstateModule m_EstateModule;
 
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<EstateChangeInfoCapModule> m_logger;
+
+        public EstateChangeInfoCapModule(
+            IConfiguration configuration,
+            ILogger<EstateChangeInfoCapModule> logger
+            )
+        {
+            m_configuration = configuration;
+            m_logger = logger;
+        }
+
         #region INonSharedRegionModule Members
 
-        public void Initialise(IConfiguration pSource)
+        public void Initialise()
         {
-            IConfig config = pSource.Configs["ClientStack.LindenCaps"];
-            if (config == null)
+            var config = m_configuration.GetSection("ClientStack.LindenCaps");
+            if (config.Exists() is false)
                 return;
 
-            m_capUrl = config.GetString("Cap_EstateChangeInfo", string.Empty);
+            m_capUrl = config.GetValue("Cap_EstateChangeInfo", string.Empty);
             if (!String.IsNullOrEmpty(m_capUrl) && m_capUrl.Equals("localhost"))
                 m_Enabled = true;
         }
@@ -150,18 +160,20 @@ namespace OpenSim.Region.ClientStack.Linden
             }
 
             OSDMap r;
+
             try
             {
                 r = (OSDMap)OSDParser.Deserialize(request.InputStream);
             }
             catch (Exception ex)
             {
-                m_log.Error("[UPLOAD OBJECT ASSET MODULE]: Error deserializing message " + ex.ToString());
+                m_logger.LogError(ex, "[UPLOAD OBJECT ASSET MODULE]: Error deserializing message");
                 response.StatusCode = (int)HttpStatusCode.BadRequest;
                 return;
             }
 
             bool ok = true;
+            
             try
             {
                 string estateName = r["estate_name"].AsString();

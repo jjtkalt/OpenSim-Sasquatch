@@ -26,18 +26,20 @@
  */
 
 using System.Net;
-using System.Reflection;
 using System.Text;
-using log4net;
-using Nini.Config;
+
 using OpenMetaverse;
 using OpenMetaverse.StructuredData;
+
 using OpenSim.Framework;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
 
 using Caps = OpenSim.Framework.Capabilities.Caps;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Region.ClientStack.Linden
 {
@@ -54,8 +56,6 @@ namespace OpenSim.Region.ClientStack.Linden
     /// </remarks>
     public class SimulatorFeaturesModule : INonSharedRegionModule, ISimulatorFeaturesModule
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         public event SimulatorFeaturesRequestDelegate OnSimulatorFeaturesRequest;
 
         private Scene m_scene;
@@ -67,22 +67,30 @@ namespace OpenSim.Region.ClientStack.Linden
 
         private bool m_ExportSupported = false;
 
-        private bool m_doScriptSyntax;
+        private bool m_doScriptSyntax = true;
 
         static private readonly object m_scriptSyntaxLock = new();
         static private UUID m_scriptSyntaxID = UUID.Zero;
         static private byte[] m_scriptSyntaxXML = null;
 
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<SimulatorFeaturesModule> m_logger;
+
+        public SimulatorFeaturesModule(IConfiguration configuration, ILogger<SimulatorFeaturesModule> logger)
+        {
+            m_configuration = configuration;
+            m_logger = logger;
+        }
+
         #region ISharedRegionModule Members
 
-        public void Initialise(IConfiguration source)
-        {
-            IConfig config = source.Configs["SimulatorFeatures"];
-            m_doScriptSyntax = true;
-            if (config != null)
+        public void Initialise()
+        {          
+            var config = m_configuration.GetSection("SimulatorFeatures");
+            if (config.Exists() is true)
             {
-                m_ExportSupported = config.GetBoolean("ExportSupported", m_ExportSupported);
-                m_doScriptSyntax = config.GetBoolean("ScriptSyntax", m_doScriptSyntax);
+                m_ExportSupported = config.GetValue<bool>("ExportSupported", m_ExportSupported);
+                m_doScriptSyntax = config.GetValue<bool>("ScriptSyntax", m_doScriptSyntax);
             }
 
             ReadScriptSyntax();
@@ -331,7 +339,7 @@ namespace OpenSim.Region.ClientStack.Linden
             Dictionary<string, object> extraFeatures = scene.GridService.GetExtraFeatures();
             if (extraFeatures.ContainsKey("Result") && extraFeatures["Result"] != null && extraFeatures["Result"].ToString() == "Failure")
             {
-                m_log.WarnFormat("[SIMULATOR FEATURES MODULE]: Unable to retrieve grid-wide features");
+                m_logger.LogWarning("[SIMULATOR FEATURES MODULE]: Unable to retrieve grid-wide features");
                 return;
             }
 
@@ -434,9 +442,10 @@ namespace OpenSim.Region.ClientStack.Linden
                         m_scriptSyntaxID = id;
                     }
                 }
-                catch
+                catch (Exception e)
                 {
-                    m_log.Error("[SIMULATOR FEATURES MODULE] fail read ScriptSyntax.xml file");
+                    m_logger.LogError(e, "[SIMULATOR FEATURES MODULE] fail read ScriptSyntax.xml file");
+                    
                     m_scriptSyntaxID = UUID.Zero;
                     m_scriptSyntaxXML = null;
                 }

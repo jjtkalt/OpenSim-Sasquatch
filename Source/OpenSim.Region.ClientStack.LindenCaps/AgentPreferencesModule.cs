@@ -26,9 +26,7 @@
  */
 
 using System.Net;
-using System.Reflection;
-using log4net;
-using Nini.Config;
+
 using OpenMetaverse;
 using OpenMetaverse.StructuredData;
 using OpenSim.Framework.Servers.HttpServer;
@@ -38,17 +36,25 @@ using OpenSim.Services.Interfaces;
 
 using Caps = OpenSim.Framework.Capabilities.Caps;
 
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+
 namespace OpenSim.Region.ClientStack.Linden
 {
     public class AgentPreferencesModule : ISharedRegionModule
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         private List<Scene> m_scenes = new List<Scene>();
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger m_logger;
 
-        public void Initialise(IConfiguration source)
+        public AgentPreferencesModule(IConfiguration config, ILogger<AgentPreferencesModule> logger)
         {
+            m_configuration = config;
+            m_logger = logger;
+        }
 
+        public void Initialise( )
+        {
         }
 
         #region Region module
@@ -63,6 +69,7 @@ namespace OpenSim.Region.ClientStack.Linden
         {
             lock (m_scenes)
                 m_scenes.Remove(scene);
+                
             scene.EventManager.OnRegisterCaps -= RegisterCaps;
             scene = null;
         }

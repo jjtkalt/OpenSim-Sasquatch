@@ -24,11 +24,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-using Xunit;
-using OpenSim.Framework;
 
 using OpenMetaverse;
-using OpenMetaverse.StructuredData;
 
 namespace OpenSim.Framework.Tests
 {
@@ -46,6 +43,11 @@ namespace OpenSim.Framework.Tests
         private Random rnd = new Random(Environment.TickCount);
 
         public AgentCircuitManagerTests()
+        {
+        }
+
+        [SetUp]
+        public void Setup()
         {
             AgentId1 = UUID.Random();
             AgentId2 = UUID.Random();
@@ -103,7 +105,7 @@ namespace OpenSim.Framework.Tests
         /// <summary>
         /// Validate that adding the circuit works appropriately
         /// </summary>
-        [Fact]
+        [Test]
         public void AddAgentCircuitTest()
         {
             AgentCircuitManager agentCircuitManager = new AgentCircuitManager();
@@ -129,7 +131,7 @@ namespace OpenSim.Framework.Tests
         /// <summary>
         /// Validate that removing the circuit code removes it appropriately
         /// </summary>
-        [Fact]
+        [Test]
         public void RemoveAgentCircuitTest()
         {
             AgentCircuitManager agentCircuitManager = new AgentCircuitManager();
@@ -145,7 +147,7 @@ namespace OpenSim.Framework.Tests
         /// <summary>
         /// Validate that changing the circuit code works
         /// </summary>
-        [Fact]
+        [Test]
         public void ChangeAgentCircuitCodeTest()
         {
             AgentCircuitManager agentCircuitManager = new AgentCircuitManager();
@@ -169,7 +171,7 @@ namespace OpenSim.Framework.Tests
         /// First one should be authorized
         /// Rest should not be authorized
         /// </summary>
-        [Fact]
+        [Test]
         public void ValidateLoginTest()
         {
             AgentCircuitManager agentCircuitManager = new AgentCircuitManager();

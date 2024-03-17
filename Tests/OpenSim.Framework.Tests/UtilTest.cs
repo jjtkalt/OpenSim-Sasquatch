@@ -25,15 +25,13 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using Xunit;
-using OpenSim.Framework;
 using OpenMetaverse;
 
 namespace OpenSim.Framework.Tests
 {
     public class UtilTests
     {
-//         [Fact]
+//         [Test]
 //         public void VectorOperationTests()
 //         {
 //             Vector3 v1, v2;
@@ -137,7 +135,7 @@ namespace OpenSim.Framework.Tests
 //             }
 //         }
 
-        [Fact]
+        [Test]
         public void UUIDTests()
         {
             Assert.True(Util.isUUID("01234567-89ab-Cdef-0123-456789AbCdEf"),
@@ -152,24 +150,24 @@ namespace OpenSim.Framework.Tests
                           "UUIDs with wrong format are recognized as correct UUIDs.");
         }
 
-        [Fact]
+        [Test]
         public void GetHashGuidTests()
         {
             string string1 = "This is one string";
             string string2 = "This is another";
 
             // Two consecutive runs should equal the same
-            Assert.Equal(Util.GetHashGuid(string1, "secret1"), Util.GetHashGuid(string1, "secret1"));
-            Assert.Equal(Util.GetHashGuid(string2, "secret1"), Util.GetHashGuid(string2, "secret1"));
+            Assert.AreEqual(Util.GetHashGuid(string1, "secret1"), Util.GetHashGuid(string1, "secret1"));
+            Assert.AreEqual(Util.GetHashGuid(string2, "secret1"), Util.GetHashGuid(string2, "secret1"));
 
             // Varying data should not eqal the same
-            Assert.NotEqual(Util.GetHashGuid(string1, "secret1"), Util.GetHashGuid(string2, "secret1"));
+            Assert.That(Util.GetHashGuid(string2, "secret1"), Is.Not.EqualTo(Util.GetHashGuid(string1, "secret1")));
 
             // Varying secrets should not eqal the same
-            Assert.NotEqual(Util.GetHashGuid(string1, "secret1"), Util.GetHashGuid(string1, "secret2"));
+            Assert.That(Util.GetHashGuid(string1, "secret2"), Is.Not.EqualTo(Util.GetHashGuid(string1, "secret1")));
         }
 
-        [Fact]
+        [Test]
         public void SLUtilTypeConvertTests()
         {
             int[] assettypes = new int[]{-1,0,1,2,3,5,6,7,8,10,11,12,13,17,18,19,20,21,22,24,25};
@@ -277,7 +275,7 @@ namespace OpenSim.Framework.Tests
             }
         }
 
-        [Fact]
+        [Test]
         public void FakeParcelIDTests()
         {
             byte[] hexBytes8 = { 0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10 };

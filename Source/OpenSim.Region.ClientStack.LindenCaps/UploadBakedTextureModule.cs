@@ -26,11 +26,10 @@
  */
 
 using System.Net;
-using System.Reflection;
 using System.Timers;
-using log4net;
-using Nini.Config;
+
 using OpenMetaverse;
+
 using OpenSim.Framework;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Region.Framework.Interfaces;
@@ -39,24 +38,33 @@ using OpenSim.Framework.Capabilities;
 
 using Caps = OpenSim.Framework.Capabilities.Caps;
 
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+
 namespace OpenSim.Region.ClientStack.Linden
 {
     public class UploadBakedTextureModule : ISharedRegionModule
     {
-       private static readonly ILog m_log =LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         private int m_nscenes;
         IAssetCache m_assetCache = null;
-
         private string m_URL;
 
-        public void Initialise(IConfiguration source)
+        protected readonly IConfiguration m_configuration;
+        protected readonly ILogger<UploadBakedTextureModule> m_logger;
+
+        public UploadBakedTextureModule(IConfiguration configuration, ILogger<UploadBakedTextureModule> logger)
         {
-            IConfig config = source.Configs["ClientStack.LindenCaps"];
-            if (config == null)
+            m_configuration = configuration;
+            m_logger = logger;
+        }
+
+        public void Initialise()
+        {
+            var config = m_configuration.GetSection("ClientStack.LindenCaps");
+            if (config.Exists() is false)
                 return;
 
-            m_URL = config.GetString("Cap_UploadBakedTexture", string.Empty);
+            m_URL = config.GetValue("Cap_UploadBakedTexture", string.Empty);
         }
 
         public void AddRegion(Scene s)
@@ -66,6 +74,7 @@ namespace OpenSim.Region.ClientStack.Linden
         public void RemoveRegion(Scene s)
         {
             s.EventManager.OnRegisterCaps -= RegisterCaps;
+
             --m_nscenes;
             if(m_nscenes <= 0)
                 m_assetCache = null;
@@ -75,6 +84,7 @@ namespace OpenSim.Region.ClientStack.Linden
         {
             if (m_assetCache == null)
                 m_assetCache = s.RequestModuleInterface <IAssetCache>();
+
             if (m_assetCache != null)
             {
                 ++m_nscenes;
@@ -143,7 +153,7 @@ namespace OpenSim.Region.ClientStack.Linden
             }
             catch (Exception e)
             {
-                m_log.ErrorFormat("[UPLOAD BAKED TEXTURE HANDLER]: Error: {0}", e.Message);
+                m_logger.LogError(e, "[UPLOAD BAKED TEXTURE HANDLER] UploadBakedTexture");
             }
             httpResponse.StatusCode = (int)HttpStatusCode.BadRequest;
         }

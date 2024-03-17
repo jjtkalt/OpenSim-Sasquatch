@@ -25,22 +25,15 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
 using System.Timers;
 using System.Collections;
-using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.IO;
 using System.Net;
-using System.Threading;
 using System.Reflection;
 using System.Text;
-using System.Web;
 
 using OpenMetaverse;
 using OpenMetaverse.StructuredData;
-using Nini.Config;
-using log4net;
 
 using OpenSim.Framework;
 using OpenSim.Framework.Capabilities;
@@ -55,6 +48,9 @@ using OSDArray = OpenMetaverse.StructuredData.OSDArray;
 using OSDMap = OpenMetaverse.StructuredData.OSDMap;
 using PermissionMask = OpenSim.Framework.PermissionMask;
 using Timer = System.Threading.Timer;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Region.ClientStack.Linden
 {
@@ -82,9 +78,6 @@ namespace OpenSim.Region.ClientStack.Linden
 
     public partial class BunchOfCaps
     {
-        private static readonly ILog m_log =
-            LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         private Scene m_Scene;
         private UUID m_AgentID;
         private UUID m_scopeID;
@@ -135,10 +128,22 @@ namespace OpenSim.Region.ClientStack.Linden
             waitUpload = 2,
             processUpload = 3
         }
+
         private FileAgentInventoryState m_FileAgentInventoryState = FileAgentInventoryState.idle;
 
-        public BunchOfCaps(Scene scene, UUID agentID, Caps caps)
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger m_logger;
+
+        public BunchOfCaps(
+            IConfiguration configuration,
+            ILogger logger,
+            Scene scene, 
+            UUID agentID, 
+            Caps caps)
         {
+            m_configuration = configuration;
+            m_logger = logger;
+
             m_Scene = scene;
             m_AgentID = agentID;
             m_HostCapsObj = caps;
@@ -151,37 +156,40 @@ namespace OpenSim.Region.ClientStack.Linden
             IConfiguration config = m_Scene.Config;
             if (config != null)
             {
-                IConfig sconfig = config.Configs["Startup"];
-                if (sconfig != null)
+                var sconfig = config.GetSection("Startup");
+                if (sconfig.Exists() is true)
                 {
-                    m_levelUpload = sconfig.GetInt("LevelUpload", 0);
+                    m_levelUpload = sconfig.GetValue<int>("LevelUpload", 0);
                 }
+
                 if (m_levelUpload == 0)
                 {
-                    IConfig pconfig = config.Configs["Permissions"];
-                    if (pconfig != null)
+                    var pconfig = config.GetSection("Permissions");
+                    if (pconfig.Exists() is true)
                     {
-                        m_levelUpload = pconfig.GetInt("LevelUpload", 0);
+                        m_levelUpload = pconfig.GetValue<int>("LevelUpload", 0);
                     }
                 }
 
-                IConfig appearanceConfig = config.Configs["Appearance"];
-                if (appearanceConfig != null)
+                var appearanceConfig = config.GetSection("Appearance");
+                if (appearanceConfig.Exists() is true)
                 {
-                    m_persistBakedTextures = appearanceConfig.GetBoolean("PersistBakedTextures", m_persistBakedTextures);
+                    m_persistBakedTextures = appearanceConfig.GetValue<bool>("PersistBakedTextures", m_persistBakedTextures);
                 }
+
                 // economy for model upload
-                IConfig EconomyConfig = config.Configs["Economy"];
-                if (EconomyConfig != null)
+                var EconomyConfig = config.GetSection("Economy");
+                if (EconomyConfig.Exists() is true)
                 {
                     m_ModelCost.Econfig(EconomyConfig);
 
-                    m_enableModelUploadTextureToInventory = EconomyConfig.GetBoolean("MeshModelAllowTextureToInventory", m_enableModelUploadTextureToInventory);
+                    m_enableModelUploadTextureToInventory = EconomyConfig.GetValue<bool>("MeshModelAllowTextureToInventory", m_enableModelUploadTextureToInventory);
 
-                    m_RestrictFreeTestUploadPerms = EconomyConfig.GetBoolean("m_RestrictFreeTestUploadPerms", m_RestrictFreeTestUploadPerms);
-                    m_enableFreeTestUpload = EconomyConfig.GetBoolean("AllowFreeTestUpload", m_enableFreeTestUpload);
-                    m_ForceFreeTestUpload = EconomyConfig.GetBoolean("ForceFreeTestUpload", m_ForceFreeTestUpload);
-                    string testcreator = EconomyConfig.GetString("TestAssetsCreatorID", "");
+                    m_RestrictFreeTestUploadPerms = EconomyConfig.GetValue<bool>("m_RestrictFreeTestUploadPerms", m_RestrictFreeTestUploadPerms);
+                    m_enableFreeTestUpload = EconomyConfig.GetValue<bool>("AllowFreeTestUpload", m_enableFreeTestUpload);
+                    m_ForceFreeTestUpload = EconomyConfig.GetValue<bool>("ForceFreeTestUpload", m_ForceFreeTestUpload);
+
+                    string testcreator = EconomyConfig.GetValue("TestAssetsCreatorID", string.Empty);
                     if (!string.IsNullOrEmpty(testcreator))
                     {
                         if (UUID.TryParse(testcreator, out UUID id))
@@ -189,23 +197,23 @@ namespace OpenSim.Region.ClientStack.Linden
                     }
                 }
 
-                IConfig CapsConfig = config.Configs["ClientStack.LindenCaps"];
-                if (CapsConfig != null)
+                var CapsConfig = config.GetSection("ClientStack.LindenCaps");
+                if (CapsConfig.Exists() is true)
                 {
-                    string homeLocationUrl = CapsConfig.GetString("Cap_HomeLocation", "localhost");
-                    if(homeLocationUrl.Length == 0)
+                    string homeLocationUrl = CapsConfig.GetValue("Cap_HomeLocation", "localhost");
+                    if(string.IsNullOrEmpty(homeLocationUrl))
                         m_AllowCapHomeLocation = false;
 
-                    string GroupMemberDataUrl = CapsConfig.GetString("Cap_GroupMemberData", "localhost");
-                    if(GroupMemberDataUrl.Length == 0)
+                    string GroupMemberDataUrl = CapsConfig.GetValue("Cap_GroupMemberData", "localhost");
+                    if(string.IsNullOrEmpty(GroupMemberDataUrl))
                         m_AllowCapGroupMemberData = false;
 
-                    string LandResourcesUrl = CapsConfig.GetString("Cap_LandResources", "localhost");
-                    if (LandResourcesUrl.Length == 0)
+                    string LandResourcesUrl = CapsConfig.GetValue("Cap_LandResources", "localhost");
+                    if (string.IsNullOrEmpty(LandResourcesUrl))
                         m_AllowCapLandResources = false;
 
-                    string AttachmentResourcesUrl = CapsConfig.GetString("Cap_AttachmentResources", "localhost");
-                    if (AttachmentResourcesUrl.Length == 0)
+                    string AttachmentResourcesUrl = CapsConfig.GetValue("Cap_AttachmentResources", "localhost");
+                    if (string.IsNullOrEmpty(AttachmentResourcesUrl))
                         m_AllowCapAttachmentResources = false;
                 }
             }
@@ -215,8 +223,11 @@ namespace OpenSim.Region.ClientStack.Linden
             m_UserManager = m_Scene.RequestModuleInterface<IUserManagement>();
             m_userAccountService = m_Scene.RequestModuleInterface<IUserAccountService>();
             m_moneyModule = m_Scene.RequestModuleInterface<IMoneyModule>();
+
             if (m_UserManager == null)
-                m_log.Error("[CAPS]: GetDisplayNames disabled because user management component not found");
+            {
+                m_logger.LogError("[CAPS]: GetDisplayNames disabled because user management component not found");
+            }
 
             UserAccount account = m_userAccountService.GetUserAccount(m_Scene.RegionInfo.ScopeID, m_AgentID);
             if (account == null) // Hypergrid?
@@ -248,7 +259,7 @@ namespace OpenSim.Region.ClientStack.Linden
             string seedcapsBase = "/CAPS/" + m_HostCapsObj.CapsObjectPath + "0000";
 
             m_HostCapsObj.RegisterSimpleHandler("SEED", new SimpleStreamHandler(seedcapsBase, SeedCapRequest));
-            // m_log.DebugFormat(
+            // m_logger.DebugFormat(
             //     "[CAPS]: Registered seed capability {0} for {1}", seedcapsBase, m_HostCapsObj.AgentID);
 
             RegisterRegionServiceHandlers();
@@ -295,7 +306,7 @@ namespace OpenSim.Region.ClientStack.Linden
             }
             catch (Exception e)
             {
-                m_log.Error("[CAPS]: " + e.ToString());
+                m_logger.LogError("[CAPS]: " + e.ToString());
             }
         }
 
@@ -354,7 +365,7 @@ namespace OpenSim.Region.ClientStack.Linden
             }
             catch (Exception e)
             {
-                m_log.Error("[CAPS]: " + e.ToString());
+                m_logger.LogError(e, "[CAPS]: RegisterInventoryServiceHandlers Exception");
             }
         }
 
@@ -370,7 +381,7 @@ namespace OpenSim.Region.ClientStack.Linden
             }
             catch (Exception e)
             {
-                m_log.Error("[CAPS]: " + e.ToString());
+                m_logger.LogError(e, "[CAPS]: RegisterOtherHandlers");
             }
         }
         /// <summary>
@@ -385,8 +396,8 @@ namespace OpenSim.Region.ClientStack.Linden
         public void SeedCapRequest(IOSHttpRequest httpRequest, IOSHttpResponse httpResponse)
         {
             UUID agentID = m_HostCapsObj.AgentID;
-            m_log.DebugFormat(
-                "[CAPS]: Received SEED caps request in {0} for agent {1}", m_regionName, agentID);
+
+            m_logger.LogDebug($"[CAPS]: Received SEED caps request in {m_regionName} for agent {agentID}");
 
             if(httpRequest.HttpMethod != "POST" || httpRequest.ContentType != "application/llsd+xml")
             {
@@ -403,9 +414,8 @@ namespace OpenSim.Region.ClientStack.Linden
 
             if (!m_Scene.CheckClient(agentID, httpRequest.RemoteIPEndPoint))
             {
-                m_log.WarnFormat(
-                    "[CAPS]: Unauthorized CAPS client {0} from {1}",
-                    agentID, httpRequest.RemoteIPEndPoint);
+                m_logger.LogWarning($"[CAPS]: Unauthorized CAPS client {agentID} from {httpRequest.RemoteIPEndPoint}");
+
                 httpResponse.StatusCode = (int)HttpStatusCode.Forbidden;
                 return;
             }
@@ -438,7 +448,7 @@ namespace OpenSim.Region.ClientStack.Linden
             string result = LLSDHelpers.SerialiseLLSDReply(m_HostCapsObj.GetCapsDetails(true, validCaps));
             httpResponse.RawBuffer = Util.UTF8NBGetbytes(result);
             httpResponse.StatusCode = (int)HttpStatusCode.OK;
-            //m_log.DebugFormat("[CAPS] CapsRequest {0}", result);
+            //m_logger.DebugFormat("[CAPS] CapsRequest {0}", result);
 
             m_HostCapsObj.Flags |= Caps.CapsFlags.SentSeeds;
         }
@@ -450,8 +460,8 @@ namespace OpenSim.Region.ClientStack.Linden
         /// <returns></returns>
         public LLSDAssetUploadResponse NewAgentInventoryRequest(LLSDAssetUploadRequest llsdRequest)
         {
-            //m_log.Debug("[CAPS]: NewAgentInventoryRequest Request is: " + llsdRequest.ToString());
-            //m_log.Debug("asset upload request via CAPS" + llsdRequest.inventory_type + " , " + llsdRequest.asset_type);
+            //m_logger.Debug("[CAPS]: NewAgentInventoryRequest Request is: " + llsdRequest.ToString());
+            //m_logger.Debug("asset upload request via CAPS" + llsdRequest.inventory_type + " , " + llsdRequest.asset_type);
 
             // start by getting the client
             IClientAPI client = null;
@@ -678,9 +688,7 @@ namespace OpenSim.Region.ClientStack.Linden
             lock (m_ModelCost)
                 m_FileAgentInventoryState = FileAgentInventoryState.processUpload;
 
-            m_log.DebugFormat(
-                "[BUNCH OF CAPS]: Uploaded asset {0} for inventory item {1}, inv type {2}, asset type {3}",
-                assetID, inventoryItem, inventoryType, assetType);
+            m_logger.LogDebug($"[BUNCH OF CAPS]: Uploaded asset {assetID} for inventory item {inventoryItem}, inv type {inventoryType}, asset type {assetType}");
 
             sbyte assType = 0;
             sbyte inType = 0;
@@ -731,7 +739,7 @@ namespace OpenSim.Region.ClientStack.Linden
             {
                 inType = (sbyte)CustomInventoryType.AnimationSet;
                 assType = (sbyte)CustomAssetType.AnimationSet;
-                m_log.Debug("got animset upload request");
+                m_logger.LogDebug("got animset upload request");
             }
             else if (inventoryType == "wearable")
             {
@@ -1101,7 +1109,7 @@ namespace OpenSim.Region.ClientStack.Linden
 
                 else // not a mesh model
                 {
-                    m_log.ErrorFormat("[CAPS Asset Upload] got unsuported assetType for object upload");
+                    m_logger.LogError("[CAPS Asset Upload] got unsuported assetType for object upload");
                     return;
                 }
             }
@@ -1287,7 +1295,7 @@ namespace OpenSim.Region.ClientStack.Linden
             }
             catch { }
 
-            m_log.Debug("[CAPS]: CreateInventoryCategory failed to process request");
+            m_logger.LogDebug("[CAPS]: CreateInventoryCategory failed to process request");
             httpResponse.StatusCode = (int)HttpStatusCode.BadRequest;
         }
 
@@ -1312,7 +1320,7 @@ namespace OpenSim.Region.ClientStack.Linden
                 UUID folderID = content["folder-id"].AsUUID();
                 UUID itemID = content["item-id"].AsUUID();
 
-                //  m_log.InfoFormat("[CAPS]: CopyInventoryFromNotecard, FolderID:{0}, ItemID:{1}, NotecardID:{2}, ObjectID:{3}", folderID, itemID, notecardID, objectID);
+                //  m_logger.InfoFormat("[CAPS]: CopyInventoryFromNotecard, FolderID:{0}, ItemID:{1}, NotecardID:{2}, ObjectID:{3}", folderID, itemID, notecardID, objectID);
 
                 UUID noteAssetID = UUID.Zero;
                 UUID agentID = m_HostCapsObj.AgentID;
@@ -1345,9 +1353,10 @@ namespace OpenSim.Region.ClientStack.Linden
                         if (copyItem == null)
                             throw new Exception("Failed to find notecard item" + notecardID.ToString());
 
-                        m_log.InfoFormat("[CAPS]: CopyInventoryFromNotecard, ItemID:{0}, FolderID:{1}", copyItem.ID, copyItem.Folder);
+                        m_logger.LogInformation($"[CAPS]: CopyInventoryFromNotecard, ItemID:{copyItem.ID}, FolderID:{copyItem.Folder}");
                         if (client != null)
                             client.SendBulkUpdateInventory(copyItem);
+
                         return;
                     }
 
@@ -1459,14 +1468,17 @@ namespace OpenSim.Region.ClientStack.Linden
                 if (!m_Scene.InventoryService.AddItem(item))
                     throw new Exception("Failed create the notecard item" + notecardID.ToString());
 
-                m_log.InfoFormat("[CAPS]: CopyInventoryFromNotecard, ItemID:{0} FolderID:{1}", item.ID, item.Folder);
+                m_logger.LogInformation($"[CAPS]: CopyInventoryFromNotecard, ItemID:{item.ID} FolderID:{item.Folder}");
+
                 if (client != null)
                     client.SendBulkUpdateInventory(item);
+                
                 return;
             }
             catch (Exception e)
             {
-                m_log.ErrorFormat("[CAPS]: CopyInventoryFromNotecard : {0}", e.Message);
+                m_logger.LogError(e, $"[CAPS]: CopyInventoryFromNotecard");
+
                 copyItem = null;
             }
 
@@ -2336,9 +2348,6 @@ namespace OpenSim.Region.ClientStack.Linden
 
         public class AssetUploader
         {
-            private static readonly ILog m_log =
-                LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
             public event UpLoadedAsset OnUpLoad;
             private UpLoadedAsset handlerUpLoad = null;
 
@@ -2482,17 +2491,18 @@ namespace OpenSim.Region.ClientStack.Linden
 
             private void TimedOut(object sender, ElapsedEventArgs args)
             {
-                m_log.InfoFormat("[CAPS]: Removing URL and handler for timed out mesh upload");
                 httpListener.RemoveStreamHandler("POST", uploaderPath);
             }
 
             private static void SaveAssetToFile(string filename, byte[] data)
             {
                 string assetPath = "UserAssets";
+
                 if (!Directory.Exists(assetPath))
                 {
                     Directory.CreateDirectory(assetPath);
                 }
+
                 FileStream fs = File.Create(Path.Combine(assetPath, Util.SafeFileName(filename)));
                 BinaryWriter bw = new BinaryWriter(fs);
                 bw.Write(data);
@@ -2528,14 +2538,11 @@ namespace OpenSim.Region.ClientStack.Linden
             public virtual void Timedout(object state)
             {
                 Stop();
-                m_log.InfoFormat("[CAPS]: Removing URL and handler for timed out service");
             }
         }
 
         public class ScriptResourceSummary : ExpiringCapBase
         {
-            private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
             private Scene m_scene;
             private UUID m_agentID;
             private int m_memory;
@@ -2619,8 +2626,6 @@ namespace OpenSim.Region.ClientStack.Linden
 
         public class ScriptResourceDetails : ExpiringCapBase
         {
-            private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
             private Scene m_scene;
             private UUID m_agentID;
             private List<ParcelScriptInfo> m_parcelsInfo;

@@ -78,6 +78,8 @@ namespace OpenSim.Data
 
     public interface IXInventoryData
     {
+        void Initialize(string connString, string realm);
+        
         XInventoryFolder[] GetFolder(string field, string val);
         XInventoryFolder[] GetFolders(string[] fields, string[] vals);
         XInventoryItem[] GetItems(string[] fields, string[] vals);

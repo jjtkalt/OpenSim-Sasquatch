@@ -27,9 +27,7 @@
 
 using System.Collections;
 using System.Net;
-using System.Reflection;
-using log4net;
-using Nini.Config;
+
 using OpenMetaverse;
 using OpenMetaverse.StructuredData;
 using OpenSim.Framework;
@@ -38,6 +36,9 @@ using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
 
 using Caps = OpenSim.Framework.Capabilities.Caps;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace OpenSim.Region.ClientStack.Linden
 {
@@ -49,7 +50,6 @@ namespace OpenSim.Region.ClientStack.Linden
 
     public partial class  EventQueueGetModule : IEventQueue, INonSharedRegionModule
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
         private static readonly string LogHeader = "[EVENT QUEUE GET MODULE]";
 
         private const int KEEPALIVE = 60; // this could be larger now, but viewers expect it on opensim
@@ -67,9 +67,19 @@ namespace OpenSim.Region.ClientStack.Linden
 
         private readonly Dictionary<UUID, Queue<byte[]>> queues = new();
         private readonly Dictionary<UUID, UUID> m_AvatarQueueUUIDMapping = new();
+        
+        protected readonly IConfiguration m_configuration;
+        protected readonly ILogger<EventQueueGetModule> m_logger;
+        
+        public EventQueueGetModule(IConfiguration configuration, ILogger<EventQueueGetModule> logger)
+        {
+            m_configuration = configuration;
+            m_logger = logger;
+        }
 
         #region INonSharedRegionModule methods
-        public virtual void Initialise(IConfiguration config)
+
+        public virtual void Initialise()
         {
         }
 
@@ -173,9 +183,9 @@ namespace OpenSim.Region.ClientStack.Linden
                     return queue;
 
                 if (DebugLevel > 0)
-                    m_log.DebugFormat(
-                       "[EVENTQUEUE]: Adding new queue for agent {0} in region {1}",
-                       agentId, m_scene.RegionInfo.RegionName);
+                {
+                    m_logger.LogDebug($"[EVENTQUEUE]: Adding new queue for agent {agentId} in region {m_scene.RegionInfo.RegionName}");
+                }
 
                 queue = new Queue<byte[]>();
                 queues[agentId] = queue;
@@ -196,6 +206,7 @@ namespace OpenSim.Region.ClientStack.Linden
             {
                 if (queues.TryGetValue(agentId, out  Queue<byte[]> queue))
                     return queue;
+
                 return null;
             }
         }
@@ -216,14 +227,15 @@ namespace OpenSim.Region.ClientStack.Linden
                 }
                 else
                 {
-                    m_log.Warn($"[EVENTQUEUE]: (Enqueue) No queue found for agent {avatarID} in region {m_scene.Name}");
+                    m_logger.LogWarning($"[EVENTQUEUE]: (Enqueue) No queue found for agent {avatarID} in region {m_scene.Name}");
                 }
             }
             catch (NullReferenceException e)
             {
-                m_log.Error($"[EVENTQUEUE] Caught exception: {e.Message}");
+                m_logger.LogError(e, $"[EVENTQUEUE] Caught NullReferenceException");
                 return false;
             }
+
             return true;
         }
 
@@ -270,14 +282,12 @@ namespace OpenSim.Region.ClientStack.Linden
                 }
                 else
                 {
-                    m_log.WarnFormat(
-                            "[EVENTQUEUE]: (Enqueue) No queue found for agent {0} in region {1}",
-                            avatarID, m_scene.Name);
+                    m_logger.LogWarning($"[EVENTQUEUE]: (Enqueue) No queue found for agent {avatarID} in region {m_scene.Name}");
                 }
             }
             catch (NullReferenceException e)
             {
-                m_log.Error("[EVENTQUEUE] Caught exception: " + e);
+                m_logger.LogError(e, $"[EVENTQUEUE] Caught NullReferenceException");
                 return false;
             }
             return true;
@@ -296,14 +306,12 @@ namespace OpenSim.Region.ClientStack.Linden
                 }
                 else
                 {
-                    m_log.WarnFormat(
-                            "[EVENTQUEUE]: (Enqueue) No queue found for agent {0} in region {1}",
-                            avatarID, m_scene.Name);
+                    m_logger.LogWarning($"[EVENTQUEUE]: (Enqueue) No queue found for agent {avatarID} in region {m_scene.Name}");
                 }
             }
             catch (NullReferenceException e)
             {
-                m_log.Error("[EVENTQUEUE] Caught exception: " + e);
+                m_logger.LogError(e, $"[EVENTQUEUE] Caught NullReferenceException");
                 return false;
             }
             return true;
@@ -344,8 +352,9 @@ namespace OpenSim.Region.ClientStack.Linden
             // Register an event queue for the client
 
             if (DebugLevel > 0)
-                m_log.Debug(
-                    $"[EVENTQUEUE]: OnRegisterCaps: agentID {agentID} caps {caps} region {m_scene.Name}");
+            {
+                m_logger.LogDebug($"[EVENTQUEUE]: OnRegisterCaps: agentID {agentID} caps {caps} region {m_scene.Name}");
+            }
 
             UUID eventQueueGetUUID;
             lock (queues)
@@ -382,7 +391,8 @@ namespace OpenSim.Region.ClientStack.Linden
                         // Its reuse caps path not queues those are been reused already
                         if (m_AvatarQueueUUIDMapping.TryGetValue(agentID, out eventQueueGetUUID))
                         {
-                            m_log.DebugFormat("[EVENTQUEUE]: Found Existing UUID!");
+                            m_logger.LogDebug("[EVENTQUEUE]: Found Existing UUID!");
+
                             lock (m_ids)
                             {
                                 // change to negative numbers so they are changed at end of sending first marker
@@ -442,7 +452,7 @@ namespace OpenSim.Region.ClientStack.Linden
         {
             if (element is OSDMap ev)
             {
-                m_log.Debug($"Eq OUT {ev["message"],-30} to {m_scene.GetScenePresence(agentId).Name,-20} {m_scene.Name,-20}");
+                m_logger.LogDebug($"Eq OUT {ev["message"],-30} to {m_scene.GetScenePresence(agentId).Name,-20} {m_scene.Name,-20}");
             }
         }
 
@@ -456,7 +466,7 @@ namespace OpenSim.Region.ClientStack.Linden
         public Hashtable GetEvents(UUID requestID, UUID pAgentId)
         {
             if (DebugLevel >= 2)
-                m_log.Warn($"POLLED FOR EQ MESSAGES BY {pAgentId} in {m_scene.Name}");
+                m_logger.LogWarning($"POLLED FOR EQ MESSAGES BY {pAgentId} in {m_scene.Name}");
 
             Queue<byte[]> queue = GetQueue(pAgentId);
             if (queue is null)

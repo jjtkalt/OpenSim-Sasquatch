@@ -26,9 +26,10 @@
  */
 
 using System.Net;
-using Nini.Config;
+
 using OpenMetaverse;
 using OpenMetaverse.StructuredData;
+
 using OpenSim.Framework;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Region.Framework.Interfaces;
@@ -36,16 +37,24 @@ using OpenSim.Region.Framework.Scenes;
 
 using Caps = OpenSim.Framework.Capabilities.Caps;
 
+using Microsoft.Extensions.Configuration;
+
 namespace OpenSim.Region.ClientStack.Linden
 {
     public class ObjectAdd : INonSharedRegionModule
     {
-        // private static readonly ILog m_log =
-        //     LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
         private Scene m_scene;
 
+        private IConfiguration m_configuration;
+
+        public ObjectAdd(IConfiguration configuration)
+        {
+            m_configuration = configuration;
+        }
+
         #region INonSharedRegionModule Members
-        public void Initialise(IConfiguration pSource)
+
+        public void Initialise()
         {
         }
 

@@ -24,21 +24,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
-using System.Xml;
 
-using Nini.Config;
-using log4net;
+using Autofac;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using OpenMetaverse;
 
 using OpenSim.Framework;
 using OpenSim.Framework.Serialization.External;
 using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
-using OpenSim.Services.AssetService;
 
 namespace OpenSim.Services.HypergridService
 {
@@ -49,10 +44,7 @@ namespace OpenSim.Services.HypergridService
     /// </summary>
     public class HGRemoteAssetService : IAssetService
     {
-        private static readonly ILog m_log =
-            LogManager.GetLogger(
-            MethodBase.GetCurrentMethod().DeclaringType);
-
+        private const string _ConfigName = "HGAssetService";
         private string m_HomeURL;
         private IUserAccountService m_UserAccountService;
         private IAssetService m_assetConnector;
@@ -61,45 +53,55 @@ namespace OpenSim.Services.HypergridService
 
         private AssetPermissions m_AssetPerms;
 
-        public HGRemoteAssetService(IConfiguration config, string configName)
+        private readonly IComponentContext m_context;
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<HGRemoteAssetService> m_logger;
+
+        public HGRemoteAssetService(
+            IComponentContext componentContext,
+            IConfiguration config, 
+            ILogger<HGRemoteAssetService> logger
+            )
         {
-            m_log.Debug("[HGRemoteAsset Service]: Starting");
-            IConfig assetConfig = config.Configs[configName];
-            if (assetConfig == null)
+            m_context = componentContext;
+            m_configuration = config;
+            m_logger = logger;
+
+            m_logger.LogDebug("[HGRemoteAsset Service]: Starting");
+
+            var assetConfig = config.GetSection(_ConfigName);
+            if (assetConfig.Exists() is false)
                 throw new Exception("No HGAssetService configuration");
 
-            Object[] args = new Object[] { config };
-
-            string assetConnectorDll = assetConfig.GetString("AssetConnector", String.Empty);
-            if (assetConnectorDll.Length == 0)
+            string? assetConnectorService = assetConfig.GetValue("AssetConnector", String.Empty);
+            if (string.IsNullOrEmpty(assetConnectorService))
                 throw new Exception("Please specify AssetConnector in HGAssetService configuration");
 
-            m_assetConnector = ServerUtils.LoadPlugin<IAssetService>(assetConnectorDll, args);
+            m_assetConnector = m_context.ResolveNamed<IAssetService>(assetConnectorService);
             if (m_assetConnector == null)
-                throw new Exception(String.Format("Unable to create AssetConnector from {0}", assetConnectorDll));
+                throw new Exception($"Unable to create AssetConnector from {assetConnectorService}");
 
-            string userAccountsDll = assetConfig.GetString("UserAccountsService", string.Empty);
-            if (userAccountsDll.Length == 0)
+            string? userAccountsService = assetConfig.GetValue("UserAccountsService", string.Empty);
+            if (string.IsNullOrEmpty(userAccountsService))
                 throw new Exception("Please specify UserAccountsService in HGAssetService configuration");
 
-            m_UserAccountService = ServerUtils.LoadPlugin<IUserAccountService>(userAccountsDll, args);
+            m_UserAccountService = m_context.ResolveNamed<IUserAccountService>(userAccountsService);
             if (m_UserAccountService == null)
-                throw new Exception(String.Format("Unable to create UserAccountService from {0}", userAccountsDll));
+                throw new Exception(String.Format("Unable to create UserAccountService from {0}", userAccountsService));
 
-            m_HomeURL = Util.GetConfigVarFromSections<string>(config, "HomeURI",
-                new string[] { "Startup", "Hypergrid", configName }, string.Empty);
-            if (m_HomeURL.Length == 0)
+            var sections = new string[] { "Startup", "Hypergrid", _ConfigName };
+            m_HomeURL = Util.GetConfigVarFromSections<string>(config, "HomeURI", sections, string.Empty);
+            if (string.IsNullOrEmpty(m_HomeURL))
                 throw new Exception("[HGAssetService] No HomeURI specified");
 
             m_Cache = UserAccountCache.CreateUserAccountCache(m_UserAccountService);
 
             // Permissions
             m_AssetPerms = new AssetPermissions(assetConfig);
-
         }
 
         #region IAssetService overrides
-        public AssetBase Get(string id)
+        public AssetBase? Get(string id)
         {
             AssetBase asset = m_assetConnector.Get(id);
 
@@ -117,12 +119,12 @@ namespace OpenSim.Services.HypergridService
             return asset;
         }
 
-        public AssetBase Get(string id, string ForeignAssetService, bool dummy)
+        public AssetBase? Get(string id, string ForeignAssetService, bool dummy)
         {
             return null;
         }
 
-        public AssetMetadata GetMetadata(string id)
+        public AssetMetadata? GetMetadata(string id)
         {
             AssetMetadata meta = m_assetConnector.GetMetadata(id);
 
@@ -134,9 +136,9 @@ namespace OpenSim.Services.HypergridService
             return meta;
         }
 
-        public byte[] GetData(string id)
+        public byte[]? GetData(string id)
         {
-            AssetBase asset = Get(id);
+            AssetBase? asset = Get(id);
 
             if (asset == null)
                 return null;
@@ -253,7 +255,7 @@ namespace OpenSim.Services.HypergridService
             return Utils.StringToBytes(ExternalRepresentationUtils.RewriteSOP(xml, "HGAssetService", m_HomeURL, m_Cache, UUID.Zero));
         }
 
-        public AssetBase GetCached(string id)
+        public AssetBase? GetCached(string id)
         {
             return Get(id);
         }

@@ -27,7 +27,7 @@
 // Ubit Umarov 2012
 using System;
 using System.Collections.Generic;
-using OpenSim.Region.PhysicsModules.SharedBase;
+using OpenSim.Region.PhysicsModule.SharedBase;
 using OpenMetaverse;
 
 namespace OpenSim.Region.PhysicsModule.ubOde

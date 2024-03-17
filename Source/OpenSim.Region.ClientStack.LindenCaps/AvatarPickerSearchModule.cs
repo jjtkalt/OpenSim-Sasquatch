@@ -27,8 +27,6 @@
 
 using System.Collections.Specialized;
 
-using System.Net;
-using Nini.Config;
 using OpenMetaverse;
 using OpenSim.Framework;
 using OpenSim.Framework.Servers.HttpServer;
@@ -38,31 +36,29 @@ using OpenSim.Framework.Capabilities;
 
 using Caps = OpenSim.Framework.Capabilities.Caps;
 
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using System.Net;
+
 namespace OpenSim.Region.ClientStack.Linden
 {
     public class AvatarPickerSearchModule : ISharedRegionModule
     {
-//        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         private int m_nscenes;
         private IPeople m_People = null;
         private bool m_Enabled = false;
-
         private string m_URL;
 
-        #region ISharedRegionModule Members
+        private readonly IConfiguration m_configuration;
+        private readonly ILogger<AvatarPickerSearchModule> m_logger;
 
-        public void Initialise(IConfiguration source)
+        public AvatarPickerSearchModule(IConfiguration configuration, ILogger<AvatarPickerSearchModule> logger)
         {
-            IConfig config = source.Configs["ClientStack.LindenCaps"];
-            if (config == null)
-                return;
-
-            m_URL = config.GetString("Cap_AvatarPickerSearch", string.Empty);
-            // Cap doesn't exist
-            if (m_URL != string.Empty)
-                m_Enabled = true;
+            m_configuration = configuration;
+            m_logger = logger;
         }
+
+        #region ISharedRegionModule Members
 
         public void AddRegion(Scene s)
         {
@@ -90,6 +86,17 @@ namespace OpenSim.Region.ClientStack.Linden
                 m_People = s.RequestModuleInterface<IPeople>();
             s.EventManager.OnRegisterCaps += RegisterCaps;
             ++m_nscenes;
+        }
+
+        public void Initialise()
+        {
+            var config = m_configuration.GetSection("ClientStack.LindenCaps");
+            if (config.Exists() is false)
+                return;
+
+            m_URL = config.GetValue("Cap_AvatarPickerSearch", string.Empty);
+            if (string.IsNullOrEmpty(m_URL) is false)
+                m_Enabled = true;
         }
 
         public void PostInitialise()
@@ -184,5 +191,6 @@ namespace OpenSim.Region.ClientStack.Linden
             p.is_display_name_default = false;
             return p;
         }
+
     }
 }

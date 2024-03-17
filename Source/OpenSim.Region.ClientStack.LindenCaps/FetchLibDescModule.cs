@@ -26,18 +26,18 @@
  */
 
 using System.Collections;
-using System.Reflection;
-using log4net;
-using Nini.Config;
+
 using OpenMetaverse;
 using OpenSim.Framework;
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
 using OpenSim.Services.Interfaces;
+using OpenSim.Capabilities.Handlers;
 
 using Caps = OpenSim.Framework.Capabilities.Caps;
-using OpenSim.Capabilities.Handlers;
+
+using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Region.ClientStack.Linden
 {
@@ -53,15 +53,13 @@ namespace OpenSim.Region.ClientStack.Linden
             public OSHttpRequest request;
         }
 
-        //private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         /// <summary>
         /// Control whether requests will be processed asynchronously.
         /// </summary>
         /// <remarks>
         /// Defaults to true.  Can currently not be changed once a region has been added to the module.
         /// </remarks>
-        public bool ProcessQueuedRequestsAsync { get; private set; }
+        public bool ProcessQueuedRequestsAsync { get; set; }
 
         /// <summary>
         /// Number of inventory requests processed by this module.
@@ -86,21 +84,22 @@ namespace OpenSim.Region.ClientStack.Linden
 
         #region ISharedRegionModule Members
 
-        public FetchLibDescModule() : this(true) {}
+        protected readonly IConfiguration m_configuration;
 
-        public FetchLibDescModule(bool processQueuedResultsAsync)
+        public FetchLibDescModule(IConfiguration configuration, bool processQueuedResultsAsync = true)
         {
+            m_configuration = configuration;
             ProcessQueuedRequestsAsync = processQueuedResultsAsync;
         }
 
-        public void Initialise(IConfiguration source)
+        public void Initialise()
         {
-            IConfig config = source.Configs["ClientStack.LindenCaps"];
+            var config = m_configuration.GetSection("ClientStack.LindenCaps");
             if (config == null)
                 return;
 
-            m_fetchLibDescendents2Url = config.GetString("Cap_FetchLibDescendents2", string.Empty);
-            m_Enabled = m_fetchLibDescendents2Url.Length > 0;
+            m_fetchLibDescendents2Url = config.GetValue("Cap_FetchLibDescendents2", string.Empty);
+            m_Enabled = string.IsNullOrEmpty(m_fetchLibDescendents2Url);
         }
 
         public void AddRegion(Scene s)
@@ -172,8 +171,6 @@ namespace OpenSim.Region.ClientStack.Linden
 
         private class PollServiceInventoryEventArgs : PollServiceEventArgs
         {
-            private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
             private Dictionary<UUID, Hashtable> responses = new Dictionary<UUID, Hashtable>();
             private HashSet<UUID> dropedResponses = new HashSet<UUID>();
 

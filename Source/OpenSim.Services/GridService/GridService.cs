@@ -31,7 +31,6 @@ using System.Text;
 using OpenSim.Framework;
 using OpenSim.Framework.Console;
 using OpenSim.Data;
-using OpenSim.Server.Base;
 using OpenSim.Services.Interfaces;
 
 using GridRegion = OpenSim.Services.Interfaces.GridRegion;
@@ -49,13 +48,11 @@ namespace OpenSim.Services.GridService
         private const string _ConfigName = "GridService";
 
         private bool m_DeleteOnUnregister = true;
-        private static GridService m_RootInstance = null;
-        protected static HypergridLinker m_HypergridLinker;
+        protected HypergridLinker m_HypergridLinker;
 
-        protected IAuthenticationService m_AuthenticationService = null;
+        protected IAuthenticationService m_AuthenticationService;
         protected bool m_AllowDuplicateNames = false;
         protected bool m_AllowHypergridMapSearch = false;
-        protected bool m_suppressConsoleCommands = false;
 
         protected readonly IComponentContext m_context;
         protected readonly IConfiguration m_configuration;
@@ -104,70 +101,57 @@ namespace OpenSim.Services.GridService
 
                 m_AllowDuplicateNames = gridConfig.GetValue<bool>("AllowDuplicateNames", m_AllowDuplicateNames);
                 m_AllowHypergridMapSearch = gridConfig.GetValue<bool>("AllowHypergridMapSearch", m_AllowHypergridMapSearch);
-
-                // This service is also used locally by a simulator running in grid mode.  This switches prevents
-                // inappropriate console commands from being registered
-                m_suppressConsoleCommands = gridConfig.GetValue<bool>("SuppressConsoleCommands", m_suppressConsoleCommands);
             }
 
             m_Database.Initialize(connString, realm);
 
             m_logger.LogDebug("[GRID SERVICE]: Starting...");
 
-            if (m_RootInstance == null)
-            {
-                m_RootInstance = this;
+            MainConsole.Instance.Commands.AddCommand("Regions", true,
+                    "deregister region id",
+                    "deregister region id <region-id>+",
+                    "Deregister a region manually.",
+                    String.Empty,
+                    HandleDeregisterRegion);
 
-                if (!m_suppressConsoleCommands && MainConsole.Instance != null)
-                {
-                    MainConsole.Instance.Commands.AddCommand("Regions", true,
-                            "deregister region id",
-                            "deregister region id <region-id>+",
-                            "Deregister a region manually.",
-                            String.Empty,
-                            HandleDeregisterRegion);
+            MainConsole.Instance.Commands.AddCommand("Regions", true,
+                    "show regions",
+                    "show regions",
+                    "Show details on all regions",
+                    String.Empty,
+                    HandleShowRegions);
 
-                    MainConsole.Instance.Commands.AddCommand("Regions", true,
-                            "show regions",
-                            "show regions",
-                            "Show details on all regions",
-                            String.Empty,
-                            HandleShowRegions);
+            MainConsole.Instance.Commands.AddCommand("Regions", true,
+                    "show region name",
+                    "show region name <Region name>",
+                    "Show details on a region",
+                    String.Empty,
+                    HandleShowRegion);
 
-                    MainConsole.Instance.Commands.AddCommand("Regions", true,
-                            "show region name",
-                            "show region name <Region name>",
-                            "Show details on a region",
-                            String.Empty,
-                            HandleShowRegion);
+            MainConsole.Instance.Commands.AddCommand("Regions", true,
+                    "show region at",
+                    "show region at <x-coord> <y-coord>",
+                    "Show details on a region at the given co-ordinate.",
+                    "For example, show region at 1000 1000",
+                    HandleShowRegionAt);
 
-                    MainConsole.Instance.Commands.AddCommand("Regions", true,
-                            "show region at",
-                            "show region at <x-coord> <y-coord>",
-                            "Show details on a region at the given co-ordinate.",
-                            "For example, show region at 1000 1000",
-                            HandleShowRegionAt);
+            MainConsole.Instance.Commands.AddCommand("General", true,
+                    "show grid size",
+                    "show grid size",
+                    "Show the current grid size (excluding hyperlink references)",
+                    String.Empty,
+                    HandleShowGridSize);
 
-                    MainConsole.Instance.Commands.AddCommand("General", true,
-                            "show grid size",
-                            "show grid size",
-                            "Show the current grid size (excluding hyperlink references)",
-                            String.Empty,
-                            HandleShowGridSize);
+            MainConsole.Instance.Commands.AddCommand("Regions", true,
+                        "set region flags",
+                        "set region flags <Region name> <flags>",
+                        "Set database flags for region",
+                        String.Empty,
+                        HandleSetFlags);
+            
+            SetExtraServiceURLs(config);
 
-                    MainConsole.Instance.Commands.AddCommand("Regions", true,
-                             "set region flags",
-                             "set region flags <Region name> <flags>",
-                             "Set database flags for region",
-                             String.Empty,
-                             HandleSetFlags);
-                }
-
-                if (!m_suppressConsoleCommands)
-                    SetExtraServiceURLs(config);
-
-                m_HypergridLinker = new HypergridLinker(config, this, m_Database);
-            }
+            m_HypergridLinker = new HypergridLinker(config, this, m_Database);
         }
 
         private void SetExtraServiceURLs(IConfiguration config)

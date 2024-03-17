@@ -25,15 +25,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Reflection;
-using System.Collections.Generic;
-using System.Xml;
-using log4net;
 using OMV = OpenMetaverse;
+
 using OpenSim.Framework;
-using OpenSim.Region.PhysicsModules.SharedBase;
-using OpenSim.Region.PhysicsModules.ConvexDecompositionDotNet;
+using OpenSim.Region.PhysicsModule.SharedBase;
 
 namespace OpenSim.Region.PhysicsModule.BulletS
 {
@@ -41,7 +36,6 @@ namespace OpenSim.Region.PhysicsModule.BulletS
     [Serializable]
     public class BSPrim : BSPhysObject
     {
-        protected static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
         private static readonly string LogHeader = "[BULLETS PRIM]";
 
         // _size is what the user passed. Scale is what we pass to the physics engine with the mesh.

@@ -48,8 +48,8 @@ namespace OpenSim.Services.HypergridService
     public class HGFSAssetService : FSAssetConnector, IAssetService
     {
         private string m_HomeURL;
-        private IUserAccountService m_UserAccountService;
 
+        private readonly IUserAccountService m_UserAccountService;
         private UserAccountCache m_Cache;
 
         private AssetPermissions m_AssetPerms;
@@ -58,6 +58,7 @@ namespace OpenSim.Services.HypergridService
             IComponentContext componentContext,
             IConfiguration config, 
             ILogger<HGFSAssetService> logger,
+            IUserAccountService accountService,
             IFSAssetDataPlugin dataPlugin
             ) : base(componentContext, config, logger, dataPlugin)
         {
@@ -66,14 +67,16 @@ namespace OpenSim.Services.HypergridService
             if (assetConfig.Exists() is false)
                 throw new Exception("No HGAssetService configuration");
 
-            string? userAccountsDll = assetConfig.GetValue("UserAccountsService", string.Empty);
-            if (string.IsNullOrEmpty(userAccountsDll))
-                throw new Exception("Please specify UserAccountsService in HGAssetService configuration");
+            m_UserAccountService = accountService;
 
-            Object[] args = new Object[] { config };
-            m_UserAccountService = ServerUtils.LoadPlugin<IUserAccountService>(userAccountsDll, args);
-            if (m_UserAccountService == null)
-                throw new Exception(String.Format("Unable to create UserAccountService from {0}", userAccountsDll));
+            // string? userAccountsDll = assetConfig.GetValue("UserAccountsService", string.Empty);
+            // if (string.IsNullOrEmpty(userAccountsDll))
+            //     throw new Exception("Please specify UserAccountsService in HGAssetService configuration");
+
+            // Object[] args = new Object[] { config };
+            // m_UserAccountService = ServerUtils.LoadPlugin<IUserAccountService>(userAccountsDll, args);
+            // if (m_UserAccountService == null)
+            //     throw new Exception(String.Format("Unable to create UserAccountService from {0}", userAccountsDll));
 
             m_HomeURL = Util.GetConfigVarFromSections<string>(config, "HomeURI",
                 new string[] { "Startup", "Hypergrid", _ConfigName }, string.Empty);

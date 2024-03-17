@@ -26,9 +26,9 @@
  */
 
 using System.Collections;
-using System.Reflection;
-using log4net;
-using Nini.Config;
+using log4net.Core;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using OpenMetaverse;
 using OpenSim.Capabilities.Handlers;
 using OpenSim.Framework;
@@ -43,9 +43,6 @@ namespace OpenSim.Region.ClientStack.Linden
 {
     public class GetAssetsModule : INonSharedRegionModule
     {
-//        private static readonly ILog m_log =
-//            LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         private Scene m_scene;
         private bool m_Enabled;
 
@@ -66,14 +63,21 @@ namespace OpenSim.Region.ClientStack.Linden
             public OSHttpResponse osresponse;
         }
 
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         private static IAssetService m_assetService = null;
         private static GetAssetsHandler m_getAssetHandler;
         private static ObjectJobEngine m_workerpool = null;
         private static int m_NumberScenes = 0;
         private static object m_loadLock = new object();
         protected IUserManagement m_UserManagement = null;
+
+        protected readonly IConfiguration m_configuration;
+        protected readonly ILogger<GetAssetsModule> m_logger;
+
+        public GetAssetsModule(IConfiguration configuration, ILogger<GetAssetsModule> logger)
+        {
+            m_configuration = configuration;
+            m_logger = logger;
+        }
 
         #region Region Module interfaceBase Members
 
@@ -82,26 +86,26 @@ namespace OpenSim.Region.ClientStack.Linden
             get { return null; }
         }
 
-        public void Initialise(IConfiguration source)
+        public void Initialise()
         {
-            IConfig config = source.Configs["ClientStack.LindenCaps"];
-            if (config == null)
+            var config = m_configuration.GetSection("ClientStack.LindenCaps");
+            if (config.Exists() is false)
                 return;
 
-            m_GetTextureURL = config.GetString("Cap_GetTexture", string.Empty);
-            if (m_GetTextureURL != string.Empty)
+            m_GetTextureURL = config.GetValue("Cap_GetTexture", string.Empty);
+            if (string.IsNullOrEmpty(m_GetTextureURL) is false)
                 m_Enabled = true;
 
-            m_GetMeshURL = config.GetString("Cap_GetMesh", string.Empty);
-            if (m_GetMeshURL != string.Empty)
+            m_GetMeshURL = config.GetValue("Cap_GetMesh", string.Empty);
+            if (string.IsNullOrEmpty(m_GetMeshURL) is false)
                 m_Enabled = true;
 
-            m_GetMesh2URL = config.GetString("Cap_GetMesh2", string.Empty);
-            if (m_GetMesh2URL != string.Empty)
+            m_GetMesh2URL = config.GetValue("Cap_GetMesh2", string.Empty);
+            if (string.IsNullOrEmpty(m_GetMesh2URL) is false)
                 m_Enabled = true;
 
-            m_GetAssetURL = config.GetString("Cap_GetAsset", string.Empty);
-            if (m_GetAssetURL != string.Empty)
+            m_GetAssetURL = config.GetValue("Cap_GetAsset", string.Empty);
+            if (string.IsNullOrEmpty(m_GetAssetURL) is false)
                 m_Enabled = true;
         }
 

@@ -43,13 +43,17 @@ namespace OpenSim.Data.MySQL
         private MySqlFolderHandler m_Folders;
         private MySqlItemHandler m_Items;
 
-        public MySQLXInventoryData(string conn, string realm)
+        public MySQLXInventoryData()
+        {
+        }
+
+        public void Initialize(string connString, string realm)
         {
             m_Folders = new MySqlFolderHandler();
-            m_Folders.Initialize(conn, "inventoryfolders", "InventoryStore");
+            m_Folders.Initialize(connString, "inventoryfolders", "InventoryStore");
 
             m_Items = new MySqlItemHandler();
-            m_Items.Initialize(conn, "inventoryitems", string.Empty);
+            m_Items.Initialize(connString, "inventoryitems", string.Empty);
         }
 
         public XInventoryFolder[] GetFolder(string field, string val)

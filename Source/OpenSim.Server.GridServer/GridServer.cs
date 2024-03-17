@@ -29,39 +29,40 @@ using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 
+using Autofac;
+
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 using OpenSim.Framework;
 using OpenSim.Framework.Servers;
-using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Server.Base;
 using OpenSim.Server.Handlers.Base;
 
 namespace OpenSim.Server.GridServer
 {
-    public class GridServer
+    public partial class GridServer
     {
         private bool m_NoVerifyCertChain = false;
         private bool m_NoVerifyCertHostname = false;
-        private OpenSimServer m_baseServer = null;
+        private OpenSimServer m_baseServer;
 
         protected List<IServiceConnector> m_ServiceConnectors = new();
-        protected Dictionary<string,uint> portMapping = new();
 
-        private readonly IServiceProvider m_serviceProvider;
+        protected Dictionary<string,ServiceEntry> serviceList = new();
+
+        private readonly IComponentContext m_context;
         private readonly ILogger<GridServer> m_logger;
         private readonly IConfiguration m_configuration;
 
         public GridServer(
-            IServiceProvider serviceProvider,
+            IComponentContext componentContext,
             IConfiguration configuration, 
             ILogger<GridServer> logger,
             OpenSimServer openSimServer
             )
         {
-            m_serviceProvider = serviceProvider;
+            m_context = componentContext;
             m_configuration = configuration;
             m_logger = logger;
             m_baseServer = openSimServer;
@@ -97,7 +98,7 @@ namespace OpenSim.Server.GridServer
             {
                 using (StreamReader readFile = File.OpenText(fileName))
                 {
-                    string currentLine;
+                    string? currentLine;
                     while ((currentLine = readFile.ReadLine()) is not null)
                     {
                         m_logger.LogInformation("[!]" + currentLine);
@@ -122,32 +123,27 @@ namespace OpenSim.Server.GridServer
 
             m_baseServer.Startup();
 
-            if (LoadConfiguration() <= 0)
-                return 1;
-
-            using (var scope = m_serviceProvider.CreateScope())
+            if (LoadServices() <= 0)
             {
-                foreach (var servicesConnector in scope.ServiceProvider.GetServices<IServiceConnector>())
+                throw new Exception("GridServer.Startup - No Services Defined");
+            }
+
+            foreach (var kvp in serviceList)
+            {
+                try
                 {
-                    uint port;
-                    string typeName = servicesConnector.GetType().Name;
+                    var service = m_context.ResolveNamed<IServiceConnector>(kvp.Value.ModuleName);
+                    var server = MainServer.Instance;
+                    // if (kvp.Value.Port != 0)
+                    //     server = MainServer.GetHttpServer()
 
-                    m_logger.LogInformation($"Searching for {typeName} as {servicesConnector.ConfigName}");
-
-                    if (portMapping.TryGetValue(typeName, out port) == true)
-                    {                                                    
-                        IHttpServer server = MainServer.Instance;
-                        if (port != 0)
-                            server = MainServer.GetHttpServer(scope, port);
-
-                        servicesConnector.Initialize(server);
-                        m_ServiceConnectors.Add(servicesConnector);
-                    }
-                    else
-                    {
-                        m_logger.LogError($"Configuration for {typeName} not found.");
-                    }
+                    service.Initialize(server);
+                    m_ServiceConnectors.Add(service);
                 }
+                catch (Exception e)
+                {
+                    m_logger.LogError(e, $"Configuration for {kvp.Key} not found.");
+                }                 
             }
 
             //     if (friendlyName == "LLLoginServiceInConnector")
@@ -181,76 +177,26 @@ namespace OpenSim.Server.GridServer
             return 0;
         }
 
-        private int LoadConfiguration()
+        private int LoadServices()
         {
-            var startupConfig = m_configuration.GetSection("Startup");
-
-            var connList = startupConfig.GetValue<string>("ServiceConnectors", string.Empty);
-            var registryLocation = startupConfig.GetValue<string>("RegistryLocation", ".");
-
             var servicesConfig = m_configuration.GetSection("ServiceList");
-
-            List<string> servicesList = new();
-            if (!string.IsNullOrEmpty(connList))
-                servicesList.Add(connList);
-
-            foreach (var k in servicesConfig.AsEnumerable())
+            if (servicesConfig.Exists() is false)
             {
-                string[] keyparts = k.Key.Split(":");
-                if ((keyparts.Length > 1) && (keyparts[0] == "ServiceList"))
-                {
-                    string v = servicesConfig.GetValue<string>(keyparts[1]);
-                    if (!string.IsNullOrEmpty(v))
-                        servicesList.Add(v);
-                }
+                throw new Exception("LoadConfiguration: No ServiceList found");
             }
-
-            foreach (string c in servicesList)
+            
+            var services = servicesConfig.AsEnumerable();
+            foreach (var kvp in services)
             {
-                if (string.IsNullOrEmpty(c))
+                if ((kvp.Key == "ServiceList") && (kvp.Value == null))
                     continue;
-
-                string configName = string.Empty;
-                string conn = c;
-                uint port = 0;
-
-                string[] split1 = conn.Split(new char[] { '/' });
-                if (split1.Length > 1)
-                {
-                    conn = split1[1];
-
-                    string[] split2 = split1[0].Split(new char[] { '@' });
-                    if (split2.Length > 1)
-                    {
-                        configName = split2[0];
-                        port = Convert.ToUInt32(split2[1]);
-                    }
-                    else
-                    {
-                        port = Convert.ToUInt32(split1[0]);
-                    }
-                }
-
-                string[] parts = conn.Split(new char[] { ':' });
-                string moduleName = string.Empty;
-                string friendlyName = parts[0];
-                if (parts.Length > 1)
-                {
-                    moduleName = parts[0];
-                    friendlyName = parts[1];
-                }
-
-                if (portMapping.ContainsKey(friendlyName))
-                {
-                    m_logger.LogInformation($"Loading configuration, {friendlyName} already found");
-                }
-                else
-                {
-                    portMapping.Add(friendlyName, port);
-                }
+                    
+                string serviceName = kvp.Key.Split(new char[] { ':' })[1];
+                ServiceEntry entry = new ServiceEntry(kvp.Value);
+                serviceList.Add(serviceName, entry);
             }
 
-            return 1;
+            return serviceList.Count;
         }
 
         public void Work()

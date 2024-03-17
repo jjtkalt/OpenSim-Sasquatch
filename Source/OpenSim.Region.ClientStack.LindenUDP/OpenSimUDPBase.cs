@@ -25,14 +25,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
-using log4net;
+using Microsoft.Extensions.Logging;
 using OpenSim.Framework;
-using OpenSim.Framework.Monitoring;
 
 namespace OpenMetaverse
 {
@@ -41,13 +37,14 @@ namespace OpenMetaverse
     /// </summary>
     public abstract class OpenSimUDPBase
     {
-        private static readonly ILog m_log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
-
         /// <summary>
         /// This method is called when an incoming packet is received
         /// </summary>
         /// <param name="buffer">Incoming packet buffer</param>
         public abstract void PacketReceived(UDPPacketBuffer buffer);
+
+        // Logging Extensions;
+        protected ILogger m_logger;
 
         /// <summary>UDP port to bind to in server mode</summary>
         protected int m_udpPort;
@@ -181,7 +178,7 @@ namespace OpenMetaverse
         {
             if (!IsRunningInbound)
             {
-                m_log.DebugFormat("[UDPBASE]: Starting inbound UDP loop");
+                m_logger.LogDebug("[UDPBASE]: Starting inbound UDP loop");
 
                 const int SIO_UDP_CONNRESET = -1744830452;
 
@@ -197,7 +194,7 @@ namespace OpenMetaverse
                 }
                 catch (SocketException)
                 {
-                    m_log.Debug("[UDPBASE]: Failed to increase default TTL");
+                    m_logger.LogDebug("[UDPBASE]: Failed to increase default TTL");
                 }
 
                 try
@@ -206,7 +203,7 @@ namespace OpenMetaverse
                 }
                 catch
                 {
-                    m_log.Debug("[UDPBASE]: SIO_UDP_CONNRESET flag not supported on this platform, ignoring");
+                    m_logger.LogDebug("[UDPBASE]: SIO_UDP_CONNRESET flag not supported on this platform, ignoring");
                 }
 
                 // On at least Mono 3.2.8, multiple UDP sockets can bind to the same port by default.  At the moment
@@ -244,7 +241,7 @@ namespace OpenMetaverse
         /// </summary>
         public virtual void StartOutbound()
         {
-            m_log.DebugFormat("[UDPBASE]: Starting outbound UDP loop");
+            m_logger.LogDebug("[UDPBASE]: Starting outbound UDP loop");
 
             IsRunningOutbound = true;
         }
@@ -253,7 +250,7 @@ namespace OpenMetaverse
         {
             if (IsRunningInbound)
             {
-                m_log.DebugFormat("[UDPBASE]: Stopping inbound UDP loop");
+                m_logger.LogDebug("[UDPBASE]: Stopping inbound UDP loop");
 
                 IsRunningInbound = false;
                 m_udpSocket.Close();
@@ -262,7 +259,7 @@ namespace OpenMetaverse
 
         public virtual void StopOutbound()
         {
-            m_log.DebugFormat("[UDPBASE]: Stopping outbound UDP loop");
+            m_logger.LogDebug("[UDPBASE]: Stopping outbound UDP loop");
 
             IsRunningOutbound = false;
         }
@@ -291,7 +288,7 @@ namespace OpenMetaverse
                 {
                     if (e.SocketErrorCode == SocketError.ConnectionReset)
                     {
-                        m_log.Warn("[UDPBASE]: SIO_UDP_CONNRESET was ignored, attempting to salvage the UDP listener on port " + m_udpPort);
+                        m_logger.LogWarning("[UDPBASE]: SIO_UDP_CONNRESET was ignored, attempting to salvage the UDP listener on port " + m_udpPort);
                         {
                             try
                             {
@@ -310,12 +307,12 @@ namespace OpenMetaverse
                             catch (SocketException) { }
                             catch (ObjectDisposedException) { return; }
                         }
-                        m_log.Warn("[UDPBASE]: Salvaged the UDP listener on port " + m_udpPort);
+                        m_logger.LogWarning("[UDPBASE]: Salvaged the UDP listener on port " + m_udpPort);
                     }
                 }
                 catch (Exception e)
                 {
-                    m_log.Error(
+                    m_logger.LogError(
                         string.Format("[UDPBASE]: Error processing UDP begin receive {0}.  Exception  ", UdpReceives), e);
                 }
             }
@@ -363,7 +360,7 @@ namespace OpenMetaverse
                 }
                 catch (SocketException se)
                 {
-                    m_log.Error(
+                    m_logger.LogError(
                         string.Format(
                             "[UDPBASE]: Error processing UDP end receive {0}, socket error code {1}.  Exception  ",
                             UdpReceives, se.ErrorCode),
@@ -372,7 +369,7 @@ namespace OpenMetaverse
                 catch(ObjectDisposedException) { }
                 catch (Exception e)
                 {
-                    m_log.Error(
+                    m_logger.LogError(
                         string.Format("[UDPBASE]: Error processing UDP end receive {0}.  Exception  ", UdpReceives), e);
                 }
                 finally
@@ -400,7 +397,7 @@ namespace OpenMetaverse
             }
             catch (SocketException e)
             {
-                m_log.WarnFormat("[UDPBASE]: sync send SocketException {0} {1}", buf.RemoteEndPoint, e.Message);
+                m_logger.LogWarning(e, $"[UDPBASE]: sync send SocketException {buf.RemoteEndPoint} {1}", buf.RemoteEndPoint);
             }
             catch (ObjectDisposedException) { }
         }

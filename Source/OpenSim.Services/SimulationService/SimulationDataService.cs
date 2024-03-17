@@ -26,16 +26,13 @@
  */
 
 using OpenMetaverse;
-using OpenSim.Services.Base;
 using OpenSim.Framework;
-using OpenSim.Region.Framework.Interfaces;
-using OpenSim.Region.Framework.Scenes;
 
 using Microsoft.Extensions.Configuration;
 
 namespace OpenSim.Services.SimulationService
 {
-    public class SimulationDataService : ServiceBase, ISimulationDataService
+    public class SimulationDataService : ISimulationDataService
     {
         protected ISimulationDataStore m_database;
 
