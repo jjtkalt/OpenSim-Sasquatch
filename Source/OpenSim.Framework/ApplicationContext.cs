@@ -18,7 +18,7 @@ namespace OpenSim.Framework
         public IConfiguration? Configuration { get; private set; }
 
         public ILoggerFactory? LoggerFactory { get; private set; }
-        public ILogger? CreateLogger<T>() => LoggerFactory?.CreateLogger<T>();
+        public ILogger<T>? CreateLogger<T>() => LoggerFactory?.CreateLogger<T>();
         public ILogger? CreateLogger(string categoryName) => LoggerFactory?.CreateLogger(categoryName);
 
         // Private constructor to prevent instantiation from outside
@@ -26,15 +26,10 @@ namespace OpenSim.Framework
         {
         }
 
-        public static void Initialize(IComponentContext? componentContext)
+        public void Initialize(IComponentContext? componentContext)
         {
             lock (_lock)
             {
-                if (_instance == null)
-                {
-                    _instance = new ApplicationContext();
-                }
-
                 _instance._componentContext = componentContext;
 
                 _instance._loggerFactory = componentContext?.Resolve<ILoggerFactory>();
