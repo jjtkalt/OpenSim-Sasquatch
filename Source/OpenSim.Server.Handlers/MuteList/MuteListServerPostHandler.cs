@@ -46,7 +46,7 @@ namespace OpenSim.Server.Handlers.GridUser
         private readonly ILogger m_logger;
 
         public MuteListServerPostHandler(
-            ILogger<MuteListServerPostHandler> logger, 
+            ILogger logger, 
             IMuteListService service, 
             IServiceAuth auth) :
             base("POST", "/mutelist", auth)

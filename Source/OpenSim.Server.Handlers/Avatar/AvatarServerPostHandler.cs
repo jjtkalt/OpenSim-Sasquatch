@@ -38,11 +38,11 @@ namespace OpenSim.Server.Handlers.Avatar
 {
     public class AvatarServerPostHandler : BaseStreamHandler
     {
-        private ILogger<AvatarServerPostHandler> m_logger;
+        private ILogger m_logger;
         private IAvatarService m_AvatarService;
 
         public AvatarServerPostHandler(
-            ILogger<AvatarServerPostHandler> logger,
+            ILogger logger,
             IAvatarService service, IServiceAuth auth) :
             base("POST", "/avatar", auth)
         {

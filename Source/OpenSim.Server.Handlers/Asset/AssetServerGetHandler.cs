@@ -39,11 +39,11 @@ namespace OpenSim.Server.Handlers.Asset
 {
     public class AssetServerGetHandler : BaseStreamHandler
     {
-        private readonly ILogger<AssetServerGetHandler> m_logger;
+        private readonly ILogger m_logger;
         private readonly IAssetService m_AssetService;
-        private readonly string m_RedirectURL;
+        private readonly string? m_RedirectURL;
 
-        public AssetServerGetHandler(ILogger<AssetServerGetHandler> logger, IAssetService service) :
+        public AssetServerGetHandler(ILogger logger, IAssetService service) :
                 base("GET", "/assets")
         {
             m_logger = logger;
@@ -51,7 +51,7 @@ namespace OpenSim.Server.Handlers.Asset
             m_RedirectURL = string.Empty;
         }
 
-        public AssetServerGetHandler(ILogger<AssetServerGetHandler> logger, IAssetService service, IServiceAuth auth, string redirectURL) :
+        public AssetServerGetHandler(ILogger logger, IAssetService service, IServiceAuth auth, string? redirectURL) :
             base("GET", "/assets", auth)
         {
             m_logger = logger;

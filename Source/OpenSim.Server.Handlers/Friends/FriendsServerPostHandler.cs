@@ -45,7 +45,7 @@ namespace OpenSim.Server.Handlers.Friends
         private IFriendsService m_FriendsService;
 
         public FriendsServerPostHandler(
-            ILogger<FriendsServerPostHandler> logger, 
+            ILogger logger, 
             IFriendsService service, 
             IServiceAuth auth) :
             base("POST", "/friends", auth)

@@ -52,14 +52,14 @@ namespace OpenSim.Server.Handlers.Authentication
 
         public AuthenticationServerPostHandler(
             IConfiguration config,
-            ILogger<AuthenticationServerPostHandler> logger,
+            ILogger logger,
             IAuthenticationService service) :
             this(config, logger, service, null) 
         { }
 
         public AuthenticationServerPostHandler(
             IConfiguration config, 
-            ILogger<AuthenticationServerPostHandler> logger, 
+            ILogger logger, 
             IAuthenticationService service, 
             IServiceAuth auth) :
             base("POST", "/auth", auth)
