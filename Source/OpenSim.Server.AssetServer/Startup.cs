@@ -1,16 +1,26 @@
+/*
+ * OpenSim.NGC Tranquillity 
+ * Copyright (C) 2024 Utopia Skye LLC and its affiliates.
+ * All rights reserved.
+
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using Microsoft.EntityFrameworkCore;
-
-using OpenSim.Data.Models;
 using MediatR;
 using System.Reflection;
+using OpenSim.Data.Model.Core;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
-namespace OpenSim.GridServices.AssetService
+namespace OpenSim.Server.AssetServer
 {
     public class Startup
     {
@@ -25,10 +35,15 @@ namespace OpenSim.GridServices.AssetService
         public void ConfigureServices(IServiceCollection services)
         {
             var connectionString = Configuration.GetConnectionString("OpenSimDatabase");
-            services.AddDbContext<OpenSimDatabaseContext>(opt => opt.UseMySQL(connectionString));
+            var serverVersion = new MySqlServerVersion(new Version(connectionString));
 
-            services.AddMediatR(Assembly.GetExecutingAssembly());
-	        services.AddAutoMapper(typeof(Startup));
+            services.AddDbContext<OpenSimCoreContext>(opt => opt
+                .UseMySql(connectionString, serverVersion)
+                .LogTo(Console.WriteLine, LogLevel.Information)
+                .EnableSensitiveDataLogging()
+                .EnableDetailedErrors());
+
+            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
             
             services.AddControllers();
             services.AddMvc().AddXmlSerializerFormatters();

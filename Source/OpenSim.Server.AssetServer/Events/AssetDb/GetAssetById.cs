@@ -1,14 +1,9 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-
 using AutoMapper;
 using MediatR;
+using OpenSim.Data.Model.Core;
+using OpenSim.Server.AssetServer.Models;
 
-using OpenSim.Data.Models;
-using OpenSim.GridServices.AssetService.Models;
-
-namespace OpenSim.GridServices.AssetService.Events.AssetDb
+namespace OpenSim.Server.AssetServer.Events.AssetDb
 {
     public class GetAssetById {
         public class Request : IRequest<AssetDto> 
@@ -18,10 +13,10 @@ namespace OpenSim.GridServices.AssetService.Events.AssetDb
 
         public class Command : IRequestHandler<Request, AssetDto>
         {
-            private readonly OpenSimDatabaseContext _database;
+            private readonly OpenSimCoreContext _database;
             private readonly IMapper _mapper;
 
-            public Command(OpenSimDatabaseContext database, IMapper mapper)
+            public Command(OpenSimCoreContext database, IMapper mapper)
             {
                 this._database = database;
                 this._mapper = mapper;

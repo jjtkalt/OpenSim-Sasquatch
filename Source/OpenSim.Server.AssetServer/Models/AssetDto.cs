@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿#nullable disable
 
-#nullable disable
-
-namespace OpenSim.GridServices.AssetService.Models
+namespace OpenSim.Server.AssetServer.Models
 {
     public partial class AssetDto
     {

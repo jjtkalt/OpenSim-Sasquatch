@@ -1,15 +1,17 @@
-using System.Linq;
-using System.Threading.Tasks;
+/*
+ * OpenSim.NGC Tranquillity 
+ * Copyright (C) 2024 Utopia Skye LLC and its affiliates.
+ * All rights reserved.
+
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using AutoMapper;
-using OpenSim.Data.Models;
 using MediatR;
 
-using OpenSim.GridServices.AssetService.Events.AssetDb;
-using OpenSim.GridServices.AssetService.Models;
-
-namespace AssetService.Controllers
+namespace OpenSim.Services.Controllers.AssetService
 {
     [Route("assets/")]
     [ApiController]
@@ -22,16 +24,16 @@ namespace AssetService.Controllers
             _mediator = mediator;
         }
 
-        // GET: assets/<asset-id>
-        [HttpGet("{id}")]
-        public async Task<ActionResult<AssetDto>> GetAsset(string id)
-        {
-            var asset = await _mediator.Send(new GetAssetById.Request { Id = id });
-            if (asset == null)
-                return NotFound();
+        // // GET: assets/<asset-id>
+        // [HttpGet("{id}")]
+        // public async Task<ActionResult<AssetDto>> GetAsset(string id)
+        // {
+        //     var asset = await _mediator.Send(new GetAssetById.Request { Id = id });
+        //     if (asset == null)
+        //         return NotFound();
 
-            return asset;
-        }
+        //     return asset;
+        // }
 /*
         // PUT: assets/id
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754

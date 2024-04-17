@@ -1,15 +1,9 @@
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-
-using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using OpenSim.Data.Models;
-using OpenSim.GridServices.AssetService.Models;
+using OpenSim.Data.Model.Core;
 
-namespace OpenSim.GridServices.AssetService.Events.AssetDb
+
+namespace OpenSim.Server.AssetServer.Events.AssetDb
 {
     public class AssetExists {
         public class Request : IRequest<bool> 
@@ -19,9 +13,9 @@ namespace OpenSim.GridServices.AssetService.Events.AssetDb
 
         public class Command : IRequestHandler<Request, bool>
         {
-            private readonly OpenSimDatabaseContext _database;
+            private readonly OpenSimCoreContext _database;
 
-            public Command(OpenSimDatabaseContext database)
+            public Command(OpenSimCoreContext database)
             {
                 this._database = database;
             }

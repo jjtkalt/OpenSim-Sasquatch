@@ -18,14 +18,19 @@ namespace OpenSim.Server.GridServer
 
         public GridService(
             IComponentContext componentContext,
+            IConfiguration configuration,
+            ILogger<GridService> logger,
             GridServer openSimServer
             )
         {
-            _applicationContext = ApplicationContext.GetInstance();
-            _applicationContext?.Initialize(componentContext);
+            _configuration = configuration;
+            _logger = logger;
 
-            _configuration = _applicationContext.Configuration;
-            _logger = _applicationContext.CreateLogger<GridService>();
+            // _applicationContext = ApplicationContext.GetInstance();
+            // _applicationContext?.Initialize(componentContext);
+
+            // _configuration = _applicationContext.Configuration;
+            // _logger = _applicationContext.CreateLogger<GridService>();
 
             _openSimServer = openSimServer;
         }

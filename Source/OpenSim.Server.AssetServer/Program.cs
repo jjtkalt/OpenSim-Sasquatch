@@ -7,7 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace OpenSim.GridServices.InventoryService
+namespace OpenSim.Server.AssetServer
 {
     public class Program
     {

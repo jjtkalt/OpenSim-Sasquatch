@@ -1,11 +1,7 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-
 using AutoMapper;
 
-using OpenSim.Data.Models;
-using OpenSim.GridServices.AssetService.Models;
+using OpenSim.Data.Model.Core;
+using OpenSim.Server.AssetServer.Models;
 
 namespace OpenSim.GridServices.AssetService.Events.AssetDb
 {
