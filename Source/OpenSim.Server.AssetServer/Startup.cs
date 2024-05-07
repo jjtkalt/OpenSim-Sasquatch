@@ -34,14 +34,17 @@ namespace OpenSim.Server.AssetServer
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            var connectionString = Configuration.GetConnectionString("OpenSimDatabase");
-            var serverVersion = new MySqlServerVersion(new Version(connectionString));
-
-            services.AddDbContext<OpenSimCoreContext>(opt => opt
-                .UseMySql(connectionString, serverVersion)
-                .LogTo(Console.WriteLine, LogLevel.Information)
-                .EnableSensitiveDataLogging()
-                .EnableDetailedErrors());
+            string? connectionString = Configuration.GetConnectionString("OpenSimDatabase");
+            if (string.IsNullOrWhiteSpace(connectionString) is false)
+            {
+                var serverVersion = new MySqlServerVersion(new Version(connectionString));
+                
+                services.AddDbContext<OpenSimCoreContext>(opt => opt
+                    .UseMySql(connectionString, serverVersion)
+                    .LogTo(Console.WriteLine, LogLevel.Information)
+                    .EnableSensitiveDataLogging()
+                    .EnableDetailedErrors());
+            }
 
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
             
