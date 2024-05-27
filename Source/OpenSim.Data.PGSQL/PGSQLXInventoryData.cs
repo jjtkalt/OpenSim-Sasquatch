@@ -25,15 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Data;
 using OpenMetaverse;
-using OpenSim.Framework;
-using System.Reflection;
-using System.Text;
-using log4net;
+
 using Npgsql;
 using NpgsqlTypes;
 
@@ -49,10 +42,14 @@ namespace OpenSim.Data.PGSQL
 
         public PGSQLXInventoryData(string conn, string realm)
         {
+            this.Initialize(conn, realm);
+        }
+
+        public void Initialize(string connString, string realm) {
             m_Folders = new PGSQLFolderHandler(
-                    conn, "inventoryfolders", "InventoryStore");
+                    connString, "inventoryfolders", "InventoryStore");
             m_Items = new PGSQLItemHandler(
-                    conn, "inventoryitems", String.Empty);
+                    connString, "inventoryitems", String.Empty);
         }
 
         public static UUID str2UUID(string strUUID)

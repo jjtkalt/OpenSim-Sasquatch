@@ -25,33 +25,33 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Reflection;
-using log4net;
-using OpenMetaverse;
-using OpenSim.Framework;
-using OpenSim.Region.Framework.Interfaces;
 using System.Text;
+
+using Microsoft.Extensions.Logging;
+
+using OpenSim.Server.Base;
+
+using OpenMetaverse;
+
 using Npgsql;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace OpenSim.Data.PGSQL
 {
     public class PGSQLGenericTableHandler<T> : PGSqlFramework where T : class, new()
     {
-        private static readonly ILog m_log =
-            LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static ILogger m_logger;
 
-        protected string m_ConnectionString;
-        protected PGSQLManager m_database; //used for parameter type translation
-        protected Dictionary<string, FieldInfo> m_Fields =
-                new Dictionary<string, FieldInfo>();
+        protected string? m_ConnectionString;
+        protected PGSQLManager? m_database; //used for parameter type translation
+        protected Dictionary<string, FieldInfo> m_Fields = new Dictionary<string, FieldInfo>();
 
         protected Dictionary<string, string> m_FieldTypes = new Dictionary<string, string>();
 
         protected List<string> m_ColumnNames = null;
-        protected string m_Realm;
+        protected string? m_Realm = null;
         protected FieldInfo m_DataField = null;
 
         protected virtual Assembly Assembly
@@ -59,10 +59,12 @@ namespace OpenSim.Data.PGSQL
             get { return GetType().Assembly; }
         }
 
-        public PGSQLGenericTableHandler(string connectionString,
-                string realm, string storeName)
-            : base(connectionString)
+        public void Initialize(string connectionString, string realm, string storeName)
         {
+            m_logger ??= OpenSimServer.Instance.ServiceProvider.GetRequiredService<ILogger<PGSQLGenericTableHandler<T>>>();
+
+            base.Initialize(connectionString);
+
             m_Realm = realm;
 
             m_ConnectionString = connectionString;

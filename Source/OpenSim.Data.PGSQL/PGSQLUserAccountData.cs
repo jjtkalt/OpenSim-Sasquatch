@@ -25,27 +25,22 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Data;
-using OpenMetaverse;
-using OpenSim.Framework;
-using System.Text;
-using Npgsql;
-using log4net;
 using System.Reflection;
+
+using OpenMetaverse;
+
+using Npgsql;
 
 namespace OpenSim.Data.PGSQL
 {
     public class PGSQLUserAccountData : PGSQLGenericTableHandler<UserAccountData>,IUserAccountData
     {
-        private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        // private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
 
-        public PGSQLUserAccountData(string connectionString, string realm) :
-            base(connectionString, realm, "UserAccount")
+        public void Initialize(string connectionString, string realm)
         {
+            base.Initialize(connectionString, realm, "UserAccount");
         }
 
         /*
