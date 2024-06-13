@@ -40,6 +40,7 @@ using OpenMetaverse.StructuredData;
 using PrimMesher;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using OpenSim.Region.PhysicsModules.ConvexDecompositionDotNet;
 
 namespace OpenSim.Region.PhysicsModule.ubODEMeshing
 {
