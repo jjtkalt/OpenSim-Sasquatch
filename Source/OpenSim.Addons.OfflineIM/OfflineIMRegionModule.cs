@@ -41,18 +41,19 @@ namespace OpenSim.OfflineIM
         IMessageTransferModule m_TransferModule = null;
         private bool m_ForwardOfflineGroupMessages = true;
 
-        private IOfflineIMService m_OfflineIMService;
-
         private readonly IConfiguration m_configuration;
         private readonly ILogger<OfflineIMRegionModule> m_logger;
+        private readonly IOfflineIMService m_OfflineIMService;
 
         public OfflineIMRegionModule(
             IConfiguration configuration,
-            ILogger<OfflineIMRegionModule> logger
+            ILogger<OfflineIMRegionModule> logger,
+            IOfflineIMService offlineIMService
             )
         {
             m_configuration = configuration;
             m_logger = logger;
+            m_OfflineIMService = offlineIMService;
         }
 
         public void Initialise(IConfiguration pConfiguration)
@@ -65,11 +66,11 @@ namespace OpenSim.OfflineIM
 
             m_Enabled = true;
 
-            string serviceLocation = cnf.GetValue("OfflineMessageURL", string.Empty);
-            if (string.IsNullOrEmpty(serviceLocation))
-                m_OfflineIMService = new OfflineIMService(m_configuration);
-            else
-                m_OfflineIMService = new OfflineIMServiceRemoteConnector(m_configuration);
+            // string serviceLocation = cnf.GetValue("OfflineMessageURL", string.Empty);
+            // if (string.IsNullOrEmpty(serviceLocation))
+            //     m_OfflineIMService = new OfflineIMService(m_configuration);
+            // else
+            //     m_OfflineIMService = new OfflineIMServiceRemoteConnector(m_configuration);
 
             m_ForwardOfflineGroupMessages = cnf.GetValue<bool>("ForwardOfflineGroupMessages", m_ForwardOfflineGroupMessages);
 

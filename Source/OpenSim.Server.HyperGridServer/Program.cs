@@ -1,17 +1,17 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.OpenApi.Models;
+using System.CommandLine;
 
+using FluentValidation;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using OpenSim.Data.Model;
 using OpenSim.Data.Model.Core;
 using OpenSim.Data.Model.Economy;
 using OpenSim.Data.Model.Identity;
 using OpenSim.Data.Model.Region;
 using OpenSim.Data.Model.Search;
 
-namespace OpenSim.Server.GridServer;
+namespace OpenSim.Server.HyperGrid;
 
 public class Program
 {
@@ -87,13 +87,11 @@ public class Program
         
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen(c =>
-        {
-            c.SwaggerDoc("v1", new OpenApiInfo { Title = "OpenSimulator Grid Services v0.8", Version = "v1" });
-        });
+        builder.Services.AddSwaggerGen();
 
         var app = builder.Build();
 
+        // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
@@ -102,7 +100,6 @@ public class Program
 
         app.UseHttpsRedirection();
         app.UseAuthorization();
-
         app.MapControllers();
 
         app.Run();
