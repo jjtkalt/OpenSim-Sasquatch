@@ -1,10 +1,13 @@
-﻿using OpenSim.Region.Framework.Scenes;
-using OpenSim.Region.Framework.Interfaces;
+﻿
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 using OpenMetaverse;
 
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+using OpenSim.Region.Framework.Scenes;
+using OpenSim.Region.Framework.Interfaces;
+using OpenSim.Server.Base;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace OpenSim.Region.PhysicsModule.ubOde
 {
@@ -43,8 +46,9 @@ namespace OpenSim.Region.PhysicsModule.ubOde
             get { return null; }
         }
 
-        public void Initialise( )
+        public void Initialise(IConfiguration pConfiguration)
         {
+            // NOTE: we don't use the configuration passed in, we use the one passed in the constructor
             var config = m_config.GetSection("Startup");
             if (config.Exists() is false)
             {
@@ -109,7 +113,9 @@ namespace OpenSim.Region.PhysicsModule.ubOde
             if (!m_Enabled)
                 return;
 
-            m_odeScene = new ODEScene(scene, m_config, Name, Version + "-" + m_libVersion);
+            var sp = OpenSimServer.Instance.ServiceProvider;
+            m_odeScene = new ODEScene(sp, sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<ILogger<ODEScene>>(),
+                                        scene, Name, Version + "-" + m_libVersion);
         }
 
         public void RemoveRegion(Scene scene)

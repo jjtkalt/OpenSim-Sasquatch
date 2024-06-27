@@ -26,6 +26,7 @@
  */
 
 using OpenMetaverse;
+
 using OpenSim.Framework;
 using OpenSim.Region.PhysicsModule.SharedBase;
 

@@ -27,10 +27,12 @@
 
 using System.Net;
 using System.Text;
+
 using Microsoft.Extensions.Configuration;
-using Nini.Config;
+
 using OpenMetaverse;
 using OpenMetaverse.StructuredData;
+
 using OpenSim.Framework.Servers.HttpServer;
 using OpenSim.Region.Framework.Interfaces;
 using OpenSim.Region.Framework.Scenes;
@@ -62,7 +64,7 @@ namespace OpenSim.Region.ClientStack.Linden
             Enabled = true;
         }
 
-        public void Initialise()
+        public void Initialise(IConfiguration pConfiguration)
         {
             var config = m_configuration.GetSection("Mesh");
             if (config.Exists() is false)

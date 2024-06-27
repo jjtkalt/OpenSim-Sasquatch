@@ -29,18 +29,19 @@
 using System.Drawing;
 using System.IO.Compression;
 
-using OpenSim.Framework;
-using OpenSim.Region.Framework.Scenes;
-using OpenSim.Region.Framework.Interfaces;
-using OpenSim.Region.PhysicsModule.SharedBase;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 using OpenMetaverse;
 using OpenMetaverse.StructuredData;
 
+using OpenSim.Framework;
+using OpenSim.Region.Framework.Scenes;
+using OpenSim.Region.Framework.Interfaces;
+using OpenSim.Region.PhysicsModule.SharedBase;
+using OpenSim.Region.PhysicsModule.ConvexDecompositionDotNet;
+
 using PrimMesher;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using OpenSim.Region.PhysicsModules.ConvexDecompositionDotNet;
 
 namespace OpenSim.Region.PhysicsModule.ubODEMeshing
 {
@@ -90,7 +91,7 @@ namespace OpenSim.Region.PhysicsModule.ubODEMeshing
             get { return null; }
         }
 
-        public void Initialise()
+        public void Initialise(IConfiguration pConfiguration)
         {
             var start_config = m_configuration.GetSection("Startup");
 

@@ -30,11 +30,9 @@ using System.IO;
 using System.Collections.Generic;
 using System.Text;
 
-using Nini.Config;
-
 using OpenSim.Framework;
 using OpenSim.Region;
-using OpenSim.Region.PhysicsModules.SharedBase;
+using OpenSim.Region.PhysicsModule.SharedBase;
 using OpenSim.Region.PhysicsModule.Meshing;
 using OpenSim.Region.Framework.Interfaces;
 
