@@ -4,12 +4,13 @@ using OpenMetaverse;
 using OpenSim.Services.Interfaces;
 
 using GridRegion = OpenSim.Services.Interfaces.GridRegion;
+using OpenSim.Server.HyperGridServer.Dto;
 
 namespace OpenSim.Server.HyperGrid.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class GatekeeperServiceController : ControllerBase, IGatekeeperService
+public class GatekeeperServiceController : ControllerBase // , IGatekeeperService
 {
     private readonly IConfiguration _configuration;
     private readonly ILogger<GatekeeperServiceController> _logger;
@@ -22,25 +23,26 @@ public class GatekeeperServiceController : ControllerBase, IGatekeeperService
         _logger = logger;
     }
 
-    [HttpGet(Name = "GetHyperLinkRegion")]
+    [HttpGet(Name = "get_region")]
     [Produces("application/xml")]
-    public GridRegion GetHyperlinkRegion(global::OpenMetaverse.UUID regionID, global::OpenMetaverse.UUID agentID, string agentHomeURI, out string message)
+    public GetRegionResponse GetHyperlinkRegion(UUID regionID)
     {
         throw new NotImplementedException();
     }
 
 
-    [HttpGet(Name = "LinkRegion")]
-    [Produces("application/xml")]
-    public bool LinkRegion(string regionDescriptor, out global::OpenMetaverse.UUID regionID, out ulong regionHandle, out string externalName, out string imageURL, out string reason, out int sizeX, out int sizeY)
-    {
-        throw new NotImplementedException();
-    }
 
-    [HttpGet(Name = "LoginAgent")]
-    [Produces("application/xml")]
-    public bool LoginAgent(GridRegion source, AgentCircuitData aCircuit, GridRegion destination, out string reason)
-    {
-        throw new NotImplementedException();
-    }
+    // [HttpGet(Name = "link_region")]
+    // [Produces("application/xml")]
+    // public LinkRegionResponse LinkRegion(string regionDescriptor)
+    // {
+    //     throw new NotImplementedException();
+    // }
+
+    // [HttpPost(Name = "LoginAgent")]
+    // [Produces("application/xml")]
+    // public LoginAgentResponse LoginAgent([FromBody]GridRegion source, [FromBody]AgentCircuitData aCircuit, [FromBody]GridRegion destination)
+    // {
+    //     throw new NotImplementedException();
+    // }
 }

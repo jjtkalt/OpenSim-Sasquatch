@@ -55,14 +55,16 @@ namespace OpenSim.OfflineIM
         public OfflineIMServiceRobustConnector(
             IConfiguration configuration, 
             ILogger<OfflineIMServiceRobustConnector> logger,
+            OfflineIMService offlineIMService,
             IHttpServer server) :
-            this(configuration, logger, server, m_ConfigName)
+            this(configuration, logger, offlineIMService, server, m_ConfigName)
         {
         }
 
         public OfflineIMServiceRobustConnector(
             IConfiguration configuration, 
             ILogger<OfflineIMServiceRobustConnector> logger,
+            OfflineIMService offlineIMService,
             IHttpServer server, 
             string configName)
         {
@@ -71,7 +73,7 @@ namespace OpenSim.OfflineIM
 
             m_logger.LogDebug($"Starting with config name {configName}");
 
-            m_OfflineIMService = new OfflineIMService(configuration);
+            m_OfflineIMService = offlineIMService;
 
             IServiceAuth auth = ServiceAuth.Create(configuration, configName);
 

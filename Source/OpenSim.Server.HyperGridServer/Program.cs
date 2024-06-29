@@ -15,49 +15,55 @@ namespace OpenSim.Server.HyperGrid;
 
 public class Program
 {
-    public static void SetCommandLineArgs(string console, List<string> inifiles, string prompt)
+   
+    static string _console = "local";
+    static string _prompt = "HyperGrid$ ";
+
+    static List<string>? _inifiles = null;
+
+    public static async Task Main(string[] args)
     {
+        var rootCommand = new RootCommand("Grid Server");
 
-    }
+        var consoleOption = new Option<string>
+            (name: "--console", description: "console type, one of basic, local or rest.", 
+            getDefaultValue: () => "local")
+            .FromAmong("basic", "local", "rest");
+        var promptOption = new Option<string>
+            (name: "--prompt", description: "Overide the server prompt",
+            getDefaultValue: () => "HyperGrid$ ");
+        var inifileOption = new Option<List<string>>
+            (name: "--inifile", description: "Specify the location of zero or more .ini file(s) to read.");
 
-    public static void Main(string[] args)
-    {
-        // var rootCommand = new RootCommand("Grid Server");
-
-        // var consoleOption = new Option<string>
-        //     (name: "--console", description: "console type, one of basic, local or rest.", getDefaultValue: () => "local")
-        //     .FromAmong("basic", "local", "rest");
-        // var inifileOption = new Option<List<string>>
-        //     (name: "--inifile", description: "Specify the location of zero or more .ini file(s) to read.");
-        // var promptOption = new Option<string>
-        //     (name: "--prompt", description: "Overide the server prompt",
-        //     getDefaultValue: () => "GRID> ");
-
-        // rootCommand.Add(consoleOption);
-        // rootCommand.Add(inifileOption);
-        // rootCommand.Add(promptOption);
+        rootCommand.Add(consoleOption);
+        rootCommand.Add(inifileOption);
+        rootCommand.Add(promptOption);
         
-        // rootCommand.SetHandler(
-        //     (consoleOptionValue, inifileOptionValue, promptOptionValue) =>
-        //     {
-        //         SetCommandLineArgs(consoleOptionValue, inifileOptionValue, promptOptionValue);
-        //     },
-        //     consoleOption, inifileOption, promptOption);
+        rootCommand.SetHandler(
+            (consoleOptionValue, promptOptionValue, inifileOptionValue) =>
+            {
+                _console = consoleOptionValue;
+                _prompt = promptOptionValue;
+                _inifiles = inifileOptionValue;
+            },
+            consoleOption, promptOption, inifileOption);
 
-        // await rootCommand.InvokeAsync(args);
+        await rootCommand.InvokeAsync(args);
 
         // Create Builder and run program
         var builder = WebApplication.CreateBuilder(args);
 
-        // builder.Configuration.AddCommandLine(args, switchMappings);
+        //builder.Configuration.EnableSubstitutions("$(", ")");
+        builder.Configuration.AddIniFile("HyperGridServer.ini", optional: true, reloadOnChange: false);
+        builder.Configuration.AddEnvironmentVariables();
 
-        // builder.Configuration.EnableSubstitutions("$(", ")");
-        builder.Configuration.AddIniFile("GridServer.ini", optional: true, reloadOnChange: false);
-
-        // foreach (var item in inifile)
-        // {
-        //     builder.Configuration.AddIniFile(item, optional: true, reloadOnChange: true);
-        // }
+        if (_inifiles is not null)
+        {
+            foreach (var item in _inifiles)
+            {
+                builder.Configuration.AddIniFile(item, optional: true, reloadOnChange: false);
+            }
+        }
 
         // Initialize Database
         var connectionString = builder.Configuration.GetConnectionString("IdentityConnection");
