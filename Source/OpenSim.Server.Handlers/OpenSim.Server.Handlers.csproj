@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <Reference Include="DotNetOpenId">
-      <HintPath>..\..\..\bin\DotNetOpenId.dll</HintPath>
+      <HintPath>..\..\bin\DotNetOpenId.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Nini">

@@ -17,12 +17,15 @@ OpenSimConsoleHistory.txt
 *.bak
 *.lnk
 
+*.deps.json
+*.runtimeconfig.json
+
 launchSettings.json
 
 build/
 
-*/bin/Debug/*
-*/bin/Release/*
+[Bb]in/Debug/*
+[Bb]in/Release/*
 
 packages/
 
