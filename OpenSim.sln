@@ -120,6 +120,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Services.Connectors
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Services.EstateService", "Source\OpenSim.Services.EstateService\OpenSim.Services.EstateService.csproj", "{8020C608-0000-0000-0000-000000000000}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSim.Services.ExperienceService", "Source\OpenSim.Services.ExperienceService\OpenSim.Services.ExperienceService.csproj", "{186509B6-EF90-431A-9034-75A1221E4120}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Services.FreeswitchService", "Source\OpenSim.Services.FreeswitchService\OpenSim.Services.FreeswitchService.csproj", "{78D8DF46-0000-0000-0000-000000000000}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Services.FriendsService", "Source\OpenSim.Services.FriendsService\OpenSim.Services.FriendsService.csproj", "{CDF575DD-0000-0000-0000-000000000000}"
@@ -451,6 +453,10 @@ Global
 		{3258E822-A183-4455-816D-3240333E6A2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3258E822-A183-4455-816D-3240333E6A2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3258E822-A183-4455-816D-3240333E6A2A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{186509B6-EF90-431A-9034-75A1221E4120}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{186509B6-EF90-431A-9034-75A1221E4120}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{186509B6-EF90-431A-9034-75A1221E4120}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{186509B6-EF90-431A-9034-75A1221E4120}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
