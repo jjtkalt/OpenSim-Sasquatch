@@ -12,8 +12,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSim.Tests.Common", "Tes
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{E886CEB5-B01D-411F-A7A0-72AA1B71761D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Region.Application", "Source\OpenSim.Region.Application\OpenSim.csproj", "{AC9EB8AB-0000-0000-0000-000000000000}"
-EndProject
+
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Addons.Gloebit", "Source\OpenSim.Addons.Gloebit\OpenSim.Addons.Gloebit.csproj", "{4C8A6BF4-0000-0000-0000-000000000000}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Addons.Groups", "Source\OpenSim.Addons.Groups\OpenSim.Addons.Groups.csproj", "{77DEC20C-0000-0000-0000-000000000000}"
@@ -101,6 +100,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Server.Handlers", "Source\OpenSim.Server.Handlers\OpenSim.Server.Handlers.csproj", "{ED041501-0000-0000-0000-000000000000}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Server.MoneyServer", "Source\OpenSim.Server.MoneyServer\OpenSim.Server.MoneyServer.csproj", "{C3AEE6AC-BE40-4003-A7A3-E8AA039E4451}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Server.RegionServer", "Source\OpenSim.Server.RegionServer\OpenSim.Server.RegionServer.csproj", "{AC9EB8AB-0000-0000-0000-000000000000}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSim.Server.RobustServer", "Source\OpenSim.Server.RobustServer\OpenSim.Server.RobustServer.csproj", "{6E64F01D-0000-0000-0000-000000000000}"
 EndProject
