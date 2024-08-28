@@ -9,27 +9,21 @@
   <ItemGroup>
     <Reference Include="Mono.Security.dll">
       <HintPath>..\..\bin\Mono.Security.dll</HintPath>
-      <Private>False</Private>
     </Reference>
     <Reference Include="Nini">
       <HintPath>..\..\bin\Nini.dll</HintPath>
-      <Private>False</Private>
     </Reference>
     <Reference Include="OpenMetaverse">
       <HintPath>..\..\bin\OpenMetaverse.dll</HintPath>
-      <Private>False</Private>
     </Reference>
     <Reference Include="OpenMetaverse.StructuredData">
       <HintPath>..\..\bin\OpenMetaverse.StructuredData.dll</HintPath>
-      <Private>False</Private>
     </Reference>
     <Reference Include="OpenMetaverseTypes">
       <HintPath>..\..\bin\OpenMetaverseTypes.dll</HintPath>
-      <Private>False</Private>
     </Reference>
     <Reference Include="XMLRPC">
       <HintPath>..\..\bin\XMLRPC.dll</HintPath>
-      <Private>False</Private>
     </Reference>
   </ItemGroup>
 
@@ -47,6 +41,13 @@
     <ProjectReference Include="..\OpenSim.Services.Interfaces\OpenSim.Services.Interfaces.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+      <None Include="Data\**\*">
+      <TargetPath>%(RecursiveDir)%(FileName)%(Extension)</TargetPath>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  
   <ItemGroup>
     <PackageReference Include="log4net" Version="2.0.15" />
     <PackageReference Include="Mono.Addins" Version="1.4.1" />

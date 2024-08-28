@@ -42,16 +42,12 @@
     <ProjectReference Include="..\OpenSim.Services.Interfaces\OpenSim.Services.Interfaces.csproj" />
     <ProjectReference Include="..\OpenSim.Services.UserAccountService\OpenSim.Services.UserAccountService.csproj" />
   </ItemGroup>
-  <!-- <ItemGroup>
-      <Content Include="$(SolutionDir)\bin\**">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
-    </ItemGroup> -->
-  <!-- <ItemGroup>
+  <ItemGroup>
       <None Include="Data\**\*">
+      <TargetPath>%(RecursiveDir)%(FileName)%(Extension)</TargetPath>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-  </ItemGroup> -->
+  </ItemGroup>
   <ItemGroup>
     <Content Include="Resources/OpenSim.addin.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
