@@ -1,0 +1,291 @@
+diff -ruNa OpenSim/Framework/NetworkServersInfo.cs OpenSim-ipandportrange/Framework/NetworkServersInfo.cs
+--- OpenSim/Framework/NetworkServersInfo.cs	2024-08-09 06:39:36.000000000 -0700
++++ OpenSim-ipandportrange/Framework/NetworkServersInfo.cs	2024-09-18 17:25:31.736804382 -0700
+@@ -27,12 +27,14 @@
+ 
+ using System;
+ using Nini.Config;
++using System.Net;
+ 
+ namespace OpenSim.Framework
+ {
+     public class NetworkServersInfo
+     {
+-        public uint HttpListenerPort = ConfigSettings.DefaultRegionHttpPort;
++        public IPAddress HttpListenerAddress = IPAddress.Any;
++		public uint HttpListenerPort = ConfigSettings.DefaultRegionHttpPort;
+         public bool secureInventoryServer = false;
+         public bool isSandbox;
+         public bool HttpUsesSSL = false;
+@@ -40,6 +42,8 @@
+         public string HttpSSLCertPath = "";
+         public string HttpSSLCNCertPass = "";
+         public uint httpSSLPort = 9001;
++		public uint HttpListenerPortMin = ConfigSettings.DefaultRegionHttpPort;
++        public uint HttpListenerPortMax = ConfigSettings.DefaultRegionHttpPort;
+ 
+         // "Out of band" managemnt https
+         public bool ssl_listener = false;
+@@ -58,11 +62,19 @@
+ 
+         public void loadFromConfiguration(IConfigSource config)
+         {
+-            HttpListenerPort =
++            string str_ip = config.Configs["Network"].GetString("http_listener_address", "0.0.0.0");
++            if (!IPAddress.TryParse(str_ip, out HttpListenerAddress))
++                HttpListenerAddress = IPAddress.Any;
++			
++			HttpListenerPort =
+                 (uint) config.Configs["Network"].GetInt("http_listener_port", (int) ConfigSettings.DefaultRegionHttpPort);
+             httpSSLPort =
+                 (uint)config.Configs["Network"].GetInt("http_listener_sslport", ((int)ConfigSettings.DefaultRegionHttpPort+1));
+-            HttpUsesSSL = config.Configs["Network"].GetBoolean("http_listener_ssl", false);
++            HttpListenerPortMin =
++                (uint)config.Configs["Network"].GetInt("http_listener_port_min", (int)HttpListenerPort);
++            HttpListenerPortMax =
++                (uint)config.Configs["Network"].GetInt("http_listener_port_max", (int)HttpListenerPort);
++			HttpUsesSSL = config.Configs["Network"].GetBoolean("http_listener_ssl", false);
+             HttpSSLCN = config.Configs["Network"].GetString("http_listener_cn", "localhost");
+             HttpSSLCertPath = config.Configs["Network"].GetString("http_listener_cert_path", HttpSSLCertPath);
+             HttpSSLCNCertPass = config.Configs["Network"].GetString("http_listener_cert_pass", HttpSSLCNCertPass);
+diff -ruNa OpenSim/Framework/RegionInfo.cs OpenSim-ipandportrange/Framework/RegionInfo.cs
+--- OpenSim/Framework/RegionInfo.cs	2024-08-09 06:39:36.000000000 -0700
++++ OpenSim-ipandportrange/Framework/RegionInfo.cs	2024-09-18 17:25:31.740804409 -0700
+@@ -52,6 +52,7 @@
+ 
+         private EstateSettings m_estateSettings;
+         private RegionSettings m_regionSettings;
++		private IConfigSource m_configSource = null;
+ 
+         public UUID originRegionID = UUID.Zero;
+         public string proxyUrl = "";
+@@ -136,7 +137,7 @@
+ 
+         public RegionInfo(string description, string filename, bool skipConsoleConfig, IConfigSource configSource, string configName)
+         {
+-            // m_configSource = configSource;
++            m_configSource = configSource;
+             if (filename.ToLower().EndsWith(".ini"))
+             {
+                 if (!File.Exists(filename)) // New region config request
+@@ -565,17 +566,28 @@
+ 
+             // InternalPort
+             //
++			string str_port = "MATCHING";
+             int port;
+             allKeys.Remove("InternalPort");
+             if (config.Contains("InternalPort"))
+             {
+-                port = config.GetInt("InternalPort", 9000);
++                str_port = config.GetString("InternalPort", str_port);
+             }
+             else
+             {
+-                port = Convert.ToInt32(MainConsole.Instance.Prompt("Internal port", "9000"));
+-                config.Set("InternalPort", port);
++                str_port = MainConsole.Instance.Prompt("Internal port", str_port);
++                config.Set("InternalPort", str_port);
+             }
++			
++			if (str_port == "MATCHING")
++            {
++                IConfig networkConfig = (IConfig)m_configSource.Configs["Network"];
++                port = networkConfig.GetInt("http_listener_port", 9000);
++            }
++            else if (!int.TryParse(str_port, out port))
++                port = 9000;
++
++			m_httpPort = (uint)port;
+             m_internalEndPoint = new IPEndPoint(address, port);
+ 
+             // ResolveAddress
+diff -ruNa OpenSim/Framework/Servers/HttpServer/BaseHttpServer.cs OpenSim-ipandportrange/Framework/Servers/HttpServer/BaseHttpServer.cs
+--- OpenSim/Framework/Servers/HttpServer/BaseHttpServer.cs	2024-08-09 06:39:36.000000000 -0700
++++ OpenSim-ipandportrange/Framework/Servers/HttpServer/BaseHttpServer.cs	2024-09-18 17:25:31.740804409 -0700
+@@ -47,6 +47,7 @@
+ using OpenSim.Framework.Monitoring;
+ using OpenMetaverse.StructuredData;
+ using OpenMetaverse;
++using System.Net.NetworkInformation;
+ 
+ namespace OpenSim.Framework.Servers.HttpServer
+ {
+@@ -154,6 +155,12 @@
+             set { m_listenIPAddress = value; }
+         }
+ 
++		public BaseHttpServer(IPAddress address, uint port)
++        {
++            m_listenIPAddress = address;
++            m_port = port;
++        }
++
+         public BaseHttpServer(uint port)
+         {
+             m_port = port;
+@@ -1977,10 +1984,15 @@
+ 
+             return buffer;
+         }
++		
++		public void Start(uint port_min, uint port_max)
++        {
++            Start(true, true, port_min, port_max);
++        }
+ 
+         public void Start()
+         {
+-            Start(true, true);
++            Start(true, true, m_port, m_port);
+         }
+ 
+         /// <summary>
+@@ -1990,13 +2002,35 @@
+         /// If true then poll responses are performed asynchronsly.
+         /// Option exists to allow regression tests to perform processing synchronously.
+         /// </param>
+-        public void Start(bool performPollResponsesAsync, bool runPool)
++        public void Start(bool performPollResponsesAsync, bool runPool, uint port_min, uint port_max)
+         {
++			if (port_min == port_max)
+             m_log.Info($"[BASE HTTP SERVER]: Starting HTTP{(UseSSL ? "S" : "")} server on port {Port}");
++			else
++			m_log.Info($"[BASE HTTP SERVER]: Starting HTTP{(UseSSL ? "S" : "")} server on first available port between {port_min} and {port_max}");
+ 
+             try
+             {
+                 //m_httpListener = new HttpListener();
++		
++				if (port_min != port_max)
++				{
++					IPGlobalProperties ipProperties = IPGlobalProperties.GetIPGlobalProperties();
++					List<IPEndPoint> ipEndPoints = new List<IPEndPoint>(ipProperties.GetActiveTcpListeners());
++
++					for (uint current_port = port_min; current_port < port_max; current_port++)
++					{
++						if (ipEndPoints.Find(x => x.Port == current_port) != null)
++							continue;
++
++						m_port = current_port;
++						break;
++					}
++				}
++				else
++				{
++					m_port = port_min;
++				}
+                 if (!m_ssl)
+                 {
+                     m_httpListener = tinyHTTPListener.Create(m_listenIPAddress, (int)m_port);
+diff -ruNa OpenSim/Region/Application/RegionApplicationBase.cs OpenSim-ipandportrange/Region/Application/RegionApplicationBase.cs
+--- OpenSim/Region/Application/RegionApplicationBase.cs	2024-08-09 06:39:36.000000000 -0700
++++ OpenSim-ipandportrange/Region/Application/RegionApplicationBase.cs	2024-09-18 17:25:31.740804409 -0700
+@@ -68,6 +68,8 @@
+             SceneManager = SceneManager.Instance;
+ 
+             Initialize();
++			
++			IPAddress ipaddress = m_networkServersInfo.HttpListenerAddress;
+ 
+             uint mainport = m_networkServersInfo.HttpListenerPort;
+             uint mainSSLport = m_networkServersInfo.httpSSLPort;
+@@ -88,11 +90,15 @@
+             }
+ 
+             // unsecure main server
+-            BaseHttpServer server = new BaseHttpServer(mainport);
++            BaseHttpServer server = new BaseHttpServer(ipaddress, mainport);
+             if(!m_networkServersInfo.HttpUsesSSL)
+             {
+                 m_httpServer = server;
+-                server.Start();
++                server.Start(m_networkServersInfo.HttpListenerPortMin, m_networkServersInfo.HttpListenerPortMax);
++                // hack: update the config to the selected port
++                m_networkServersInfo.HttpListenerPort = server.Port;
++                Config.Configs["Network"].Set("http_listener_port", server.Port);
++				m_httpServerPort = server.Port;
+             }
+             else
+                 server.Start();
+diff -ruNa OpenSim/Server/Base/HttpServerBase.cs OpenSim-ipandportrange/Server/Base/HttpServerBase.cs
+--- OpenSim/Server/Base/HttpServerBase.cs	2024-08-09 06:39:36.000000000 -0700
++++ OpenSim-ipandportrange/Server/Base/HttpServerBase.cs	2024-09-18 17:25:31.744804437 -0700
+@@ -35,6 +35,7 @@
+ using OpenSim.Framework.Servers.HttpServer;
+ using log4net;
+ using Nini.Config;
++using System.Net;
+ 
+ namespace OpenSim.Server.Base
+ {
+@@ -43,6 +44,15 @@
+         private static readonly ILog m_log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+ 
+         private uint m_consolePort;
++		
++		private IPAddress m_ipaddress = null;
++        public IPAddress IPAddress
++        {
++            get
++            {
++                return m_ipaddress;
++            }
++        }
+ 
+         // Handle all the automagical stuff
+         //
+@@ -59,9 +69,13 @@
+                 System.Console.WriteLine("ERROR: Section [Network] not found, server can't start");
+                 Environment.Exit(1);
+             }
+-
++			
++			string address = networkConfig.GetString("address", "0.0.0.0");
+             uint port = (uint)networkConfig.GetInt("port", 0);
+ 
++            if (!IPAddress.TryParse(address, out m_ipaddress))
++                m_ipaddress = IPAddress.Any;
++			
+             if (port == 0)
+             {
+                 System.Console.WriteLine("ERROR: No 'port' entry found in [Network].  Server can't start");
+@@ -87,7 +101,7 @@
+             //
+             if (!ssl_main)
+             {
+-                httpServer = new BaseHttpServer(port);
++                httpServer = new BaseHttpServer(m_ipaddress, port);
+             }
+             else
+             {
+@@ -137,7 +151,7 @@
+                 else
+                 {
+                     m_log.WarnFormat("[SSL]: SSL port is active but no SSL is used because external SSL was requested.");
+-                    MainServer.AddHttpServer(new BaseHttpServer(https_port));
++                    MainServer.AddHttpServer(new BaseHttpServer(m_ipaddress, https_port));
+                 }
+             }
+         }
+@@ -156,7 +170,7 @@
+                 if (m_consolePort == 0)
+                     mi.Invoke(MainConsole.Instance, new object[] { MainServer.Instance });
+                 else
+-                    mi.Invoke(MainConsole.Instance, new object[] { MainServer.GetHttpServer(m_consolePort) });
++                    mi.Invoke(MainConsole.Instance, new object[] { MainServer.GetHttpServer(m_consolePort, m_ipaddress) });
+             }
+         }
+     }
+diff -ruNa OpenSim/Server/ServerMain.cs OpenSim-ipandportrange/Server/ServerMain.cs
+--- OpenSim/Server/ServerMain.cs	2024-08-09 06:39:36.000000000 -0700
++++ OpenSim-ipandportrange/Server/ServerMain.cs	2024-09-18 17:25:31.768804603 -0700
+@@ -200,7 +200,7 @@
+                 BaseHttpServer server;
+ 
+                 if (port != 0)
+-                    server = (BaseHttpServer)MainServer.GetHttpServer(port);
++                server = (BaseHttpServer)MainServer.GetHttpServer(port, m_Server.IPAddress);
+                 else
+                     server = MainServer.Instance;
+ 

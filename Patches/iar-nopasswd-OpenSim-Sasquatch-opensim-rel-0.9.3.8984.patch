@@ -1,0 +1,1531 @@
+diff -ruNa OpenSim/Region/CoreModules/Avatar/Inventory/Archiver/InventoryArchiverModule.cs OpenSim-noiar/Region/CoreModules/Avatar/Inventory/Archiver/InventoryArchiverModule.cs
+--- OpenSim/Region/CoreModules/Avatar/Inventory/Archiver/InventoryArchiverModule.cs	2024-08-09 06:39:36.000000000 -0700
++++ OpenSim-noiar/Region/CoreModules/Avatar/Inventory/Archiver/InventoryArchiverModule.cs	2024-09-18 17:28:53.182361283 -0700
+@@ -115,20 +115,19 @@
+ 
+                 scene.AddCommand(
+                     "Archiving", this, "load iar",
+-                    "load iar [-m|--merge] <first> <last> <inventory path> <password> [<IAR path>]",
++                    "load iar [-m|--merge] <first> <last> <inventory path> [<IAR path>]",
+                     "Load user inventory archive (IAR).",
+                     "-m|--merge is an option which merges the loaded IAR with existing inventory folders where possible, rather than always creating new ones"
+                     + "<first> is user's first name." + Environment.NewLine
+                     + "<last> is user's last name." + Environment.NewLine
+                     + "<inventory path> is the path inside the user's inventory where the IAR should be loaded." + Environment.NewLine
+-                    + "<password> is the user's password." + Environment.NewLine
+                     + "<IAR path> is the filesystem path or URI from which to load the IAR."
+                     + string.Format("  If this is not given then the filename {0} in the current directory is used", DEFAULT_INV_BACKUP_FILENAME),
+                     HandleLoadInvConsoleCommand);
+ 
+                 scene.AddCommand(
+                     "Archiving", this, "save iar",
+-                    "save iar [-h|--home=<url>] [--noassets] <first> <last> <inventory path> <password> [<IAR path>] [-c|--creators] [-e|--exclude=<name/uuid>] [-f|--excludefolder=<foldername/uuid>] [-v|--verbose]",
++                    "save iar [-h|--home=<url>] [--noassets] <first> <last> <inventory path> [<IAR path>] [-c|--creators] [-e|--exclude=<name/uuid>] [-f|--excludefolder=<foldername/uuid>] [-v|--verbose]",
+                     "Save user inventory archive (IAR).",
+                     "<first> is the user's first name.\n"
+                     + "<last> is the user's last name.\n"
+@@ -199,18 +198,18 @@
+         }
+ 
+         public bool ArchiveInventory(
+-             UUID id, string firstName, string lastName, string invPath, string pass, Stream saveStream)
++             UUID id, string firstName, string lastName, string invPath, Stream saveStream)
+         {
+-            return ArchiveInventory(id, firstName, lastName, invPath, pass, saveStream, new Dictionary<string, object>());
++            return ArchiveInventory(id, firstName, lastName, invPath, saveStream, new Dictionary<string, object>());
+         }
+ 
+         public bool ArchiveInventory(
+-            UUID id, string firstName, string lastName, string invPath, string pass, Stream saveStream,
++            UUID id, string firstName, string lastName, string invPath, Stream saveStream,
+             Dictionary<string, object> options)
+         {
+             if (m_scenes.Count > 0)
+             {
+-                UserAccount userInfo = GetUserInfo(firstName, lastName, pass);
++                UserAccount userInfo = GetUserInfo(firstName, lastName);
+ 
+                 if (userInfo != null)
+                 {
+@@ -246,7 +245,7 @@
+         }
+ 
+         public bool ArchiveInventory(
+-            UUID id, string firstName, string lastName, string invPath, string pass, string savePath,
++            UUID id, string firstName, string lastName, string invPath, string savePath,
+             Dictionary<string, object> options)
+         {
+ //            if (!ConsoleUtil.CheckFileDoesNotExist(MainConsole.Instance, savePath))
+@@ -254,7 +253,7 @@
+ 
+             if (m_scenes.Count > 0)
+             {
+-                UserAccount userInfo = GetUserInfo(firstName, lastName, pass);
++                UserAccount userInfo = GetUserInfo(firstName, lastName);
+ 
+                 if (userInfo != null)
+                 {
+@@ -289,18 +288,18 @@
+             return false;
+         }
+ 
+-        public bool DearchiveInventory(UUID id, string firstName, string lastName, string invPath, string pass, Stream loadStream)
++        public bool DearchiveInventory(UUID id, string firstName, string lastName, string invPath, Stream loadStream)
+         {
+-            return DearchiveInventory(id, firstName, lastName, invPath, pass, loadStream, new Dictionary<string, object>());
++            return DearchiveInventory(id, firstName, lastName, invPath, loadStream, new Dictionary<string, object>());
+         }
+ 
+         public bool DearchiveInventory(
+-            UUID id, string firstName, string lastName, string invPath, string pass, Stream loadStream,
++            UUID id, string firstName, string lastName, string invPath, Stream loadStream,
+             Dictionary<string, object> options)
+         {
+             if (m_scenes.Count > 0)
+             {
+-                UserAccount userInfo = GetUserInfo(firstName, lastName, pass);
++                UserAccount userInfo = GetUserInfo(firstName, lastName);
+ 
+                 if (userInfo != null)
+                 {
+@@ -343,12 +342,12 @@
+         }
+ 
+         public bool DearchiveInventory(
+-             UUID id, string firstName, string lastName, string invPath, string pass, string loadPath,
++             UUID id, string firstName, string lastName, string invPath, string loadPath,
+              Dictionary<string, object> options)
+         {
+             if (m_scenes.Count > 0)
+             {
+-                UserAccount userInfo = GetUserInfo(firstName, lastName, pass);
++                UserAccount userInfo = GetUserInfo(firstName, lastName);
+ 
+                 if (userInfo != null)
+                 {
+@@ -405,15 +404,14 @@
+                 if (mainParams.Count < 6)
+                 {
+                     m_log.Error(
+-                        "[INVENTORY ARCHIVER]: usage is load iar [-m|--merge] <first name> <last name> <inventory path> <user password> [<load file path>]");
++                        "[INVENTORY ARCHIVER]: usage is load iar [-m|--merge] <first name> <last name> <inventory path> [<load file path>]");
+                     return;
+                 }
+ 
+                 string firstName = mainParams[2];
+                 string lastName = mainParams[3];
+                 string invPath = mainParams[4];
+-                string pass = mainParams[5];
+-                string loadPath = (mainParams.Count > 6 ? mainParams[6] : DEFAULT_INV_BACKUP_FILENAME);
++                string loadPath = (mainParams.Count > 5 ? mainParams[5] : DEFAULT_INV_BACKUP_FILENAME);
+ 
+                 m_log.InfoFormat(
+                     "[INVENTORY ARCHIVER]: Loading archive {0} to inventory path {1} for {2} {3}",
+@@ -422,7 +420,7 @@
+                 lock (m_pendingConsoleTasks)
+                     m_pendingConsoleTasks.Add(id);
+ 
+-                DearchiveInventory(id, firstName, lastName, invPath, pass, loadPath, options);
++                DearchiveInventory(id, firstName, lastName, invPath, loadPath, options);
+             }
+             catch (InventoryArchiverException e)
+             {
+@@ -464,10 +462,10 @@
+ 
+             try
+             {
+-                if (mainParams.Count < 6)
++                if (mainParams.Count < 5)
+                 {
+                     m_log.Error(
+-                        "[INVENTORY ARCHIVER]: save iar [-h|--home=<url>] [--noassets] <first> <last> <inventory path> <password> [<IAR path>] [-c|--creators] [-e|--exclude=<name/uuid>] [-f|--excludefolder=<foldername/uuid>] [-v|--verbose]");
++                        "[INVENTORY ARCHIVER]: save iar [-h|--home=<url>] [--noassets] <first> <last> <inventory path> [<IAR path>] [-c|--creators] [-e|--exclude=<name/uuid>] [-f|--excludefolder=<foldername/uuid>] [-v|--verbose]");
+                     return;
+                 }
+ 
+@@ -477,8 +475,7 @@
+                 string firstName = mainParams[2];
+                 string lastName = mainParams[3];
+                 string invPath = mainParams[4];
+-                string pass = mainParams[5];
+-                string savePath = (mainParams.Count > 6 ? mainParams[6] : DEFAULT_INV_BACKUP_FILENAME);
++                string savePath = (mainParams.Count > 5 ? mainParams[5] : DEFAULT_INV_BACKUP_FILENAME);
+ 
+                 m_log.InfoFormat(
+                     "[INVENTORY ARCHIVER]: Saving archive {0} using inventory path {1} for {2} {3}",
+@@ -487,7 +484,7 @@
+                 lock (m_pendingConsoleTasks)
+                     m_pendingConsoleTasks.Add(id);
+ 
+-                ArchiveInventory(id, firstName, lastName, invPath, pass, savePath, options);
++                ArchiveInventory(id, firstName, lastName, invPath, savePath, options);
+             }
+             catch (InventoryArchiverException e)
+             {
+@@ -552,9 +549,8 @@
+         /// </summary>
+         /// <param name="firstName"></param>
+         /// <param name="lastName"></param>
+-        /// <param name="pass">User password</param>
+         /// <returns></returns>
+-        protected UserAccount GetUserInfo(string firstName, string lastName, string pass)
++        protected UserAccount GetUserInfo(string firstName, string lastName)
+         {
+             UserAccount account
+                 = m_aScene.UserAccountService.GetUserAccount(m_aScene.RegionInfo.ScopeID, firstName, lastName);
+@@ -566,27 +562,7 @@
+                     firstName, lastName);
+                 return null;
+             }
+-
+-            try
+-            {
+-                string encpass = Util.Md5Hash(pass);
+-                if (m_aScene.AuthenticationService.Authenticate(account.PrincipalID, encpass, 1) != string.Empty)
+-                {
+-                    return account;
+-                }
+-                else
+-                {
+-                    m_log.ErrorFormat(
+-                        "[INVENTORY ARCHIVER]: Password for user {0} {1} incorrect.  Please try again.",
+-                        firstName, lastName);
+-                    return null;
+-                }
+-            }
+-            catch (Exception e)
+-            {
+-                m_log.ErrorFormat("[INVENTORY ARCHIVER]: Could not authenticate password, {0}", e);
+-                return null;
+-            }
++            return account;
+         }
+ 
+         /// <summary>
+diff -ruNa OpenSim/Region/Framework/Interfaces/IInventoryArchiverModule.cs OpenSim-noiar/Region/Framework/Interfaces/IInventoryArchiverModule.cs
+--- OpenSim/Region/Framework/Interfaces/IInventoryArchiverModule.cs	2024-08-09 06:39:36.000000000 -0700
++++ OpenSim-noiar/Region/Framework/Interfaces/IInventoryArchiverModule.cs	2024-09-18 17:28:53.186361317 -0700
+@@ -81,7 +81,7 @@
+         /// <param name="invPath">The inventory path in which to place the loaded folders and items</param>
+         /// <param name="loadStream">The stream from which the inventory archive will be loaded</param>
+         /// <returns>true if the first stage of the operation succeeded, false otherwise</returns>
+-        bool DearchiveInventory(UUID id, string firstName, string lastName, string invPath, string pass, Stream loadStream);
++        bool DearchiveInventory(UUID id, string firstName, string lastName, string invPath, Stream loadStream);
+ 
+         /// <summary>
+         /// Dearchive a user's inventory folder from the given stream
+@@ -94,7 +94,7 @@
+         /// the loaded IAR with existing folders where possible.</param>
+         /// <returns>true if the first stage of the operation succeeded, false otherwise</returns>
+         bool DearchiveInventory(
+-            UUID id, string firstName, string lastName, string invPath, string pass, Stream loadStream,
++            UUID id, string firstName, string lastName, string invPath, Stream loadStream,
+             Dictionary<string, object> options);
+ 
+         /// <summary>
+@@ -106,7 +106,7 @@
+         /// <param name="invPath">The inventory path from which the inventory should be saved.</param>
+         /// <param name="saveStream">The stream to which the inventory archive will be saved</param>
+         /// <returns>true if the first stage of the operation succeeded, false otherwise</returns>
+-        bool ArchiveInventory(UUID id, string firstName, string lastName, string invPath, string pass, Stream saveStream);
++        bool ArchiveInventory(UUID id, string firstName, string lastName, string invPath, Stream saveStream);
+ 
+         /// <summary>
+         /// Archive a user's inventory folder to the given stream
+@@ -119,7 +119,7 @@
+         /// <param name="options">Archiving options.  Currently, there are none.</param>
+         /// <returns>true if the first stage of the operation succeeded, false otherwise</returns>
+         bool ArchiveInventory(
+-            UUID id, string firstName, string lastName, string invPath, string pass, Stream saveStream,
++            UUID id, string firstName, string lastName, string invPath, Stream saveStream,
+             Dictionary<string, object> options);
+     }
+ }
+diff -ruNa Tests/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveLoadPathTests.cs Tests-no-iar/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveLoadPathTests.cs
+--- Tests/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveLoadPathTests.cs	2024-08-09 06:39:36.000000000 -0700
++++ Tests-no-iar/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveLoadPathTests.cs	2024-09-18 17:28:53.186361317 -0700
+@@ -58,7 +58,7 @@
+             UserAccountHelpers.CreateUserWithInventory(scene, m_uaMT, "meowfood");
+             UserAccountHelpers.CreateUserWithInventory(scene, m_uaLL1, "hampshire");
+ 
+-            archiverModule.DearchiveInventory(UUID.Random(), m_uaMT.FirstName, m_uaMT.LastName, "/", "meowfood", m_iarStream);
++            archiverModule.DearchiveInventory(UUID.Random(), m_uaMT.FirstName, m_uaMT.LastName, "/", m_iarStream);
+             InventoryItemBase foundItem1
+                 = InventoryArchiveUtils.FindItemByPath(scene.InventoryService, m_uaMT.PrincipalID, m_item1Name);
+ 
+@@ -67,7 +67,7 @@
+             // Now try loading to a root child folder
+             UserInventoryHelpers.CreateInventoryFolder(scene.InventoryService, m_uaMT.PrincipalID, "xA", false);
+             MemoryStream archiveReadStream = new MemoryStream(m_iarStream.ToArray());
+-            archiverModule.DearchiveInventory(UUID.Random(), m_uaMT.FirstName, m_uaMT.LastName, "xA", "meowfood", archiveReadStream);
++            archiverModule.DearchiveInventory(UUID.Random(), m_uaMT.FirstName, m_uaMT.LastName, "xA", archiveReadStream);
+ 
+             InventoryItemBase foundItem2
+                 = InventoryArchiveUtils.FindItemByPath(scene.InventoryService, m_uaMT.PrincipalID, "xA/" + m_item1Name);
+@@ -76,7 +76,7 @@
+             // Now try loading to a more deeply nested folder
+             UserInventoryHelpers.CreateInventoryFolder(scene.InventoryService, m_uaMT.PrincipalID, "xB/xC", false);
+             archiveReadStream = new MemoryStream(archiveReadStream.ToArray());
+-            archiverModule.DearchiveInventory(UUID.Random(), m_uaMT.FirstName, m_uaMT.LastName, "xB/xC", "meowfood", archiveReadStream);
++            archiverModule.DearchiveInventory(UUID.Random(), m_uaMT.FirstName, m_uaMT.LastName, "xB/xC", archiveReadStream);
+ 
+             InventoryItemBase foundItem3
+                 = InventoryArchiveUtils.FindItemByPath(scene.InventoryService, m_uaMT.PrincipalID, "xB/xC/" + m_item1Name);
+@@ -98,7 +98,7 @@
+             SceneHelpers.SetupSceneModules(scene, serialiserModule, archiverModule);
+ 
+             UserAccountHelpers.CreateUserWithInventory(scene, m_uaMT, "password");
+-            archiverModule.DearchiveInventory(UUID.Random(), m_uaMT.FirstName, m_uaMT.LastName, "/Objects", "password", m_iarStream);
++            archiverModule.DearchiveInventory(UUID.Random(), m_uaMT.FirstName, m_uaMT.LastName, "/Objects", m_iarStream);
+ 
+             InventoryItemBase foundItem1
+                 = InventoryArchiveUtils.FindItemByPath(
+@@ -169,13 +169,13 @@
+ 
+             mre.Reset();
+             archiverModule.ArchiveInventory(
+-                UUID.Random(), userFirstName, userLastName, "Objects", userPassword, archiveWriteStream);
++                UUID.Random(), userFirstName, userLastName, "Objects", archiveWriteStream);
+             mre.WaitOne(60000, false);
+ 
+             // LOAD ITEM
+             MemoryStream archiveReadStream = new MemoryStream(archiveWriteStream.ToArray());
+ 
+-            archiverModule.DearchiveInventory(UUID.Random(), userFirstName, userLastName, "Scripts", userPassword, archiveReadStream);
++            archiverModule.DearchiveInventory(UUID.Random(), userFirstName, userLastName, "Scripts", archiveReadStream);
+ 
+             InventoryItemBase foundItem1
+                 = InventoryArchiveUtils.FindItemByPath(
+diff -ruNa Tests/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveLoadPathTests.cs.orig Tests-no-iar/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveLoadPathTests.cs.orig
+--- Tests/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveLoadPathTests.cs.orig	1969-12-31 16:00:00.000000000 -0800
++++ Tests-no-iar/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveLoadPathTests.cs.orig	2024-08-09 06:39:36.000000000 -0700
+@@ -0,0 +1,351 @@
++/*
++ * Copyright (c) Contributors, http://opensimulator.org/
++ * See CONTRIBUTORS.TXT for a full list of copyright holders.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions are met:
++ *     * Redistributions of source code must retain the above copyright
++ *       notice, this list of conditions and the following disclaimer.
++ *     * Redistributions in binary form must reproduce the above copyright
++ *       notice, this list of conditions and the following disclaimer in the
++ *       documentation and/or other materials provided with the distribution.
++ *     * Neither the name of the OpenSimulator Project nor the
++ *       names of its contributors may be used to endorse or promote products
++ *       derived from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE DEVELOPERS ``AS IS'' AND ANY
++ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
++ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++ * DISCLAIMED. IN NO EVENT SHALL THE CONTRIBUTORS BE LIABLE FOR ANY
++ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
++ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
++ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
++ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
++ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++using OpenMetaverse;
++
++using OpenSim.Framework;
++using OpenSim.Region.CoreModules.World.Serialiser;
++using OpenSim.Region.Framework.Scenes;
++using OpenSim.Services.Interfaces;
++using OpenSim.Tests.Common;
++
++namespace OpenSim.Region.CoreModules.Avatar.Inventory.Archiver.Tests
++{
++    [TestFixture]
++    public class InventoryArchiveLoadPathTests : InventoryArchiveTestCase
++    {
++        /// <summary>
++        /// Test loading an IAR to various different inventory paths.
++        /// </summary>
++        [Test]
++        public void TestLoadIarToInventoryPaths()
++        {
++            TestHelpers.InMethod();
++//            TestHelpers.EnableLogging();
++
++            SerialiserModule serialiserModule = new SerialiserModule();
++            InventoryArchiverModule archiverModule = new InventoryArchiverModule();
++
++            // Annoyingly, we have to set up a scene even though inventory loading has nothing to do with a scene
++            Scene scene = new SceneHelpers().SetupScene();
++
++            SceneHelpers.SetupSceneModules(scene, serialiserModule, archiverModule);
++
++            UserAccountHelpers.CreateUserWithInventory(scene, m_uaMT, "meowfood");
++            UserAccountHelpers.CreateUserWithInventory(scene, m_uaLL1, "hampshire");
++
++            archiverModule.DearchiveInventory(UUID.Random(), m_uaMT.FirstName, m_uaMT.LastName, "/", "meowfood", m_iarStream);
++            InventoryItemBase foundItem1
++                = InventoryArchiveUtils.FindItemByPath(scene.InventoryService, m_uaMT.PrincipalID, m_item1Name);
++
++            Assert.That(foundItem1, Is.Not.Null, "Didn't find loaded item 1");
++
++            // Now try loading to a root child folder
++            UserInventoryHelpers.CreateInventoryFolder(scene.InventoryService, m_uaMT.PrincipalID, "xA", false);
++            MemoryStream archiveReadStream = new MemoryStream(m_iarStream.ToArray());
++            archiverModule.DearchiveInventory(UUID.Random(), m_uaMT.FirstName, m_uaMT.LastName, "xA", "meowfood", archiveReadStream);
++
++            InventoryItemBase foundItem2
++                = InventoryArchiveUtils.FindItemByPath(scene.InventoryService, m_uaMT.PrincipalID, "xA/" + m_item1Name);
++            Assert.That(foundItem2, Is.Not.Null, "Didn't find loaded item 2");
++
++            // Now try loading to a more deeply nested folder
++            UserInventoryHelpers.CreateInventoryFolder(scene.InventoryService, m_uaMT.PrincipalID, "xB/xC", false);
++            archiveReadStream = new MemoryStream(archiveReadStream.ToArray());
++            archiverModule.DearchiveInventory(UUID.Random(), m_uaMT.FirstName, m_uaMT.LastName, "xB/xC", "meowfood", archiveReadStream);
++
++            InventoryItemBase foundItem3
++                = InventoryArchiveUtils.FindItemByPath(scene.InventoryService, m_uaMT.PrincipalID, "xB/xC/" + m_item1Name);
++            Assert.That(foundItem3, Is.Not.Null, "Didn't find loaded item 3");
++        }
++
++        /// <summary>
++        /// Test that things work when the load path specified starts with a slash
++        /// </summary>
++        [Test]
++        public void TestLoadIarPathStartsWithSlash()
++        {
++            TestHelpers.InMethod();
++//            TestHelpers.EnableLogging();
++
++            SerialiserModule serialiserModule = new SerialiserModule();
++            InventoryArchiverModule archiverModule = new InventoryArchiverModule();
++            Scene scene = new SceneHelpers().SetupScene();
++            SceneHelpers.SetupSceneModules(scene, serialiserModule, archiverModule);
++
++            UserAccountHelpers.CreateUserWithInventory(scene, m_uaMT, "password");
++            archiverModule.DearchiveInventory(UUID.Random(), m_uaMT.FirstName, m_uaMT.LastName, "/Objects", "password", m_iarStream);
++
++            InventoryItemBase foundItem1
++                = InventoryArchiveUtils.FindItemByPath(
++                    scene.InventoryService, m_uaMT.PrincipalID, "/Objects/" + m_item1Name);
++
++            Assert.That(foundItem1, Is.Not.Null, "Didn't find loaded item 1 in TestLoadIarFolderStartsWithSlash()");
++        }
++
++        [Test]
++        public void TestLoadIarPathWithEscapedChars()
++        {
++            TestHelpers.InMethod();
++//            TestHelpers.EnableLogging();
++
++            string itemName = "You & you are a mean/man/";
++            string humanEscapedItemName = @"You & you are a mean\/man\/";
++            string userPassword = "meowfood";
++
++            InventoryArchiverModule archiverModule = new InventoryArchiverModule();
++
++            Scene scene = new SceneHelpers().SetupScene();
++            SceneHelpers.SetupSceneModules(scene, archiverModule);
++
++            // Create user
++            string userFirstName = "Jock";
++            string userLastName = "Stirrup";
++            UUID userId = UUID.Parse("00000000-0000-0000-0000-000000000020");
++            UserAccountHelpers.CreateUserWithInventory(scene, userFirstName, userLastName, userId, "meowfood");
++
++            // Create asset
++            SceneObjectGroup object1;
++            SceneObjectPart part1;
++            {
++                string partName = "part name";
++                UUID ownerId = UUID.Parse("00000000-0000-0000-0000-000000000040");
++                PrimitiveBaseShape shape = PrimitiveBaseShape.CreateSphere();
++                Vector3 groupPosition = new Vector3(10, 20, 30);
++                Quaternion rotationOffset = new Quaternion(20, 30, 40, 50);
++                Vector3 offsetPosition = new Vector3(5, 10, 15);
++
++                part1
++                    = new SceneObjectPart(
++                        ownerId, shape, groupPosition, rotationOffset, offsetPosition);
++                part1.Name = partName;
++
++                object1 = new SceneObjectGroup(part1);
++                scene.AddNewSceneObject(object1, false);
++            }
++
++            UUID asset1Id = UUID.Parse("00000000-0000-0000-0000-000000000060");
++            AssetBase asset1 = AssetHelpers.CreateAsset(asset1Id, object1);
++            scene.AssetService.Store(asset1);
++
++            // Create item
++            UUID item1Id = UUID.Parse("00000000-0000-0000-0000-000000000080");
++            InventoryItemBase item1 = new InventoryItemBase();
++            item1.Name = itemName;
++            item1.AssetID = asset1.FullID;
++            item1.ID = item1Id;
++            item1.Owner = userId;
++            InventoryFolderBase objsFolder
++                = InventoryArchiveUtils.FindFoldersByPath(scene.InventoryService, userId, "Objects")[0];
++            item1.Folder = objsFolder.ID;
++            scene.AddInventoryItem(item1);
++
++            MemoryStream archiveWriteStream = new MemoryStream();
++            archiverModule.OnInventoryArchiveSaved += SaveCompleted;
++
++            mre.Reset();
++            archiverModule.ArchiveInventory(
++                UUID.Random(), userFirstName, userLastName, "Objects", userPassword, archiveWriteStream);
++            mre.WaitOne(60000, false);
++
++            // LOAD ITEM
++            MemoryStream archiveReadStream = new MemoryStream(archiveWriteStream.ToArray());
++
++            archiverModule.DearchiveInventory(UUID.Random(), userFirstName, userLastName, "Scripts", userPassword, archiveReadStream);
++
++            InventoryItemBase foundItem1
++                = InventoryArchiveUtils.FindItemByPath(
++                    scene.InventoryService, userId, "Scripts/Objects/" + humanEscapedItemName);
++
++            Assert.That(foundItem1, Is.Not.Null, "Didn't find loaded item 1");
++//            Assert.That(
++//                foundItem1.CreatorId, Is.EqualTo(userUuid),
++//                "Loaded item non-uuid creator doesn't match that of the loading user");
++            Assert.That(
++                foundItem1.Name, Is.EqualTo(itemName),
++                "Loaded item name doesn't match saved name");
++        }
++
++        /// <summary>
++        /// Test replication of an archive path to the user's inventory.
++        /// </summary>
++        [Test]
++        public void TestNewIarPath()
++        {
++            TestHelpers.InMethod();
++//            TestHelpers.EnableLogging();
++
++            Scene scene = new SceneHelpers().SetupScene();
++            UserAccount ua1 = UserAccountHelpers.CreateUserWithInventory(scene);
++
++            Dictionary <string, InventoryFolderBase> foldersCreated = new Dictionary<string, InventoryFolderBase>();
++            Dictionary<UUID, InventoryNodeBase> nodesLoaded = new Dictionary<UUID, InventoryNodeBase>();
++
++            string folder1Name = "1";
++            string folder2aName = "2a";
++            string folder2bName = "2b";
++
++            string folder1ArchiveName = InventoryArchiveWriteRequest.CreateArchiveFolderName(folder1Name, UUID.Random());
++            string folder2aArchiveName = InventoryArchiveWriteRequest.CreateArchiveFolderName(folder2aName, UUID.Random());
++            string folder2bArchiveName = InventoryArchiveWriteRequest.CreateArchiveFolderName(folder2bName, UUID.Random());
++
++            string iarPath1 = string.Join("", new string[] { folder1ArchiveName, folder2aArchiveName });
++            string iarPath2 = string.Join("", new string[] { folder1ArchiveName, folder2bArchiveName });
++
++            {
++                // Test replication of path1
++                new InventoryArchiveReadRequest(UUID.Random(), null, scene.InventoryService, scene.AssetService, scene.UserAccountService, ua1, null, (Stream)null, false)
++                    .ReplicateArchivePathToUserInventory(
++                        iarPath1, scene.InventoryService.GetRootFolder(ua1.PrincipalID),
++                        foldersCreated, nodesLoaded);
++
++                List<InventoryFolderBase> folder1Candidates
++                    = InventoryArchiveUtils.FindFoldersByPath(scene.InventoryService, ua1.PrincipalID, folder1Name);
++                Assert.That(folder1Candidates.Count, Is.EqualTo(1));
++
++                InventoryFolderBase folder1 = folder1Candidates[0];
++                List<InventoryFolderBase> folder2aCandidates
++                    = InventoryArchiveUtils.FindFoldersByPath(scene.InventoryService, folder1, folder2aName);
++                Assert.That(folder2aCandidates.Count, Is.EqualTo(1));
++            }
++
++            {
++                // Test replication of path2
++                new InventoryArchiveReadRequest(UUID.Random(), null, scene.InventoryService, scene.AssetService, scene.UserAccountService, ua1, null, (Stream)null, false)
++                    .ReplicateArchivePathToUserInventory(
++                        iarPath2, scene.InventoryService.GetRootFolder(ua1.PrincipalID),
++                        foldersCreated, nodesLoaded);
++
++                List<InventoryFolderBase> folder1Candidates
++                    = InventoryArchiveUtils.FindFoldersByPath(scene.InventoryService, ua1.PrincipalID, folder1Name);
++                Assert.That(folder1Candidates.Count, Is.EqualTo(1));
++
++                InventoryFolderBase folder1 = folder1Candidates[0];
++
++                List<InventoryFolderBase> folder2aCandidates
++                    = InventoryArchiveUtils.FindFoldersByPath(scene.InventoryService, folder1, folder2aName);
++                Assert.That(folder2aCandidates.Count, Is.EqualTo(1));
++
++                List<InventoryFolderBase> folder2bCandidates
++                    = InventoryArchiveUtils.FindFoldersByPath(scene.InventoryService, folder1, folder2bName);
++                Assert.That(folder2bCandidates.Count, Is.EqualTo(1));
++            }
++        }
++
++        /// <summary>
++        /// Test replication of a partly existing archive path to the user's inventory.  This should create
++        /// a duplicate path without the merge option.
++        /// </summary>
++        [Test]
++        public void TestPartExistingIarPath()
++        {
++            TestHelpers.InMethod();
++//            TestHelpers.EnableLogging();
++
++            Scene scene = new SceneHelpers().SetupScene();
++            UserAccount ua1 = UserAccountHelpers.CreateUserWithInventory(scene);
++
++            string folder1ExistingName = "a";
++            string folder2Name = "b";
++
++            InventoryFolderBase folder1
++                = UserInventoryHelpers.CreateInventoryFolder(
++                    scene.InventoryService, ua1.PrincipalID, folder1ExistingName, false);
++
++            string folder1ArchiveName = InventoryArchiveWriteRequest.CreateArchiveFolderName(folder1ExistingName, UUID.Random());
++            string folder2ArchiveName = InventoryArchiveWriteRequest.CreateArchiveFolderName(folder2Name, UUID.Random());
++
++            string itemArchivePath = string.Join("", new string[] { folder1ArchiveName, folder2ArchiveName });
++
++            new InventoryArchiveReadRequest(UUID.Random(), null, scene.InventoryService, scene.AssetService, scene.UserAccountService, ua1, null, (Stream)null, false)
++                .ReplicateArchivePathToUserInventory(
++                    itemArchivePath, scene.InventoryService.GetRootFolder(ua1.PrincipalID),
++                    new Dictionary<string, InventoryFolderBase>(), new Dictionary<UUID, InventoryNodeBase>());
++
++            List<InventoryFolderBase> folder1PostCandidates
++                = InventoryArchiveUtils.FindFoldersByPath(scene.InventoryService, ua1.PrincipalID, folder1ExistingName);
++            Assert.That(folder1PostCandidates.Count, Is.EqualTo(2));
++
++            // FIXME: Temporarily, we're going to do something messy to make sure we pick up the created folder.
++            InventoryFolderBase folder1Post = null;
++            foreach (InventoryFolderBase folder in folder1PostCandidates)
++            {
++                if (folder.ID != folder1.ID)
++                {
++                    folder1Post = folder;
++                    break;
++                }
++            }
++//            Assert.That(folder1Post.ID, Is.EqualTo(folder1.ID));
++
++            List<InventoryFolderBase> folder2PostCandidates
++                = InventoryArchiveUtils.FindFoldersByPath(scene.InventoryService, folder1Post, "b");
++            Assert.That(folder2PostCandidates.Count, Is.EqualTo(1));
++        }
++
++        /// <summary>
++        /// Test replication of a partly existing archive path to the user's inventory.  This should create
++        /// a merged path.
++        /// </summary>
++        [Test]
++        public void TestMergeIarPath()
++        {
++            TestHelpers.InMethod();
++//            TestHelpers.EnableLogging();
++
++            Scene scene = new SceneHelpers().SetupScene();
++            UserAccount ua1 = UserAccountHelpers.CreateUserWithInventory(scene);
++
++            string folder1ExistingName = "a";
++            string folder2Name = "b";
++
++            InventoryFolderBase folder1
++                = UserInventoryHelpers.CreateInventoryFolder(
++                    scene.InventoryService, ua1.PrincipalID, folder1ExistingName, false);
++
++            string folder1ArchiveName = InventoryArchiveWriteRequest.CreateArchiveFolderName(folder1ExistingName, UUID.Random());
++            string folder2ArchiveName = InventoryArchiveWriteRequest.CreateArchiveFolderName(folder2Name, UUID.Random());
++
++            string itemArchivePath = string.Join("", new string[] { folder1ArchiveName, folder2ArchiveName });
++
++            new InventoryArchiveReadRequest(UUID.Random(), null, scene.InventoryService, scene.AssetService, scene.UserAccountService, ua1, folder1ExistingName, (Stream)null, true)
++                .ReplicateArchivePathToUserInventory(
++                    itemArchivePath, scene.InventoryService.GetRootFolder(ua1.PrincipalID),
++                    new Dictionary<string, InventoryFolderBase>(), new Dictionary<UUID, InventoryNodeBase>());
++
++            List<InventoryFolderBase> folder1PostCandidates
++                = InventoryArchiveUtils.FindFoldersByPath(scene.InventoryService, ua1.PrincipalID, folder1ExistingName);
++            Assert.That(folder1PostCandidates.Count, Is.EqualTo(1));
++            Assert.That(folder1PostCandidates[0].ID, Is.EqualTo(folder1.ID));
++
++            List<InventoryFolderBase> folder2PostCandidates
++                = InventoryArchiveUtils.FindFoldersByPath(scene.InventoryService, folder1PostCandidates[0], "b");
++            Assert.That(folder2PostCandidates.Count, Is.EqualTo(1));
++        }
++    }
++}
++
+diff -ruNa Tests/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveLoadTests.cs Tests-no-iar/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveLoadTests.cs
+--- Tests/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveLoadTests.cs	2024-08-09 06:39:36.000000000 -0700
++++ Tests-no-iar/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveLoadTests.cs	2024-09-18 17:28:53.186361317 -0700
+@@ -60,7 +60,7 @@
+ //            TestHelpers.EnableLogging();
+ 
+             UserAccountHelpers.CreateUserWithInventory(m_scene, m_uaLL1, "password");
+-            m_archiverModule.DearchiveInventory(UUID.Random(), m_uaLL1.FirstName, m_uaLL1.LastName, "/", "password", m_iarStream);
++            m_archiverModule.DearchiveInventory(UUID.Random(), m_uaLL1.FirstName, m_uaLL1.LastName, "/", m_iarStream);
+ 
+             InventoryItemBase coaItem
+                 = InventoryArchiveUtils.FindItemByPath(m_scene.InventoryService, m_uaLL1.PrincipalID, m_coaItemName);
+@@ -95,7 +95,7 @@
+ 
+             UserAccountHelpers.CreateUserWithInventory(m_scene, m_uaLL1, "meowfood");
+ 
+-            m_archiverModule.DearchiveInventory(UUID.Random(), m_uaLL1.FirstName, m_uaLL1.LastName, "/", "meowfood", m_iarStream);
++            m_archiverModule.DearchiveInventory(UUID.Random(), m_uaLL1.FirstName, m_uaLL1.LastName, "/", m_iarStream);
+             InventoryItemBase foundItem1
+                 = InventoryArchiveUtils.FindItemByPath(m_scene.InventoryService, m_uaLL1.PrincipalID, m_item1Name);
+ 
+@@ -159,7 +159,7 @@
+ //            TestHelpers.EnableLogging();
+ 
+             UserAccountHelpers.CreateUserWithInventory(m_scene, m_uaMT, "password");
+-            m_archiverModule.DearchiveInventory(UUID.Random(), m_uaMT.FirstName, m_uaMT.LastName, "/", "password", m_iarStream);
++            m_archiverModule.DearchiveInventory(UUID.Random(), m_uaMT.FirstName, m_uaMT.LastName, "/", m_iarStream);
+ 
+             InventoryItemBase foundItem1
+                 = InventoryArchiveUtils.FindItemByPath(m_scene.InventoryService, m_uaMT.PrincipalID, m_item1Name);
+@@ -179,4 +179,4 @@
+             Assert.That(sog1.RootPart.CreatorID, Is.EqualTo(m_uaMT.PrincipalID));
+         }
+     }
+-}
+\ No newline at end of file
++}
+diff -ruNa Tests/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveLoadTests.cs.orig Tests-no-iar/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveLoadTests.cs.orig
+--- Tests/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveLoadTests.cs.orig	1969-12-31 16:00:00.000000000 -0800
++++ Tests-no-iar/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveLoadTests.cs.orig	2024-08-09 06:39:36.000000000 -0700
+@@ -0,0 +1,182 @@
++/*
++ * Copyright (c) Contributors, http://opensimulator.org/
++ * See CONTRIBUTORS.TXT for a full list of copyright holders.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions are met:
++ *     * Redistributions of source code must retain the above copyright
++ *       notice, this list of conditions and the following disclaimer.
++ *     * Redistributions in binary form must reproduce the above copyright
++ *       notice, this list of conditions and the following disclaimer in the
++ *       documentation and/or other materials provided with the distribution.
++ *     * Neither the name of the OpenSimulator Project nor the
++ *       names of its contributors may be used to endorse or promote products
++ *       derived from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE DEVELOPERS ``AS IS'' AND ANY
++ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
++ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++ * DISCLAIMED. IN NO EVENT SHALL THE CONTRIBUTORS BE LIABLE FOR ANY
++ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
++ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
++ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
++ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
++ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++using OpenMetaverse;
++
++using OpenSim.Framework;
++using OpenSim.Region.CoreModules.World.Serialiser;
++using OpenSim.Region.Framework.Scenes;
++using OpenSim.Region.Framework.Scenes.Serialization;
++using OpenSim.Tests.Common;
++
++namespace OpenSim.Region.CoreModules.Avatar.Inventory.Archiver.Tests
++{
++    [TestFixture]
++    public class InventoryArchiveLoadTests : InventoryArchiveTestCase
++    {
++        protected TestScene m_scene;
++        protected InventoryArchiverModule m_archiverModule;
++
++        [SetUp]
++        public override void SetUp()
++        {
++            base.SetUp();
++
++            SerialiserModule serialiserModule = new SerialiserModule();
++            m_archiverModule = new InventoryArchiverModule();
++
++            m_scene = new SceneHelpers().SetupScene();
++            SceneHelpers.SetupSceneModules(m_scene, serialiserModule, m_archiverModule);
++        }
++
++        [Test]
++        public void TestLoadCoalesecedItem()
++        {
++            TestHelpers.InMethod();
++//            TestHelpers.EnableLogging();
++
++            UserAccountHelpers.CreateUserWithInventory(m_scene, m_uaLL1, "password");
++            m_archiverModule.DearchiveInventory(UUID.Random(), m_uaLL1.FirstName, m_uaLL1.LastName, "/", "password", m_iarStream);
++
++            InventoryItemBase coaItem
++                = InventoryArchiveUtils.FindItemByPath(m_scene.InventoryService, m_uaLL1.PrincipalID, m_coaItemName);
++
++            Assert.That(coaItem, Is.Not.Null, "Didn't find loaded item 1");
++
++            string assetXml = AssetHelpers.ReadAssetAsString(m_scene.AssetService, coaItem.AssetID);
++
++            CoalescedSceneObjects coa;
++            bool readResult = CoalescedSceneObjectsSerializer.TryFromXml(assetXml, out coa);
++
++            Assert.That(readResult, Is.True);
++            Assert.That(coa.Count, Is.EqualTo(2));
++
++            List<SceneObjectGroup> coaObjects = coa.Objects;
++            Assert.That(coaObjects[0].UUID, Is.EqualTo(UUID.Parse("00000000-0000-0000-0000-000000000120")));
++            Assert.That(coaObjects[0].AbsolutePosition, Is.EqualTo(new Vector3(15, 30, 45)));
++
++            Assert.That(coaObjects[1].UUID, Is.EqualTo(UUID.Parse("00000000-0000-0000-0000-000000000140")));
++            Assert.That(coaObjects[1].AbsolutePosition, Is.EqualTo(new Vector3(25, 50, 75)));
++        }
++
++        /// <summary>
++        /// Test case where a creator account exists for the creator UUID embedded in item metadata and serialized
++        /// objects.
++        /// </summary>
++        [Test]
++        public void TestLoadIarCreatorAccountPresent()
++        {
++            TestHelpers.InMethod();
++//            TestHelpers.EnableLogging();
++
++            UserAccountHelpers.CreateUserWithInventory(m_scene, m_uaLL1, "meowfood");
++
++            m_archiverModule.DearchiveInventory(UUID.Random(), m_uaLL1.FirstName, m_uaLL1.LastName, "/", "meowfood", m_iarStream);
++            InventoryItemBase foundItem1
++                = InventoryArchiveUtils.FindItemByPath(m_scene.InventoryService, m_uaLL1.PrincipalID, m_item1Name);
++
++            Assert.That(
++                foundItem1.CreatorId, Is.EqualTo(m_uaLL1.PrincipalID.ToString()),
++                "Loaded item non-uuid creator doesn't match original");
++            Assert.That(
++                foundItem1.CreatorIdAsUuid, Is.EqualTo(m_uaLL1.PrincipalID),
++                "Loaded item uuid creator doesn't match original");
++            Assert.That(foundItem1.Owner, Is.EqualTo(m_uaLL1.PrincipalID),
++                "Loaded item owner doesn't match inventory reciever");
++
++            AssetBase asset1 = m_scene.AssetService.Get(foundItem1.AssetID.ToString());
++            string xmlData = Utils.BytesToString(asset1.Data);
++            SceneObjectGroup sog1 = SceneObjectSerializer.FromOriginalXmlFormat(xmlData);
++
++            Assert.That(sog1.RootPart.CreatorID, Is.EqualTo(m_uaLL1.PrincipalID));
++        }
++
++//        /// <summary>
++//        /// Test loading a V0.1 OpenSim Inventory Archive (subject to change since there is no fixed format yet) where
++//        /// an account exists with the same name as the creator, though not the same id.
++//        /// </summary>
++//        [Test]
++//        public void TestLoadIarV0_1SameNameCreator()
++//        {
++//            TestHelpers.InMethod();
++//            TestHelpers.EnableLogging();
++//
++//            UserAccountHelpers.CreateUserWithInventory(m_scene, m_uaMT, "meowfood");
++//            UserAccountHelpers.CreateUserWithInventory(m_scene, m_uaLL2, "hampshire");
++//
++//            m_archiverModule.DearchiveInventory(m_uaMT.FirstName, m_uaMT.LastName, "/", "meowfood", m_iarStream);
++//            InventoryItemBase foundItem1
++//                = InventoryArchiveUtils.FindItemByPath(m_scene.InventoryService, m_uaMT.PrincipalID, m_item1Name);
++//
++//            Assert.That(
++//                foundItem1.CreatorId, Is.EqualTo(m_uaLL2.PrincipalID.ToString()),
++//                "Loaded item non-uuid creator doesn't match original");
++//            Assert.That(
++//                foundItem1.CreatorIdAsUuid, Is.EqualTo(m_uaLL2.PrincipalID),
++//                "Loaded item uuid creator doesn't match original");
++//            Assert.That(foundItem1.Owner, Is.EqualTo(m_uaMT.PrincipalID),
++//                "Loaded item owner doesn't match inventory reciever");
++//
++//            AssetBase asset1 = m_scene.AssetService.Get(foundItem1.AssetID.ToString());
++//            string xmlData = Utils.BytesToString(asset1.Data);
++//            SceneObjectGroup sog1 = SceneObjectSerializer.FromOriginalXmlFormat(xmlData);
++//
++//            Assert.That(sog1.RootPart.CreatorID, Is.EqualTo(m_uaLL2.PrincipalID));
++//        }
++
++        /// <summary>
++        /// Test loading a V0.1 OpenSim Inventory Archive (subject to change since there is no fixed format yet) where
++        /// the creator or an account with the creator's name does not exist within the system.
++        /// </summary>
++        [Test]
++        public void TestLoadIarV0_1AbsentCreator()
++        {
++            TestHelpers.InMethod();
++//            TestHelpers.EnableLogging();
++
++            UserAccountHelpers.CreateUserWithInventory(m_scene, m_uaMT, "password");
++            m_archiverModule.DearchiveInventory(UUID.Random(), m_uaMT.FirstName, m_uaMT.LastName, "/", "password", m_iarStream);
++
++            InventoryItemBase foundItem1
++                = InventoryArchiveUtils.FindItemByPath(m_scene.InventoryService, m_uaMT.PrincipalID, m_item1Name);
++
++            Assert.That(foundItem1, Is.Not.Null, "Didn't find loaded item 1");
++            Assert.That(
++                foundItem1.CreatorId, Is.EqualTo(m_uaMT.PrincipalID.ToString()),
++                "Loaded item non-uuid creator doesn't match that of the loading user");
++            Assert.That(
++                foundItem1.CreatorIdAsUuid, Is.EqualTo(m_uaMT.PrincipalID),
++                "Loaded item uuid creator doesn't match that of the loading user");
++
++            AssetBase asset1 = m_scene.AssetService.Get(foundItem1.AssetID.ToString());
++            string xmlData = Utils.BytesToString(asset1.Data);
++            SceneObjectGroup sog1 = SceneObjectSerializer.FromOriginalXmlFormat(xmlData);
++
++            Assert.That(sog1.RootPart.CreatorID, Is.EqualTo(m_uaMT.PrincipalID));
++        }
++    }
++}
+\ No newline at end of file
+diff -ruNa Tests/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveSaveTests.cs Tests-no-iar/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveSaveTests.cs
+--- Tests/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveSaveTests.cs	2024-08-09 06:39:36.000000000 -0700
++++ Tests-no-iar/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveSaveTests.cs	2024-09-18 17:28:53.186361317 -0700
+@@ -98,7 +98,7 @@
+ 
+             mre.Reset();
+             m_archiverModule.ArchiveInventory(
+-                UUID.Random(), userFirstName, userLastName, "/", userPassword, archiveWriteStream);
++                UUID.Random(), userFirstName, userLastName, "/", archiveWriteStream);
+             mre.WaitOne(60000, false);
+ 
+             // Test created iar
+@@ -167,7 +167,7 @@
+ 
+             mre.Reset();
+             m_archiverModule.ArchiveInventory(
+-                UUID.Random(), userFirstName, userLastName, "f1", userPassword, archiveWriteStream);
++                UUID.Random(), userFirstName, userLastName, "f1", archiveWriteStream);
+             mre.WaitOne(60000, false);
+ 
+             // Test created iar
+@@ -255,7 +255,7 @@
+ 
+             mre.Reset();
+             m_archiverModule.ArchiveInventory(
+-                UUID.Random(), userFirstName, userLastName, "Objects/" + item1Name, userPassword, archiveWriteStream);
++                UUID.Random(), userFirstName, userLastName, "Objects/" + item1Name, archiveWriteStream);
+             mre.WaitOne(60000, false);
+ 
+             byte[] archive = archiveWriteStream.ToArray();
+@@ -352,7 +352,7 @@
+ 
+             // When we're not saving assets, archiving is being done synchronously.
+             m_archiverModule.ArchiveInventory(
+-                UUID.Random(), userFirstName, userLastName, "Objects/" + item1Name, userPassword, archiveWriteStream, options);
++                UUID.Random(), userFirstName, userLastName, "Objects/" + item1Name, archiveWriteStream, options);
+ 
+             byte[] archive = archiveWriteStream.ToArray();
+             MemoryStream archiveReadStream = new MemoryStream(archive);
+@@ -409,4 +409,4 @@
+             // TODO: Test presence of more files and contents of files.
+         }
+     }
+-}
+\ No newline at end of file
++}
+diff -ruNa Tests/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveSaveTests.cs.orig Tests-no-iar/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveSaveTests.cs.orig
+--- Tests/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveSaveTests.cs.orig	1969-12-31 16:00:00.000000000 -0800
++++ Tests-no-iar/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveSaveTests.cs.orig	2024-08-09 06:39:36.000000000 -0700
+@@ -0,0 +1,412 @@
++/*
++ * Copyright (c) Contributors, http://opensimulator.org/
++ * See CONTRIBUTORS.TXT for a full list of copyright holders.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions are met:
++ *     * Redistributions of source code must retain the above copyright
++ *       notice, this list of conditions and the following disclaimer.
++ *     * Redistributions in binary form must reproduce the above copyright
++ *       notice, this list of conditions and the following disclaimer in the
++ *       documentation and/or other materials provided with the distribution.
++ *     * Neither the name of the OpenSimulator Project nor the
++ *       names of its contributors may be used to endorse or promote products
++ *       derived from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE DEVELOPERS ``AS IS'' AND ANY
++ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
++ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++ * DISCLAIMED. IN NO EVENT SHALL THE CONTRIBUTORS BE LIABLE FOR ANY
++ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
++ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
++ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
++ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
++ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++using OpenMetaverse;
++
++using OpenSim.Framework;
++using OpenSim.Framework.Serialization;
++using OpenSim.Region.CoreModules.World.Serialiser;
++using OpenSim.Region.Framework.Scenes;
++using OpenSim.Tests.Common;
++
++namespace OpenSim.Region.CoreModules.Avatar.Inventory.Archiver.Tests
++{
++    [TestFixture]
++    public class InventoryArchiveSaveTests : InventoryArchiveTestCase
++    {
++        protected TestScene m_scene;
++        protected InventoryArchiverModule m_archiverModule;
++
++        [SetUp]
++        public override void SetUp()
++        {
++            base.SetUp();
++
++            SerialiserModule serialiserModule = new SerialiserModule();
++            m_archiverModule = new InventoryArchiverModule();
++
++            m_scene = new SceneHelpers().SetupScene();
++            SceneHelpers.SetupSceneModules(m_scene, serialiserModule, m_archiverModule);
++        }
++
++        /// <summary>
++        /// Test that the IAR has the required files in the right order.
++        /// </summary>
++        /// <remarks>
++        /// At the moment, the only thing that matters is that the control file is the very first one.
++        /// </remarks>
++        [Test]
++        public void TestOrder()
++        {
++            TestHelpers.InMethod();
++//            TestHelpers.EnableLogging();
++
++            MemoryStream archiveReadStream = new MemoryStream(m_iarStreamBytes);
++            TarArchiveReader tar = new TarArchiveReader(archiveReadStream);
++            string filePath;
++            TarArchiveReader.TarEntryType tarEntryType;
++
++            byte[] data = tar.ReadEntry(out filePath, out tarEntryType);
++            Assert.That(filePath, Is.EqualTo(ArchiveConstants.CONTROL_FILE_PATH));
++
++            InventoryArchiveReadRequest iarr
++                = new InventoryArchiveReadRequest(UUID.Random(), null, null, null, null, null, null, (Stream)null, false);
++            iarr.LoadControlFile(filePath, data);
++
++            Assert.That(iarr.ControlFileLoaded, Is.True);
++        }
++
++        [Test]
++        public void TestSaveRootFolderToIar()
++        {
++            TestHelpers.InMethod();
++//            TestHelpers.EnableLogging();
++
++            string userFirstName = "Jock";
++            string userLastName = "Stirrup";
++            string userPassword = "troll";
++            UUID userId = TestHelpers.ParseTail(0x20);
++
++            UserAccountHelpers.CreateUserWithInventory(m_scene, userFirstName, userLastName, userId, userPassword);
++
++            MemoryStream archiveWriteStream = new MemoryStream();
++            m_archiverModule.OnInventoryArchiveSaved += SaveCompleted;
++
++            mre.Reset();
++            m_archiverModule.ArchiveInventory(
++                UUID.Random(), userFirstName, userLastName, "/", userPassword, archiveWriteStream);
++            mre.WaitOne(60000, false);
++
++            // Test created iar
++            byte[] archive = archiveWriteStream.ToArray();
++            MemoryStream archiveReadStream = new MemoryStream(archive);
++            TarArchiveReader tar = new TarArchiveReader(archiveReadStream);
++
++//            InventoryArchiveUtils.
++            bool gotObjectsFolder = false;
++
++            string objectsFolderName
++                = string.Format(
++                    "{0}{1}",
++                    ArchiveConstants.INVENTORY_PATH,
++                    InventoryArchiveWriteRequest.CreateArchiveFolderName(
++                        UserInventoryHelpers.GetInventoryFolder(m_scene.InventoryService, userId, "Objects")));
++
++            string filePath;
++            TarArchiveReader.TarEntryType tarEntryType;
++
++            while (tar.ReadEntry(out filePath, out tarEntryType) != null)
++            {
++//                Console.WriteLine("Got {0}", filePath);
++
++                // Lazily, we only bother to look for the system objects folder created when we call CreateUserWithInventory()
++                // XXX: But really we need to stop all that stuff being created in tests or check for such folders
++                // more thoroughly
++                if (filePath == objectsFolderName)
++                    gotObjectsFolder = true;
++            }
++
++            Assert.That(gotObjectsFolder, Is.True);
++        }
++
++        [Test]
++        public void TestSaveNonRootFolderToIar()
++        {
++            TestHelpers.InMethod();
++//            TestHelpers.EnableLogging();
++
++            string userFirstName = "Jock";
++            string userLastName = "Stirrup";
++            string userPassword = "troll";
++            UUID userId = TestHelpers.ParseTail(0x20);
++
++            UserAccountHelpers.CreateUserWithInventory(m_scene, userFirstName, userLastName, userId, userPassword);
++
++            // Create base folder
++            InventoryFolderBase f1
++                = UserInventoryHelpers.CreateInventoryFolder(m_scene.InventoryService, userId, "f1", true);
++
++            // Create item1
++            SceneObjectGroup so1 = SceneHelpers.CreateSceneObject(1, userId, "My Little Dog Object", 0x5);
++            InventoryItemBase i1 = UserInventoryHelpers.AddInventoryItem(m_scene, so1, 0x50, 0x60, "f1");
++
++            // Create embedded folder
++            InventoryFolderBase f1_1
++                = UserInventoryHelpers.CreateInventoryFolder(m_scene.InventoryService, userId, "f1/f1.1", true);
++
++            // Create embedded item
++            SceneObjectGroup so1_1 = SceneHelpers.CreateSceneObject(1, userId, "My Little Cat Object", 0x6);
++            InventoryItemBase i2 = UserInventoryHelpers.AddInventoryItem(m_scene, so1_1, 0x500, 0x600, "f1/f1.1");
++
++            MemoryStream archiveWriteStream = new MemoryStream();
++            m_archiverModule.OnInventoryArchiveSaved += SaveCompleted;
++
++            mre.Reset();
++            m_archiverModule.ArchiveInventory(
++                UUID.Random(), userFirstName, userLastName, "f1", userPassword, archiveWriteStream);
++            mre.WaitOne(60000, false);
++
++            // Test created iar
++            byte[] archive = archiveWriteStream.ToArray();
++            MemoryStream archiveReadStream = new MemoryStream(archive);
++            TarArchiveReader tar = new TarArchiveReader(archiveReadStream);
++
++//            InventoryArchiveUtils.
++            bool gotf1 = false, gotf1_1 = false, gotso1 = false, gotso2 = false;
++
++            string f1FileName
++                = string.Format("{0}{1}", ArchiveConstants.INVENTORY_PATH, InventoryArchiveWriteRequest.CreateArchiveFolderName(f1));
++            string f1_1FileName
++                = string.Format("{0}{1}", f1FileName, InventoryArchiveWriteRequest.CreateArchiveFolderName(f1_1));
++            string so1FileName
++                = string.Format("{0}{1}", f1FileName, InventoryArchiveWriteRequest.CreateArchiveItemName(i1));
++            string so2FileName
++                = string.Format("{0}{1}", f1_1FileName, InventoryArchiveWriteRequest.CreateArchiveItemName(i2));
++
++            string filePath;
++            TarArchiveReader.TarEntryType tarEntryType;
++
++            while (tar.ReadEntry(out filePath, out tarEntryType) != null)
++            {
++//                Console.WriteLine("Got {0}", filePath);
++
++                if (filePath == f1FileName)
++                    gotf1 = true;
++                else if (filePath == f1_1FileName)
++                    gotf1_1 = true;
++                else if (filePath == so1FileName)
++                    gotso1 = true;
++                else if (filePath == so2FileName)
++                    gotso2 = true;
++            }
++
++//            Assert.That(gotControlFile, Is.True, "No control file in archive");
++            Assert.That(gotf1, Is.True);
++            Assert.That(gotf1_1, Is.True);
++            Assert.That(gotso1, Is.True);
++            Assert.That(gotso2, Is.True);
++
++            // TODO: Test presence of more files and contents of files.
++        }
++
++        /// <summary>
++        /// Test saving a single inventory item to an IAR
++        /// (subject to change since there is no fixed format yet).
++        /// </summary>
++        [Test]
++        public void TestSaveItemToIar()
++        {
++            TestHelpers.InMethod();
++//            TestHelpers.EnableLogging();
++
++            // Create user
++            string userFirstName = "Jock";
++            string userLastName = "Stirrup";
++            string userPassword = "troll";
++            UUID userId = UUID.Parse("00000000-0000-0000-0000-000000000020");
++            UserAccountHelpers.CreateUserWithInventory(m_scene, userFirstName, userLastName, userId, userPassword);
++
++            // Create asset
++            UUID ownerId = UUID.Parse("00000000-0000-0000-0000-000000000040");
++            SceneObjectGroup object1 = SceneHelpers.CreateSceneObject(1, ownerId, "My Little Dog Object", 0x50);
++
++            UUID asset1Id = UUID.Parse("00000000-0000-0000-0000-000000000060");
++            AssetBase asset1 = AssetHelpers.CreateAsset(asset1Id, object1);
++            m_scene.AssetService.Store(asset1);
++
++            // Create item
++            UUID item1Id = UUID.Parse("00000000-0000-0000-0000-000000000080");
++            string item1Name = "My Little Dog";
++            InventoryItemBase item1 = new InventoryItemBase();
++            item1.Name = item1Name;
++            item1.AssetID = asset1.FullID;
++            item1.ID = item1Id;
++            InventoryFolderBase objsFolder
++                = InventoryArchiveUtils.FindFoldersByPath(m_scene.InventoryService, userId, "Objects")[0];
++            item1.Folder = objsFolder.ID;
++            m_scene.AddInventoryItem(item1);
++
++            MemoryStream archiveWriteStream = new MemoryStream();
++            m_archiverModule.OnInventoryArchiveSaved += SaveCompleted;
++
++            mre.Reset();
++            m_archiverModule.ArchiveInventory(
++                UUID.Random(), userFirstName, userLastName, "Objects/" + item1Name, userPassword, archiveWriteStream);
++            mre.WaitOne(60000, false);
++
++            byte[] archive = archiveWriteStream.ToArray();
++            MemoryStream archiveReadStream = new MemoryStream(archive);
++            TarArchiveReader tar = new TarArchiveReader(archiveReadStream);
++
++            //bool gotControlFile = false;
++            bool gotObject1File = false;
++            //bool gotObject2File = false;
++            string expectedObject1FileName = InventoryArchiveWriteRequest.CreateArchiveItemName(item1);
++            string expectedObject1FilePath = string.Format(
++                "{0}{1}",
++                ArchiveConstants.INVENTORY_PATH,
++                expectedObject1FileName);
++
++            string filePath;
++            TarArchiveReader.TarEntryType tarEntryType;
++
++//            Console.WriteLine("Reading archive");
++
++            while (tar.ReadEntry(out filePath, out tarEntryType) != null)
++            {
++                Console.WriteLine("Got {0}", filePath);
++
++//                if (ArchiveConstants.CONTROL_FILE_PATH == filePath)
++//                {
++//                    gotControlFile = true;
++//                }
++
++                if (filePath.StartsWith(ArchiveConstants.INVENTORY_PATH) && filePath.EndsWith(".xml"))
++                {
++//                    string fileName = filePath.Remove(0, "Objects/".Length);
++//
++//                    if (fileName.StartsWith(part1.Name))
++//                    {
++                        Assert.That(expectedObject1FilePath, Is.EqualTo(filePath));
++                        gotObject1File = true;
++//                    }
++//                    else if (fileName.StartsWith(part2.Name))
++//                    {
++//                        Assert.That(fileName, Is.EqualTo(expectedObject2FileName));
++//                        gotObject2File = true;
++//                    }
++                }
++            }
++
++//            Assert.That(gotControlFile, Is.True, "No control file in archive");
++            Assert.That(gotObject1File, Is.True, "No item1 file in archive");
++//            Assert.That(gotObject2File, Is.True, "No object2 file in archive");
++
++            // TODO: Test presence of more files and contents of files.
++        }
++
++        /// <summary>
++        /// Test saving a single inventory item to an IAR without its asset
++        /// </summary>
++        [Test]
++        public void TestSaveItemToIarNoAssets()
++        {
++            TestHelpers.InMethod();
++//            TestHelpers.EnableLogging();
++
++            // Create user
++            string userFirstName = "Jock";
++            string userLastName = "Stirrup";
++            string userPassword = "troll";
++            UUID userId = UUID.Parse("00000000-0000-0000-0000-000000000020");
++            UserAccountHelpers.CreateUserWithInventory(m_scene, userFirstName, userLastName, userId, userPassword);
++
++            // Create asset
++            UUID ownerId = UUID.Parse("00000000-0000-0000-0000-000000000040");
++            SceneObjectGroup object1 = SceneHelpers.CreateSceneObject(1, ownerId, "My Little Dog Object", 0x50);
++
++            UUID asset1Id = UUID.Parse("00000000-0000-0000-0000-000000000060");
++            AssetBase asset1 = AssetHelpers.CreateAsset(asset1Id, object1);
++            m_scene.AssetService.Store(asset1);
++
++            // Create item
++            UUID item1Id = UUID.Parse("00000000-0000-0000-0000-000000000080");
++            string item1Name = "My Little Dog";
++            InventoryItemBase item1 = new InventoryItemBase();
++            item1.Name = item1Name;
++            item1.AssetID = asset1.FullID;
++            item1.ID = item1Id;
++            InventoryFolderBase objsFolder
++                = InventoryArchiveUtils.FindFoldersByPath(m_scene.InventoryService, userId, "Objects")[0];
++            item1.Folder = objsFolder.ID;
++            m_scene.AddInventoryItem(item1);
++
++            MemoryStream archiveWriteStream = new MemoryStream();
++
++            Dictionary<string, Object> options = new Dictionary<string, Object>();
++            options.Add("noassets", true);
++
++            // When we're not saving assets, archiving is being done synchronously.
++            m_archiverModule.ArchiveInventory(
++                UUID.Random(), userFirstName, userLastName, "Objects/" + item1Name, userPassword, archiveWriteStream, options);
++
++            byte[] archive = archiveWriteStream.ToArray();
++            MemoryStream archiveReadStream = new MemoryStream(archive);
++            TarArchiveReader tar = new TarArchiveReader(archiveReadStream);
++
++            //bool gotControlFile = false;
++            bool gotObject1File = false;
++            //bool gotObject2File = false;
++            string expectedObject1FileName = InventoryArchiveWriteRequest.CreateArchiveItemName(item1);
++            string expectedObject1FilePath = string.Format(
++                "{0}{1}",
++                ArchiveConstants.INVENTORY_PATH,
++                expectedObject1FileName);
++
++            string filePath;
++            TarArchiveReader.TarEntryType tarEntryType;
++
++//            Console.WriteLine("Reading archive");
++
++            while (tar.ReadEntry(out filePath, out tarEntryType) != null)
++            {
++                Console.WriteLine("Got {0}", filePath);
++
++//                if (ArchiveConstants.CONTROL_FILE_PATH == filePath)
++//                {
++//                    gotControlFile = true;
++//                }
++
++                if (filePath.StartsWith(ArchiveConstants.INVENTORY_PATH) && filePath.EndsWith(".xml"))
++                {
++//                    string fileName = filePath.Remove(0, "Objects/".Length);
++//
++//                    if (fileName.StartsWith(part1.Name))
++//                    {
++                        Assert.That(expectedObject1FilePath, Is.EqualTo(filePath));
++                        gotObject1File = true;
++//                    }
++//                    else if (fileName.StartsWith(part2.Name))
++//                    {
++//                        Assert.That(fileName, Is.EqualTo(expectedObject2FileName));
++//                        gotObject2File = true;
++//                    }
++                }
++                else if (filePath.StartsWith(ArchiveConstants.ASSETS_PATH))
++                {
++                    Assert.Fail("Found asset path in TestSaveItemToIarNoAssets()");
++                }
++            }
++
++//            Assert.That(gotControlFile, Is.True, "No control file in archive");
++            Assert.That(gotObject1File, Is.True, "No item1 file in archive");
++//            Assert.That(gotObject2File, Is.True, "No object2 file in archive");
++
++            // TODO: Test presence of more files and contents of files.
++        }
++    }
++}
+\ No newline at end of file
+diff -ruNa Tests/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveTestCase.cs Tests-no-iar/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveTestCase.cs
+--- Tests/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveTestCase.cs	2024-08-09 06:39:36.000000000 -0700
++++ Tests-no-iar/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveTestCase.cs	2024-09-18 17:28:53.186361317 -0700
+@@ -152,7 +152,7 @@
+             scene.AddInventoryItem(coaItem);
+ 
+             archiverModule.ArchiveInventory(
+-                UUID.Random(), m_uaLL1.FirstName, m_uaLL1.LastName, "/*", "hampshire", archiveWriteStream);
++                UUID.Random(), m_uaLL1.FirstName, m_uaLL1.LastName, "/*", archiveWriteStream);
+ 
+             m_iarStreamBytes = archiveWriteStream.ToArray();
+         }
+@@ -164,4 +164,4 @@
+             mre.Set();
+         }
+     }
+-}
+\ No newline at end of file
++}
+diff -ruNa Tests/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveTestCase.cs.orig Tests-no-iar/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveTestCase.cs.orig
+--- Tests/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveTestCase.cs.orig	1969-12-31 16:00:00.000000000 -0800
++++ Tests-no-iar/OpenSim.Region.CoreModules.Tests/Avatar/Inventory/Archiver/Tests/InventoryArchiveTestCase.cs.orig	2024-08-09 06:39:36.000000000 -0700
+@@ -0,0 +1,167 @@
++/*
++ * Copyright (c) Contributors, http://opensimulator.org/
++ * See CONTRIBUTORS.TXT for a full list of copyright holders.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions are met:
++ *     * Redistributions of source code must retain the above copyright
++ *       notice, this list of conditions and the following disclaimer.
++ *     * Redistributions in binary form must reproduce the above copyright
++ *       notice, this list of conditions and the following disclaimer in the
++ *       documentation and/or other materials provided with the distribution.
++ *     * Neither the name of the OpenSimulator Project nor the
++ *       names of its contributors may be used to endorse or promote products
++ *       derived from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE DEVELOPERS ``AS IS'' AND ANY
++ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
++ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++ * DISCLAIMED. IN NO EVENT SHALL THE CONTRIBUTORS BE LIABLE FOR ANY
++ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
++ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
++ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
++ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
++ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++using OpenMetaverse;
++
++using OpenSim.Framework;
++using OpenSim.Region.Framework.Scenes;
++using OpenSim.Services.Interfaces;
++using OpenSim.Tests.Common;
++
++namespace OpenSim.Region.CoreModules.Avatar.Inventory.Archiver.Tests
++{
++    [TestFixture]
++    public class InventoryArchiveTestCase : OpenSimTestCase
++    {
++        protected ManualResetEvent mre = new ManualResetEvent(false);
++
++        /// <summary>
++        /// A raw array of bytes that we'll use to create an IAR memory stream suitable for isolated use in each test.
++        /// </summary>
++        protected byte[] m_iarStreamBytes;
++
++        /// <summary>
++        /// Stream of data representing a common IAR for load tests.
++        /// </summary>
++        protected MemoryStream m_iarStream;
++
++        protected UserAccount m_uaMT
++            = new UserAccount {
++                PrincipalID = UUID.Parse("00000000-0000-0000-0000-000000000555"),
++                FirstName = "Mr",
++                LastName = "Tiddles" };
++
++        protected UserAccount m_uaLL1
++            = new UserAccount {
++                PrincipalID = UUID.Parse("00000000-0000-0000-0000-000000000666"),
++                FirstName = "Lord",
++                LastName = "Lucan" };
++
++        protected UserAccount m_uaLL2
++            = new UserAccount {
++                PrincipalID = UUID.Parse("00000000-0000-0000-0000-000000000777"),
++                FirstName = "Lord",
++                LastName = "Lucan" };
++
++        protected string m_item1Name = "Ray Gun Item";
++        protected string m_coaItemName = "Coalesced Item";
++
++        [OneTimeSetUp]
++        public void FixtureSetup()
++        {
++            // Don't allow tests to be bamboozled by asynchronous events.  Execute everything on the same thread.
++            Util.FireAndForgetMethod = FireAndForgetMethod.RegressionTest;
++
++            ConstructDefaultIarBytesForTestLoad();
++        }
++
++        [OneTimeTearDown]
++        public void TearDown()
++        {
++            // We must set this back afterwards, otherwise later tests will fail since they're expecting multiple
++            // threads.  Possibly, later tests should be rewritten so none of them require async stuff (which regression
++            // tests really shouldn't).
++            Util.FireAndForgetMethod = Util.DefaultFireAndForgetMethod;
++        }
++
++        [SetUp]
++        public override void SetUp()
++        {
++            base.SetUp();
++            m_iarStream = new MemoryStream(m_iarStreamBytes);
++        }
++
++        protected void ConstructDefaultIarBytesForTestLoad()
++        {
++
++            InventoryArchiverModule archiverModule = new InventoryArchiverModule();
++            Scene scene = new SceneHelpers().SetupScene();
++            SceneHelpers.SetupSceneModules(scene, archiverModule);
++
++            UserAccountHelpers.CreateUserWithInventory(scene, m_uaLL1, "hampshire");
++
++            MemoryStream archiveWriteStream = new MemoryStream();
++
++            //InventoryFolderBase objects = scene.InventoryService.GetFolderForType(m_uaLL1.PrincipalID, FolderType.Object);
++            // Create scene object asset
++            UUID ownerId = UUID.Parse("00000000-0000-0000-0000-000000000040");
++            SceneObjectGroup object1 = SceneHelpers.CreateSceneObject(1, ownerId, "Ray Gun Object", 0x50);
++
++            UUID asset1Id = UUID.Parse("00000000-0000-0000-0000-000000000060");
++            AssetBase asset1 = AssetHelpers.CreateAsset(asset1Id, object1);
++            scene.AssetService.Store(asset1);
++
++            // Create scene object item
++            InventoryItemBase item1 = new InventoryItemBase();
++            item1.Name = m_item1Name;
++            item1.ID = UUID.Parse("00000000-0000-0000-0000-000000000020");
++            item1.AssetID = asset1.FullID;
++            item1.GroupID = UUID.Random();
++            item1.CreatorId = m_uaLL1.PrincipalID.ToString();
++            item1.Owner = m_uaLL1.PrincipalID;
++            //item1.Folder = objects.ID;
++            item1.Folder = scene.InventoryService.GetRootFolder(m_uaLL1.PrincipalID).ID;
++            scene.AddInventoryItem(item1);
++
++            // Create coalesced objects asset
++            SceneObjectGroup cobj1 = SceneHelpers.CreateSceneObject(1, m_uaLL1.PrincipalID, "Object1", 0x120);
++            cobj1.AbsolutePosition = new Vector3(15, 30, 45);
++
++            SceneObjectGroup cobj2 = SceneHelpers.CreateSceneObject(1, m_uaLL1.PrincipalID, "Object2", 0x140);
++            cobj2.AbsolutePosition = new Vector3(25, 50, 75);
++
++            CoalescedSceneObjects coa = new CoalescedSceneObjects(m_uaLL1.PrincipalID, cobj1, cobj2);
++
++            AssetBase coaAsset = AssetHelpers.CreateAsset(0x160, coa);
++            scene.AssetService.Store(coaAsset);
++
++            // Create coalesced objects inventory item
++            InventoryItemBase coaItem = new InventoryItemBase();
++            coaItem.Name = m_coaItemName;
++            coaItem.ID = UUID.Parse("00000000-0000-0000-0000-000000000180");
++            coaItem.AssetID = coaAsset.FullID;
++            coaItem.GroupID = UUID.Random();
++            coaItem.CreatorId = m_uaLL1.PrincipalID.ToString();
++            coaItem.Owner = m_uaLL1.PrincipalID;
++            //coaItem.Folder = objects.ID;
++            coaItem.Folder = scene.InventoryService.GetRootFolder(m_uaLL1.PrincipalID).ID;
++            scene.AddInventoryItem(coaItem);
++
++            archiverModule.ArchiveInventory(
++                UUID.Random(), m_uaLL1.FirstName, m_uaLL1.LastName, "/*", "hampshire", archiveWriteStream);
++
++            m_iarStreamBytes = archiveWriteStream.ToArray();
++        }
++
++        protected void SaveCompleted(
++            UUID id, bool succeeded, UserAccount userInfo, string invPath, Stream saveStream,
++            Exception reportedException, int SaveCount, int FilterCount)
++        {
++            mre.Set();
++        }
++    }
++}
+\ No newline at end of file
