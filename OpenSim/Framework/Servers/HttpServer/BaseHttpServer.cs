@@ -47,6 +47,7 @@ using Nwc.XmlRpc;
 using OpenSim.Framework.Monitoring;
 using OpenMetaverse.StructuredData;
 using OpenMetaverse;
+using System.Net.NetworkInformation;
 
 namespace OpenSim.Framework.Servers.HttpServer
 {
@@ -152,6 +153,12 @@ namespace OpenSim.Framework.Servers.HttpServer
         {
             get { return m_listenIPAddress; }
             set { m_listenIPAddress = value; }
+        }
+
+		public BaseHttpServer(IPAddress address, uint port)
+        {
+            m_listenIPAddress = address;
+            m_port = port;
         }
 
         public BaseHttpServer(uint port)
@@ -1977,10 +1984,15 @@ namespace OpenSim.Framework.Servers.HttpServer
 
             return buffer;
         }
+		
+		public void Start(uint port_min, uint port_max)
+        {
+            Start(true, true, port_min, port_max);
+        }
 
         public void Start()
         {
-            Start(true, true);
+            Start(true, true, m_port, m_port);
         }
 
         /// <summary>
@@ -1990,13 +2002,35 @@ namespace OpenSim.Framework.Servers.HttpServer
         /// If true then poll responses are performed asynchronsly.
         /// Option exists to allow regression tests to perform processing synchronously.
         /// </param>
-        public void Start(bool performPollResponsesAsync, bool runPool)
+        public void Start(bool performPollResponsesAsync, bool runPool, uint port_min, uint port_max)
         {
+			if (port_min == port_max)
             m_log.Info($"[BASE HTTP SERVER]: Starting HTTP{(UseSSL ? "S" : "")} server on port {Port}");
+			else
+			m_log.Info($"[BASE HTTP SERVER]: Starting HTTP{(UseSSL ? "S" : "")} server on first available port between {port_min} and {port_max}");
 
             try
             {
                 //m_httpListener = new HttpListener();
+		
+				if (port_min != port_max)
+				{
+					IPGlobalProperties ipProperties = IPGlobalProperties.GetIPGlobalProperties();
+					List<IPEndPoint> ipEndPoints = new List<IPEndPoint>(ipProperties.GetActiveTcpListeners());
+
+					for (uint current_port = port_min; current_port < port_max; current_port++)
+					{
+						if (ipEndPoints.Find(x => x.Port == current_port) != null)
+							continue;
+
+						m_port = current_port;
+						break;
+					}
+				}
+				else
+				{
+					m_port = port_min;
+				}
                 if (!m_ssl)
                 {
                     m_httpListener = tinyHTTPListener.Create(m_listenIPAddress, (int)m_port);

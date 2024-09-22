@@ -27,12 +27,14 @@
 
 using System;
 using Nini.Config;
+using System.Net;
 
 namespace OpenSim.Framework
 {
     public class NetworkServersInfo
     {
-        public uint HttpListenerPort = ConfigSettings.DefaultRegionHttpPort;
+        public IPAddress HttpListenerAddress = IPAddress.Any;
+		public uint HttpListenerPort = ConfigSettings.DefaultRegionHttpPort;
         public bool secureInventoryServer = false;
         public bool isSandbox;
         public bool HttpUsesSSL = false;
@@ -40,6 +42,8 @@ namespace OpenSim.Framework
         public string HttpSSLCertPath = "";
         public string HttpSSLCNCertPass = "";
         public uint httpSSLPort = 9001;
+		public uint HttpListenerPortMin = ConfigSettings.DefaultRegionHttpPort;
+        public uint HttpListenerPortMax = ConfigSettings.DefaultRegionHttpPort;
 
         // "Out of band" managemnt https
         public bool ssl_listener = false;
@@ -58,11 +62,19 @@ namespace OpenSim.Framework
 
         public void loadFromConfiguration(IConfigSource config)
         {
-            HttpListenerPort =
+            string str_ip = config.Configs["Network"].GetString("http_listener_address", "0.0.0.0");
+            if (!IPAddress.TryParse(str_ip, out HttpListenerAddress))
+                HttpListenerAddress = IPAddress.Any;
+			
+			HttpListenerPort =
                 (uint) config.Configs["Network"].GetInt("http_listener_port", (int) ConfigSettings.DefaultRegionHttpPort);
             httpSSLPort =
                 (uint)config.Configs["Network"].GetInt("http_listener_sslport", ((int)ConfigSettings.DefaultRegionHttpPort+1));
-            HttpUsesSSL = config.Configs["Network"].GetBoolean("http_listener_ssl", false);
+            HttpListenerPortMin =
+                (uint)config.Configs["Network"].GetInt("http_listener_port_min", (int)HttpListenerPort);
+            HttpListenerPortMax =
+                (uint)config.Configs["Network"].GetInt("http_listener_port_max", (int)HttpListenerPort);
+			HttpUsesSSL = config.Configs["Network"].GetBoolean("http_listener_ssl", false);
             HttpSSLCN = config.Configs["Network"].GetString("http_listener_cn", "localhost");
             HttpSSLCertPath = config.Configs["Network"].GetString("http_listener_cert_path", HttpSSLCertPath);
             HttpSSLCNCertPass = config.Configs["Network"].GetString("http_listener_cert_pass", HttpSSLCNCertPass);

@@ -200,7 +200,7 @@ namespace OpenSim.Server
                 BaseHttpServer server;
 
                 if (port != 0)
-                    server = (BaseHttpServer)MainServer.GetHttpServer(port);
+                server = (BaseHttpServer)MainServer.GetHttpServer(port, m_Server.IPAddress);
                 else
                     server = MainServer.Instance;
 
